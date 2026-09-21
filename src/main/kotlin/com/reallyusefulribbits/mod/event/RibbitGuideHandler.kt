@@ -8,6 +8,7 @@ import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.ModList
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent
 import net.neoforged.neoforge.event.entity.player.PlayerEvent
 
 /**
@@ -21,6 +22,11 @@ object RibbitGuideHandler {
     private const val TAG_RECEIVED = "reallyusefulribbits.received_guide"
 
     fun isPatchouliLoaded(): Boolean = ModList.get().isLoaded(PATCHOULI_ID)
+
+    fun onCreativeTab(event: BuildCreativeModeTabContentsEvent) {
+        if (event.tabKey.location().namespace != "ribbits") return
+        createBookStack()?.let { event.accept(it) }
+    }
 
     @SubscribeEvent
     fun onPlayerLogin(event: PlayerEvent.PlayerLoggedInEvent) {

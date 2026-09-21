@@ -62,7 +62,7 @@
   "reallyusefulribbits.guide.page.highlight.2": "If that ribbit has no water, farm or container yet, it croaks in pain and angry particles appear instead. Give it time to look around, or move it closer to what it needs.",
 
   "reallyusefulribbits.guide.entry.fisherman": "The Fisher",
-  "reallyusefulribbits.guide.page.fisherman.1": "A fisher binds one nearby water block and one container (chest, barrel, shulker, double chest, and the like). It sits on the bank with its fishing pose and fishes like a player: splashes gather at the bobber, then it reels in. The catch goes into a single slot that holds 16 items.",
+  "reallyusefulribbits.guide.page.fisherman.1": "A fisher binds one nearby water block and one container (chest, barrel, shulker, double chest, and the like). It sits on the bank with its fishing pose and fishes like a player: splashes gather at the bobber, then it reels in. The catch goes into a single slot that holds 4 items.",
   "reallyusefulribbits.guide.page.fisherman.2": "A catch shows happy villager stars, the fishing bobber splash, and a quiet orb ping. The fisher sits on the water's edge. Fish dropped nearby with $(thing)Q$() are picked up. When the bag is full it carries the catch to its container and returns.",
 
   "reallyusefulribbits.guide.entry.farmer": "The Gardener",

@@ -57,7 +57,7 @@ class RibbitWorkData {
         runCatching { MerchantPhase.valueOf(merchantPhase) }.getOrDefault(MerchantPhase.INIT)
 
     fun slotLimit(kind: ProfessionKind): Int = when (kind) {
-        ProfessionKind.FISHERMAN -> 16
+        ProfessionKind.FISHERMAN -> 4
         ProfessionKind.FARMER -> 64
         ProfessionKind.MERCHANT -> 256
         ProfessionKind.NITWIT -> 64

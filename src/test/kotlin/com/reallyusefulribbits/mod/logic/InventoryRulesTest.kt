@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
 class InventoryRulesTest {
 
     @Test
-    @DisplayName("У рыбака один слот на 16, нестакаемое сразу забивает сумку")
+    @DisplayName("У рыбака один слот на 4, нестакаемое сразу забивает сумку")
     fun fisherUnstackableFillsBag() {
         val slots = mutableListOf<LogicSlot?>(null)
         val leftover = InventoryRules.insert(
@@ -23,16 +23,16 @@ class InventoryRulesTest {
     }
 
     @Test
-    @DisplayName("Рыбак может сложить 16 трески в один слот")
-    fun fisherStacksFishToSixteen() {
+    @DisplayName("Рыбак складывает в слот только 4 трески")
+    fun fisherStacksFishToFour() {
         val slots = mutableListOf<LogicSlot?>(null)
         val leftover = InventoryRules.insert(
             slots,
             InventoryRules.FISHER_STACK,
             LogicSlot("minecraft:cod", 16, 64),
         )
-        assertNull(leftover)
-        assertEquals(16, slots[0]!!.count)
+        assertEquals(12, leftover!!.count)
+        assertEquals(4, slots[0]!!.count)
         assertTrue(InventoryRules.isFull(slots, InventoryRules.FISHER_STACK))
         assertFalse(
             InventoryRules.canInsert(

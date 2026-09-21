@@ -10,7 +10,6 @@ import com.reallyusefulribbits.mod.event.RibbitInteractionHandler
 import com.reallyusefulribbits.mod.event.RibbitTickHandler
 import com.reallyusefulribbits.mod.profession.RibbitCombat
 import com.reallyusefulribbits.mod.highlight.HighlightMarkers
-import com.reallyusefulribbits.mod.item.ModItems
 import com.reallyusefulribbits.mod.network.ModNetworking
 import com.reallyusefulribbits.mod.profession.SorcererEvents
 import net.neoforged.bus.api.IEventBus
@@ -18,6 +17,7 @@ import net.neoforged.fml.ModContainer
 import net.neoforged.fml.common.Mod
 import net.neoforged.fml.config.ModConfig
 import net.neoforged.neoforge.common.NeoForge
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
@@ -34,7 +34,6 @@ class ReallyUsefulRibbitsMod(modEventBus: IEventBus, modContainer: ModContainer)
     init {
         LOGGER.info("Initializing Really Useful Ribbits ({})", MOD_ID)
         ModAttachments.ATTACHMENT_TYPES.register(modEventBus)
-        ModItems.register(modEventBus)
         modContainer.registerConfig(ModConfig.Type.SERVER, ServerConfig.SPEC)
         ModSetup.init(modEventBus, modContainer)
         ModNetworking.init(modEventBus)
@@ -45,6 +44,9 @@ class ReallyUsefulRibbitsMod(modEventBus: IEventBus, modContainer: ModContainer)
         NeoForge.EVENT_BUS.register(SorcererEvents)
         NeoForge.EVENT_BUS.register(RibbitCombat)
         NeoForge.EVENT_BUS.register(MorphInteractGuard)
+        modEventBus.addListener { event: BuildCreativeModeTabContentsEvent ->
+            RibbitGuideHandler.onCreativeTab(event)
+        }
         NeoForge.EVENT_BUS.register(RibbitGuideHandler)
     }
 }

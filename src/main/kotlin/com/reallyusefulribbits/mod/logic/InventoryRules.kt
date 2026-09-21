@@ -8,7 +8,7 @@ data class LogicSlot(
 
 object InventoryRules {
     const val FISHER_SLOTS = 1
-    const val FISHER_STACK = 16
+    const val FISHER_STACK = 4
     const val FARMER_SLOTS = 4
     const val FARMER_STACK = 64
     const val MERCHANT_SLOTS = 27
