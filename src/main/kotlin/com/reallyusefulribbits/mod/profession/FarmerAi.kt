@@ -35,9 +35,10 @@ object FarmerAi {
 
     fun ensureWorkGoal(ribbit: RibbitEntity) {
         if (ribbit.professionKind() != ProfessionKind.FARMER) return
-        val present = ribbit.goalSelector.availableGoals.any { it.goal is FarmerWorkGoal }
-        if (present) return
-        ribbit.goalSelector.addGoal(0, FarmerWorkGoal(ribbit))
+        val existing = ribbit.goalSelector.availableGoals.filter { it.goal is FarmerWorkGoal }
+        if (existing.any { it.priority == -1 }) return
+        existing.forEach { ribbit.goalSelector.removeGoal(it.goal) }
+        ribbit.goalSelector.addGoal(-1, FarmerWorkGoal(ribbit))
     }
 
     fun isBusy(ribbit: RibbitEntity): Boolean = busy.contains(ribbit.id)
@@ -474,13 +475,9 @@ private class FarmerWorkGoal(private val ribbit: RibbitEntity) : Goal() {
         FarmerAi.drive(ribbit)
     }
 
-    override fun stop() {
-        ribbit.navigation.stop()
-    }
-
     private fun working(): Boolean {
         if (ribbit.professionKind() != ProfessionKind.FARMER) return false
         if (ribbit.work().fleeTicks > 0) return false
-        return FarmerAi.isBusy(ribbit)
+        return ribbit.work().farmOrigin != null
     }
 }
