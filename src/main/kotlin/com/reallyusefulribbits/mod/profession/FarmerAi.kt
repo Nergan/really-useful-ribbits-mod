@@ -156,7 +156,7 @@ object FarmerAi {
                 harvest = pos
                 harvestDist = dist
             }
-            if (dist < plantDist && CropSupport.isEmptyFarmland(level, pos)) {
+            if (dist < plantDist && canPlantSoil(level, ribbit, pos)) {
                 plant = pos
                 plantDist = dist
             }
@@ -181,7 +181,7 @@ object FarmerAi {
                 tillDist = dist
             }
         }
-        val plantTarget = stick(ribbit, plant) { CropSupport.isEmptyFarmland(level, it) }
+        val plantTarget = stick(ribbit, plant) { canPlantSoil(level, ribbit, it) }
         listOfNotNull(harvest, till, plantTarget, water).forEach {
             BlockReservation.tryClaim(level, it, ribbit.id, now)
         }
@@ -238,7 +238,7 @@ object FarmerAi {
     private fun plant(level: ServerLevel, ribbit: RibbitEntity, soil: BlockPos?) {
         if (soil == null) return
         val data = ribbit.work()
-        val pocket = RibbitBags.find(data, ProfessionKind.FARMER) { CropSupport.plantableBlock(it) != null }
+        val pocket = RibbitBags.find(data, ProfessionKind.FARMER) { CropSupport.canPlant(level, soil, it) }
         if (pocket.isEmpty) {
             val chest = data.containerPos ?: return
             if (!walkTo(level, ribbit, chest, Math.sqrt(ModConfig.CONTAINER_REACH_SQ), 1.35, false)) return
@@ -246,7 +246,7 @@ object FarmerAi {
             ContainerSupport.openBriefly(level, chest)
             var grabbed = 0
             while (grabbed < 4 && !RibbitBags.isFull(data, ProfessionKind.FARMER)) {
-                val taken = ContainerSupport.extractMatching(level, chest, { CropSupport.plantableBlock(it) != null }, 64)
+                val taken = ContainerSupport.extractMatching(level, chest, { CropSupport.canPlant(level, soil, it) }, 64)
                 if (taken.isEmpty) break
                 val leftover = RibbitBags.insert(data, ProfessionKind.FARMER, taken)
                 if (!leftover.isEmpty) {
@@ -258,7 +258,7 @@ object FarmerAi {
             return
         }
         if (!walkTo(level, ribbit, soil)) return
-        val seed = RibbitBags.takeOne(data, ProfessionKind.FARMER) { CropSupport.plantableBlock(it) != null }
+        val seed = RibbitBags.takeOne(data, ProfessionKind.FARMER) { CropSupport.canPlant(level, soil, it) }
         if (seed.isEmpty) return
         if (!CropSupport.plant(level, soil, seed) && !seed.isEmpty) {
             RibbitBags.insert(data, ProfessionKind.FARMER, seed)
@@ -340,6 +340,18 @@ object FarmerAi {
             kept[stack.item] = already + room
         }
         return out
+    }
+
+    private fun canPlantSoil(level: ServerLevel, ribbit: RibbitEntity, pos: BlockPos): Boolean {
+        if (!CropSupport.isEmptyFarmland(level, pos)) return false
+        val data = ribbit.work()
+        if (!RibbitBags.find(data, ProfessionKind.FARMER) { CropSupport.canPlant(level, pos, it) }.isEmpty) return true
+        val container = data.containerPos ?: return false
+        val handler = ContainerSupport.handler(level, container) ?: return false
+        for (slot in 0 until handler.slots) {
+            if (CropSupport.canPlant(level, pos, handler.getStackInSlot(slot))) return true
+        }
+        return false
     }
 
     private fun hasPlantable(level: ServerLevel, ribbit: RibbitEntity): Boolean {

@@ -75,15 +75,24 @@ object CropSupport {
         return null
     }
 
+    fun canPlant(level: Level, soil: BlockPos, stack: ItemStack): Boolean {
+        val block = plantableBlock(stack) ?: return false
+        return canPlantOn(level, soil, block)
+    }
+
+    /** Песок душ принимает только незерский нарост, даже если он в теге фермы. */
     fun canPlantOn(level: Level, soil: BlockPos, plant: Block): Boolean {
         val soilState = level.getBlockState(soil)
         val above = level.getBlockState(soil.above())
         if (!above.isAir) return false
+        val soulSand = soilState.`is`(Blocks.SOUL_SAND)
         return when (plant) {
-            is NetherWartBlock -> soilState.`is`(Blocks.SOUL_SAND)
-            is SugarCaneBlock -> soilState.`is`(Blocks.SAND) || soilState.`is`(Blocks.RED_SAND) ||
-                soilState.`is`(BlockTags.DIRT) || soilState.block is FarmBlock
-            else -> soilState.block is FarmBlock || soilState.`is`(ModTags.FARMLAND)
+            is NetherWartBlock -> soulSand
+            is SugarCaneBlock -> !soulSand && (
+                soilState.`is`(Blocks.SAND) || soilState.`is`(Blocks.RED_SAND) ||
+                    soilState.`is`(BlockTags.DIRT) || soilState.block is FarmBlock
+                )
+            else -> !soulSand && (soilState.block is FarmBlock || soilState.`is`(ModTags.FARMLAND))
         }
     }
 
