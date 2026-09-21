@@ -43,7 +43,7 @@ object HighlightMarkers {
 
     private fun spark(level: ServerLevel, blocks: List<BlockPos>) {
         for (pos in blocks) {
-            level.sendParticles(ParticleTypes.GLOW, pos.x + 0.5, pos.y + 0.55, pos.z + 0.5, 6, 0.32, 0.32, 0.32, 0.0)
+            level.sendParticles(ParticleTypes.GLOW, pos.x + 0.5, pos.y + 0.55, pos.z + 0.5, 2, 0.28, 0.2, 0.28, 0.0)
             level.sendParticles(ParticleTypes.END_ROD, pos.x + 0.5, pos.y + 1.05, pos.z + 0.5, 1, 0.0, 0.0, 0.0, 0.0)
         }
     }

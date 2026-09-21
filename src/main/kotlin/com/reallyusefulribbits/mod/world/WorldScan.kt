@@ -1,5 +1,6 @@
 package com.reallyusefulribbits.mod.world
 
+import com.reallyusefulribbits.mod.config.ModConfig
 import com.reallyusefulribbits.mod.logic.FarmFloodFill
 import com.reallyusefulribbits.mod.logic.GridPos
 import net.minecraft.core.BlockPos
@@ -34,6 +35,7 @@ object WorldScan {
         val filled = FarmFloodFill.fill(
             origin = GridPos(origin.x, origin.y, origin.z),
             radius = radius,
+            maxBlocks = ModConfig.FARM_MEMORY_CAP,
         ) { pos -> CropSupport.isFarmBlock(level, BlockPos(pos.x, pos.y, pos.z)) }
         return filled.map { BlockPos(it.x, it.y, it.z) }
     }

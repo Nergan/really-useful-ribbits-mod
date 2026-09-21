@@ -18,7 +18,7 @@ object ModConfig {
     const val NITWIT_GIFT_IGNORE_TICKS: Int = 200
     const val ENDERMAN_FLEE_INTERVAL: Int = 20
     const val SORCERER_CLICK_COOLDOWN: Int = 30
-    const val MAX_HIGHLIGHT_BLOCKS: Int = 48
+    const val MAX_HIGHLIGHT_BLOCKS: Int = 1024
     const val BERRY_REACH: Double = 2.75
     const val WORK_REACH_SQ: Double = 2.6
     const val FISHER_SIT_REACH_SQ: Double = 4.0
@@ -26,7 +26,8 @@ object ModConfig {
     const val FISHER_STUCK_TICKS: Int = 100
     const val FLEE_TICKS: Int = 80
     const val GROUND_PICKUP_RANGE: Double = 2.75
-    const val FARM_MEMORY_CAP: Int = 2048
+    const val FARM_MEMORY_CAP: Int = 8192
+    const val FARM_CLAIM_RADIUS: Int = 128
     const val DIAMOND_RAIN_COUNT: Int = 256
     const val DIAMOND_RAIN_WAVES: Int = 32
     const val STRUCTURE_TRIP_TICKS: Int = 200
