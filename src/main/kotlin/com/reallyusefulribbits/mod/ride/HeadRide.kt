@@ -1,6 +1,5 @@
 package com.reallyusefulribbits.mod.ride
 
-import com.reallyusefulribbits.mod.attach.ModAttachments
 import com.reallyusefulribbits.mod.event.ModAdvancements
 import com.reallyusefulribbits.mod.mixin.RibbitEntityAccessor
 import com.reallyusefulribbits.mod.util.professionKind
@@ -11,30 +10,37 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 
 object HeadRide {
+    fun holdOnHead(player: Player, ribbit: RibbitEntity) {
+        ribbit.setPos(player.x, player.y + player.bbHeight + 0.15, player.z)
+        ribbit.xo = player.x
+        ribbit.yo = player.y + player.bbHeight + 0.15
+        ribbit.zo = player.z
+        ribbit.setDeltaMovement(player.deltaMovement)
+    }
+
     fun mount(player: Player, ribbit: RibbitEntity): Boolean {
-        if (ribbit.isPassenger) return false
-        if (player.passengers.any { it is RibbitEntity }) return false
+        if (ribbit.vehicle == player || player.passengers.any { it is RibbitEntity && it !== ribbit }) {
+            return ribbit.vehicle == player
+        }
         val data = ribbit.work()
         ribbit.setFishing(false)
         ribbit.setWatering(false)
         ribbit.setBuffing(false)
         ribbit.navigation.stop()
         ribbit.setDeltaMovement(0.0, 0.0, 0.0)
-        ribbit.moveTo(player.x, player.y + player.bbHeight, player.z, player.yRot, 0f)
+        holdOnHead(player, ribbit)
         val mounted = ribbit.startRiding(player, true)
         if (!mounted || ribbit.vehicle != player) {
             data.riding = false
             return false
         }
         data.riding = true
+        holdOnHead(player, ribbit)
         data.savedInstrument = ribbit.ribbitData.instrument.id.path
         if (ribbit.ribbitData.instrument == RibbitInstrumentModule.NONE) {
             ribbit.setInstrument(RibbitInstrumentModule.getRandomInstrument())
         }
         ribbit.setPlayingInstrument(true)
-        if (player is ServerPlayer) {
-            player.getData(ModAttachments.VISUAL.get()).headRideDismountArmed = false
-        }
         return true
     }
 
@@ -47,8 +53,9 @@ object HeadRide {
         }
         data.riding = false
         data.savedInstrument = "none"
+        ribbit.setPos(player.x, player.y, player.z)
         (ribbit as RibbitEntityAccessor).rurSetHomePosition(ribbit.blockPosition())
-        if (player is ServerPlayer) {
+        if (player is ServerPlayer && !player.level().isClientSide) {
             ModAdvancements.grantNewHome(player)
         }
         @Suppress("UNUSED_VARIABLE")

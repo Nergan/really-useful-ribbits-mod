@@ -16,7 +16,9 @@ object MerchantEconomy {
     const val INITIAL_EMERALDS = 256
     const val INITIAL_AMETHYSTS = 256
     const val RANDOM_STARTER_STACKS = 6
-    const val OFFER_COUNT = 14
+    const val SLOT_COUNT = 16
+    const val QUARTER_SIZE = 4
+    const val OFFER_COUNT = SLOT_COUNT
     const val QUACK_INTERVAL_TICKS = 18
     const val HARASS_TICKS = 15 * 20
     const val COOLDOWN_TICKS = 12 * 20
@@ -36,6 +38,8 @@ object MerchantEconomy {
         return random(1, minOf(itemMaxStack, 16) + 1)
     }
 
+    fun quarterStart(quarter: Int): Int = Math.floorMod(quarter, 4) * QUARTER_SIZE
+
     fun averagePrice(prices: List<Int>, fallback: Int): Int {
         if (prices.isEmpty()) return fallback.coerceIn(1, 32)
         return (prices.sum().toDouble() / prices.size).toInt().coerceIn(1, 32)
@@ -47,13 +51,14 @@ object MerchantEconomy {
         random: (Int, Int) -> Int,
         itemMax: (String) -> Int,
         visits: List<Pair<String, Int>> = emptyList(),
+        count: Int = OFFER_COUNT,
     ): List<MerchantOfferPlan> {
         val visitPool = visits.filter { it.first.isNotBlank() }
         val fallback = (inventoryIds + listOfNotNull(copiedId)).filter { it.isNotBlank() }.distinct()
         if (visitPool.isEmpty() && fallback.isEmpty()) return emptyList()
         val avg = averagePrice(visitPool.map { it.second }, 4)
-        val offers = ArrayList<MerchantOfferPlan>(OFFER_COUNT)
-        repeat(OFFER_COUNT) {
+        val offers = ArrayList<MerchantOfferPlan>(count)
+        repeat(count) {
             val pick = if (visitPool.isNotEmpty()) {
                 visitPool[Math.floorMod(random(0, visitPool.size), visitPool.size)]
             } else {

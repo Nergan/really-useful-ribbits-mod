@@ -102,7 +102,7 @@ object CropSupport {
         if (block is StemBlock || block is AttachedStemBlock) return false
         if (block is CropBlock) return block.isMaxAge(state)
         if (block is NetherWartBlock) return state.getValue(NetherWartBlock.AGE) >= 3
-        if (isStemFruit(state) && hasStemNeighbor(level, pos)) return true
+        if (isStemFruit(state) && CropRules.shouldHarvestStemFruit(hasStemNeighbor(level, pos))) return true
         if (block is SugarCaneBlock && level.getBlockState(pos.below()).block is SugarCaneBlock) return true
         if (CaveVines.hasGlowBerries(state)) return true
         val age = ageProperty(state)
@@ -158,8 +158,7 @@ object CropSupport {
             CaveVines.hasGlowBerries(state) -> listOf(ItemStack(net.minecraft.world.item.Items.GLOW_BERRIES))
             block is SugarCaneBlock -> previewCane(level, pos, harvester)
             isStemFruit(state) -> {
-                if (!hasStemNeighbor(level, pos)) emptyList()
-                else Block.getDrops(state, level, pos, level.getBlockEntity(pos), harvester, ItemStack.EMPTY)
+                Block.getDrops(state, level, pos, level.getBlockEntity(pos), harvester, ItemStack.EMPTY)
             }
             else -> Block.getDrops(state, level, pos, level.getBlockEntity(pos), harvester, ItemStack.EMPTY)
         }
@@ -184,7 +183,6 @@ object CropSupport {
                 drops = harvestCane(level, pos, harvester)
             }
             isStemFruit(state) -> {
-                if (!hasStemNeighbor(level, pos)) return emptyList()
                 sound = SoundEvents.WOOD_BREAK
                 drops = Block.getDrops(state, level, pos, level.getBlockEntity(pos), harvester, ItemStack.EMPTY)
                 level.removeBlock(pos, false)
@@ -206,6 +204,8 @@ object CropSupport {
 
     fun water(level: ServerLevel, pos: BlockPos) {
         hydrateFarmland(level, pos)
+        nudgeGrowth(level, pos)
+        nudgeGrowth(level, pos.above())
         val state = level.getBlockState(pos)
         if (isCaveVine(state) && state.block is BonemealableBlock && level.random.nextInt(4) == 0) {
             state.randomTick(level, pos, level.random)
@@ -233,9 +233,24 @@ object CropSupport {
     }
 
     fun isStemFruit(state: BlockState): Boolean {
+        val block = state.block
+        if (block is StemBlock || block is AttachedStemBlock) return false
         if (state.`is`(Blocks.MELON) || state.`is`(Blocks.PUMPKIN)) return true
-        val path = BuiltInRegistries.BLOCK.getKey(state.block).path
+        val path = BuiltInRegistries.BLOCK.getKey(block).path
+        if (path.contains("stem")) return false
         return path.contains("melon") || path.contains("pumpkin")
+    }
+
+    private fun nudgeGrowth(level: ServerLevel, pos: BlockPos) {
+        val state = level.getBlockState(pos)
+        val block = state.block
+        if (block is StemBlock || block is CropBlock || block is NetherWartBlock || block is SugarCaneBlock) {
+            state.randomTick(level, pos, level.random)
+            return
+        }
+        if (block is BonemealableBlock && (state.`is`(BlockTags.CROPS) || block is BushBlock)) {
+            state.randomTick(level, pos, level.random)
+        }
     }
 
     fun hasStemNeighbor(level: Level, pos: BlockPos): Boolean {

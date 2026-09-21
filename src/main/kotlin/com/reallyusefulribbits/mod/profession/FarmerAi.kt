@@ -8,6 +8,7 @@ import com.reallyusefulribbits.mod.logic.FarmerTask
 import com.reallyusefulribbits.mod.logic.FarmerTaskPlanner
 import com.reallyusefulribbits.mod.logic.FarmerWorldView
 import com.reallyusefulribbits.mod.logic.ProfessionKind
+import com.reallyusefulribbits.mod.util.LookAt
 import com.reallyusefulribbits.mod.util.work
 import com.reallyusefulribbits.mod.world.BlockReservation
 import com.reallyusefulribbits.mod.world.ContainerSupport
@@ -92,10 +93,11 @@ object FarmerAi {
         val cropScan = LinkedHashSet<BlockPos>()
         for (pos in farm) {
             cropScan += pos
-            cropScan += pos.north()
-            cropScan += pos.south()
-            cropScan += pos.east()
-            cropScan += pos.west()
+            for (dx in -2..2) {
+                for (dz in -2..2) {
+                    cropScan += pos.offset(dx, 0, dz)
+                }
+            }
             for (dy in 0..8) cropScan += pos.above(dy)
         }
         for (pos in cropScan) {
@@ -182,12 +184,15 @@ object FarmerAi {
 
     private fun water(level: ServerLevel, ribbit: RibbitEntity, pos: BlockPos?) {
         if (pos == null) return
+        LookAt.block(ribbit, pos, 0.4)
         if (!walkTo(ribbit, pos)) {
             ribbit.setWatering(false)
             return
         }
+        LookAt.block(ribbit, pos, 0.4)
         ribbit.setWatering(true)
         if (ribbit.work().taskTicks >= ModConfig.WATERING_ANIM_TICKS) {
+            LookAt.block(ribbit, pos, 0.4)
             CropSupport.water(level, pos)
             ribbit.setWatering(false)
             ribbit.work().taskTicks = FarmerTaskPlanner.MIN_TASK_TICKS + FarmerTaskPlanner.SWITCH_COOLDOWN_TICKS

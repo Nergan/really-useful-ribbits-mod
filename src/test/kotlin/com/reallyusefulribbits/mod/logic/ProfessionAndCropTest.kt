@@ -20,9 +20,9 @@ class ProfessionAndCropTest {
     }
 
     @Test
-    @DisplayName("Арбуз без стебля не собирают, тростник оставляют нижний блок")
+    @DisplayName("Арбуз собирают даже без стебля, тростник оставляют нижний блок")
     fun specialCrops() {
-        assertFalse(CropRules.shouldHarvestStemFruit(false))
+        assertTrue(CropRules.shouldHarvestStemFruit(false))
         assertTrue(CropRules.shouldHarvestStemFruit(true))
         assertEquals(5..7, CropRules.caneHarvestYs(4, 7))
         assertTrue(CropRules.caneHarvestYs(4, 4).isEmpty())
@@ -55,5 +55,17 @@ class ProfessionAndCropTest {
         assertEquals(MerchantEconomy.OFFER_COUNT, plans.size)
         assertTrue(plans.all { it.kind == MerchantOfferKind.SELL_FOR_AMETHYST })
         assertTrue(plans.all { it.amethystCount in 1..32 })
+    }
+
+    @Test
+    @DisplayName("Торговец меняет предложение по четвертям по кругу")
+    fun merchantQuarterRotation() {
+        assertEquals(0, MerchantEconomy.quarterStart(0))
+        assertEquals(4, MerchantEconomy.quarterStart(1))
+        assertEquals(8, MerchantEconomy.quarterStart(2))
+        assertEquals(12, MerchantEconomy.quarterStart(3))
+        assertEquals(0, MerchantEconomy.quarterStart(4))
+        assertEquals(16, MerchantEconomy.SLOT_COUNT)
+        assertEquals(4, MerchantEconomy.QUARTER_SIZE)
     }
 }

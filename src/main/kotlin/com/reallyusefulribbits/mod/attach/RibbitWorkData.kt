@@ -46,6 +46,8 @@ class RibbitWorkData {
     val farmMemory: ArrayList<BlockPos> = ArrayList()
     val copiedTradeIds: ArrayList<String> = ArrayList()
     val copiedTradePrices: ArrayList<Int> = ArrayList()
+    val copiedGoods: ArrayList<ItemStack> = ArrayList()
+    var offerQuarter: Int = 0
 
     fun fishingTimes(): FishingPhaseTimes = FishingPhaseTimes(fishingWait, fishingApproach, fishingBite)
 
@@ -105,12 +107,17 @@ class RibbitWorkData {
         tag.putDouble("FleeZ", fleeZ)
         tag.putInt("NavStuck", navStuck)
         tag.putBoolean("GoalsReady", goalsReady)
+        tag.putInt("OfferQuarter", offerQuarter)
         tag.putLongArray("FarmMemory", farmMemory.map { it.asLong() }.toLongArray())
         val copied = ListTag()
         for (i in copiedTradeIds.indices) {
             val row = CompoundTag()
             row.putString("Id", copiedTradeIds[i])
             row.putInt("Price", copiedTradePrices.getOrElse(i) { 4 })
+            val goods = copiedGoods.getOrNull(i)
+            if (goods != null && !goods.isEmpty) {
+                row.put("Stack", goods.save(provider))
+            }
             copied.add(row)
         }
         tag.put("CopiedTrades", copied)
@@ -157,12 +164,28 @@ class RibbitWorkData {
             data.fleeZ = tag.getDouble("FleeZ")
             data.navStuck = tag.getInt("NavStuck")
             data.goalsReady = tag.getBoolean("GoalsReady")
+            data.offerQuarter = tag.getInt("OfferQuarter")
             if (tag.contains("CopiedTrades")) {
                 val copied = tag.getList("CopiedTrades", Tag.TAG_COMPOUND.toInt())
                 for (i in 0 until copied.size) {
                     val row = copied.getCompound(i)
                     data.copiedTradeIds += row.getString("Id")
                     data.copiedTradePrices += row.getInt("Price")
+                    val stack = if (row.contains("Stack")) {
+                        ItemStack.parse(provider, row.getCompound("Stack")).orElse(ItemStack.EMPTY)
+                    } else {
+                        val id = row.getString("Id")
+                        if (id.isBlank()) {
+                            ItemStack.EMPTY
+                        } else {
+                            ItemStack(
+                                net.minecraft.core.registries.BuiltInRegistries.ITEM.get(
+                                    net.minecraft.resources.ResourceLocation.parse(id),
+                                ),
+                            )
+                        }
+                    }
+                    data.copiedGoods += stack
                 }
             }
             if (tag.contains("FarmMemory")) {

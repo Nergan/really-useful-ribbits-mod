@@ -4,7 +4,6 @@ import com.reallyusefulribbits.mod.config.ModConfig
 import com.reallyusefulribbits.mod.config.ServerConfig
 import com.reallyusefulribbits.mod.inventory.RibbitBags
 import com.reallyusefulribbits.mod.logic.MerchantEconomy
-import com.reallyusefulribbits.mod.logic.MerchantOfferKind
 import com.reallyusefulribbits.mod.logic.MerchantPhase
 import com.reallyusefulribbits.mod.logic.ProfessionKind
 import com.reallyusefulribbits.mod.util.work
@@ -103,12 +102,12 @@ object MerchantAi {
                 storeVisit(data, offer.result, offer.costA.count)
             }
         }
-        if (data.copiedTradeIds.isNotEmpty()) {
-            val last = data.copiedTradeIds.last()
-            val item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(
-                net.minecraft.resources.ResourceLocation.parse(last),
+        if (data.copiedGoods.isNotEmpty()) {
+            RibbitBags.insert(
+                data,
+                ProfessionKind.MERCHANT,
+                data.applyLimit(data.copiedGoods.last().copy(), ProfessionKind.MERCHANT),
             )
-            RibbitBags.insert(data, ProfessionKind.MERCHANT, data.applyLimit(ItemStack(item, 1), ProfessionKind.MERCHANT))
         }
     }
 
@@ -117,59 +116,70 @@ object MerchantAi {
         val id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(result.item).toString()
         data.copiedTradeIds += id
         data.copiedTradePrices += price.coerceIn(1, 32)
+        data.copiedGoods += result.copy()
         while (data.copiedTradeIds.size > MerchantEconomy.MAX_COPIED_TRADES) {
             data.copiedTradeIds.removeAt(0)
             data.copiedTradePrices.removeAt(0)
+            if (data.copiedGoods.isNotEmpty()) data.copiedGoods.removeAt(0)
         }
     }
 
     private fun buildOffers(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
-        val ids = (0 until data.usedSlots(ProfessionKind.MERCHANT))
-            .map { data.items[it] }
-            .filter { !it.isEmpty }
-            .map { net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(it.item).toString() }
-        val visits = data.copiedTradeIds.indices.map { data.copiedTradeIds[it] to data.copiedTradePrices.getOrElse(it) { 4 } }
-        val plans = MerchantEconomy.plan(
-            inventoryIds = ids,
-            copiedId = ids.lastOrNull(),
-            random = { min, max -> if (max <= min) min else ribbit.random.nextInt(min, max) },
-            itemMax = { id ->
-                val item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(
-                    net.minecraft.resources.ResourceLocation.parse(id),
-                )
-                item.defaultMaxStackSize
-            },
-            visits = visits,
-        )
         val offers = ribbit.offers
-        offers.clear()
-        for (plan in plans) {
-            val item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(
-                net.minecraft.resources.ResourceLocation.parse(plan.itemId),
-            )
-            val goods = ItemStack(item, plan.itemCount)
-            val crystals = ItemStack(Items.AMETHYST_SHARD, plan.amethystCount)
-            val offer = when (plan.kind) {
-                MerchantOfferKind.SELL_FOR_AMETHYST -> MerchantOffer(
-                    ItemCost(Items.AMETHYST_SHARD, plan.amethystCount),
-                    goods,
-                    999,
-                    0,
-                    0.05f,
-                )
-                MerchantOfferKind.BUY_FOR_AMETHYST -> MerchantOffer(
-                    ItemCost(item, plan.itemCount),
-                    crystals,
-                    999,
-                    0,
-                    0.05f,
-                )
+        if (offers.size < MerchantEconomy.SLOT_COUNT) {
+            val needed = MerchantEconomy.SLOT_COUNT - offers.size
+            for (offer in createOffers(ribbit, needed)) {
+                offers.add(offer)
             }
-            offers.add(offer)
+        } else {
+            val start = MerchantEconomy.quarterStart(data.offerQuarter)
+            val replacements = createOffers(ribbit, MerchantEconomy.QUARTER_SIZE)
+            val kept = ArrayList(offers)
+            for (i in replacements.indices) {
+                val index = start + i
+                if (index < kept.size) {
+                    kept[index] = replacements[i]
+                } else {
+                    kept += replacements[i]
+                }
+            }
+            offers.clear()
+            kept.forEach { offers.add(it) }
+            data.offerQuarter = (data.offerQuarter + 1) % 4
         }
         level.sendParticles(ParticleTypes.HAPPY_VILLAGER, ribbit.x, ribbit.y + 0.9, ribbit.z, 14, 0.35, 0.3, 0.35, 0.02)
         dataAdvance(ribbit, MerchantPhase.SEEK_PLAYER)
+    }
+
+    private fun createOffers(ribbit: RibbitEntity, count: Int): List<MerchantOffer> {
+        val data = ribbit.work()
+        val copies = data.copiedGoods.mapIndexedNotNull { index, stack ->
+            if (stack.isEmpty) null else stack to data.copiedTradePrices.getOrElse(index) { 4 }
+        }
+        val fallback = (0 until data.usedSlots(ProfessionKind.MERCHANT))
+            .map { data.items[it] }
+            .filter { !it.isEmpty }
+            .map { it to 4 }
+        val pool = if (copies.isNotEmpty()) copies else fallback
+        if (pool.isEmpty()) return emptyList()
+        val random = { min: Int, max: Int -> if (max <= min) min else ribbit.random.nextInt(min, max) }
+        return List(count) {
+            val pick = pool[ribbit.random.nextInt(pool.size)]
+            val goods = pick.first.copy()
+            goods.count = MerchantEconomy.itemCountFor(goods.maxStackSize, random)
+            val price = MerchantEconomy.averagePrice(
+                copies.filter { it.first.item == goods.item }.map { it.second },
+                pick.second,
+            )
+            MerchantOffer(
+                ItemCost(Items.AMETHYST_SHARD, price),
+                goods,
+                999,
+                0,
+                0.05f,
+            )
+        }
     }
 
     private fun seekPlayer(level: ServerLevel, ribbit: RibbitEntity) {

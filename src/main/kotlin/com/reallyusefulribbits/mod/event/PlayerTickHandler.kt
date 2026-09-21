@@ -19,6 +19,9 @@ object PlayerTickHandler {
     @SubscribeEvent
     fun onPlayerTick(event: PlayerTickEvent.Post) {
         val player = event.entity
+        for (ribbit in player.passengers.filterIsInstance<RibbitEntity>()) {
+            HeadRide.holdOnHead(player, ribbit)
+        }
         if (player.level().isClientSide) return
         val serverPlayer = player as? ServerPlayer ?: return
         val visual = player.getData(ModAttachments.VISUAL.get())
@@ -46,17 +49,6 @@ object PlayerTickHandler {
         if (visual.morphFlight && !player.isCreative && !player.isSpectator) {
             player.abilities.mayfly = true
         }
-        val riders = player.passengers.filterIsInstance<RibbitEntity>()
-        if (riders.isEmpty()) return
-        if (!player.isShiftKeyDown) {
-            visual.headRideDismountArmed = true
-            return
-        }
-        if (!visual.headRideDismountArmed) return
-        for (ribbit in riders) {
-            HeadRide.dismount(player, ribbit)
-        }
-        visual.headRideDismountArmed = false
     }
 
     fun grantTemporaryFlight(player: ServerPlayer, ticks: Int) {

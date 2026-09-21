@@ -520,9 +520,35 @@ object SorcererAi {
         val pos = ribbit.blockPosition().offset(dx, 0, dz)
         val power = SorcererTable.explosionPower(ribbit.random.nextInt())
         ribbit.invulnerableTime = 80
-        level.explode(ribbit, pos.x + 0.5, pos.y + 0.5, pos.z + 0.5, power, Level.ExplosionInteraction.TNT)
+        val blastRadius = ((power / 8f).toInt()).coerceIn(12, 20)
+        destroySphere(level, pos, blastRadius)
+        level.explode(
+            ribbit,
+            pos.x + 0.5,
+            pos.y + 0.5,
+            pos.z + 0.5,
+            8f,
+            false,
+            Level.ExplosionInteraction.NONE,
+        )
         ModAdvancements.grantNoMagicToday(player)
         return true
+    }
+
+    private fun destroySphere(level: ServerLevel, center: BlockPos, radius: Int) {
+        val r2 = radius * radius
+        for (dx in -radius..radius) {
+            for (dy in -radius..radius) {
+                for (dz in -radius..radius) {
+                    if (dx * dx + dy * dy + dz * dz > r2) continue
+                    val target = center.offset(dx, dy, dz)
+                    val state = level.getBlockState(target)
+                    if (state.isAir) continue
+                    if (state.getDestroySpeed(level, target) < 0f) continue
+                    level.destroyBlock(target, true)
+                }
+            }
+        }
     }
 
     private fun morphTypes(): List<EntityType<*>> =

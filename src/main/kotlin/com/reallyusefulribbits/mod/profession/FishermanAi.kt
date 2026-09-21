@@ -6,6 +6,7 @@ import com.reallyusefulribbits.mod.inventory.GroundPickup
 import com.reallyusefulribbits.mod.inventory.RibbitBags
 import com.reallyusefulribbits.mod.logic.FishingTiming
 import com.reallyusefulribbits.mod.logic.ProfessionKind
+import com.reallyusefulribbits.mod.util.LookAt
 import com.reallyusefulribbits.mod.util.work
 import com.reallyusefulribbits.mod.world.ContainerSupport
 import com.reallyusefulribbits.mod.world.WorldScan
@@ -55,10 +56,11 @@ object FishermanAi {
         val waterCenter = Vec3(water.x + 0.5, sit.y, water.z + 0.5)
         val towardWater = waterCenter.subtract(sit)
         val target = if (towardWater.lengthSqr() > 1.0e-6) {
-            sit.add(towardWater.normalize().scale(0.85))
+            sit.add(towardWater.normalize().scale(1.35))
         } else {
             sit
         }
+        LookAt.block(ribbit, water, 0.35)
         if (ribbit.distanceToSqr(target) > ModConfig.FISHER_SIT_REACH_SQ) {
             ribbit.setFishing(false)
             data.fishingActive = false
@@ -75,7 +77,7 @@ object FishermanAi {
 
         ribbit.navigation.stop()
         ribbit.setFishing(true)
-        ribbit.lookControl.setLookAt(water.x + 0.5, ribbit.eyeY, water.z + 0.5)
+        LookAt.block(ribbit, water, 0.35)
         if (!data.fishingActive) {
             startSession(ribbit, water)
         }

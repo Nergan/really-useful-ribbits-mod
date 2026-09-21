@@ -36,7 +36,6 @@ object RibbitInteractionHandler {
         if (player.isShiftKeyDown) {
             event.isCanceled = true
             event.cancellationResult = InteractionResult.sidedSuccess(event.level.isClientSide)
-            if (event.level.isClientSide) return
             if (ribbit.vehicle == player) {
                 HeadRide.dismount(player, ribbit)
             } else {

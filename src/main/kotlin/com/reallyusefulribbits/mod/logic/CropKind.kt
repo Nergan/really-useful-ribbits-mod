@@ -12,7 +12,7 @@ enum class CropKind {
 }
 
 object CropRules {
-    fun shouldHarvestStemFruit(hasStemNeighbor: Boolean): Boolean = hasStemNeighbor
+    fun shouldHarvestStemFruit(hasStemNeighbor: Boolean): Boolean = true
 
     fun caneHarvestYs(bottomY: Int, topY: Int): IntRange {
         if (topY <= bottomY) return IntRange.EMPTY
