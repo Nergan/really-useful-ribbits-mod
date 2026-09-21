@@ -46,7 +46,7 @@ Optional extras (not attached to the release, install them yourself if you want 
 | Minecraft | 1.21.1 |
 | NeoForge | 21.1.209 (any 21.1.x should work) |
 | Kotlin for Forge | 5.8.0, **NeoForge** build |
-| Ribbits | 4.1.6 (NeoForge) |
+| Ribbits | 1.21.1-NeoForge-4.1.6 |
 | GeckoLib | 4.7.6 (NeoForge 1.21.1) |
 | YUNG's API | 1.21.1-NeoForge-5.1.5 |
 | Java | 21 |

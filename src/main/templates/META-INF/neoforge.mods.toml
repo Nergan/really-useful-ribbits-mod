@@ -58,7 +58,7 @@ side = "BOTH"
 [[dependencies.${mod_id}]]
 modId = "yungsapi"
 type = "required"
-versionRange = "[1.21.1,)"
+versionRange = "[1.21.1-NeoForge-5.1.5,)"
 ordering = "NONE"
 side = "BOTH"
 

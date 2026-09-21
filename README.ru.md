@@ -46,7 +46,7 @@ Workflow релиза собирает аддон и забирает чужие
 | Minecraft | 1.21.1 |
 | NeoForge | 21.1.209 (подойдёт линейка 21.1.x) |
 | Kotlin for Forge | 5.8.0, сборка **NeoForge** |
-| Ribbits | 4.1.6 (NeoForge) |
+| Ribbits | 1.21.1-NeoForge-4.1.6 |
 | GeckoLib | 4.7.6 (NeoForge 1.21.1) |
 | YUNG's API | 1.21.1-NeoForge-5.1.5 |
 | Java | 21 |
