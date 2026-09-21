@@ -106,6 +106,26 @@ jobs:
             "${{ steps.versions.outputs.patchouli_version }}"
           ls -lh release-assets
 
+      # overwrite_files заменяет только файлы с тем же именем.
+      # Fabric-jar и прочий мусор от прошлого прогона иначе остаются.
+      - name: Remove stale GitHub Release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="v${{ steps.versions.outputs.mod_version }}"
+          if ! gh release view "${tag}" >/dev/null 2>&1; then
+            echo "No existing release ${tag}"
+            exit 0
+          fi
+          mapfile -t existing < <(gh release view "${tag}" --json assets --jq '.assets[].name')
+          for name in "${existing[@]}"; do
+            if [[ ! -f "release-assets/${name}" ]]; then
+              echo "Deleting stale asset ${name}"
+              gh release delete-asset "${tag}" "${name}" --yes
+            fi
+          done
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -119,7 +139,7 @@ jobs:
           files: |
             release-assets/reallyusefulribbits-*.jar
             release-assets/kotlinforforge-*.jar
-            release-assets/Ribbits-*.jar
+            release-assets/Ribbits-*-NeoForge-*.jar
             release-assets/geckolib-*.jar
             release-assets/YungsApi-*.jar
             release-assets/Patchouli-*.jar
@@ -136,6 +156,18 @@ jobs:
             | `Patchouli-*-NEOFORGE.jar` | No, only for the guidebook | [Patchouli](https://modrinth.com/mod/patchouli) (CC-BY-NC-SA-3.0) |
 
             Do not install `*-sources.jar`. Companion jars are official Modrinth builds, rehosted here for a one-page install. Patchouli is redistributed for non-commercial use with attribution to VazkiiMods. GitHub shows a SHA-256 digest next to each uploaded file.
+
+      - name: Check Modrinth token
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${MODRINTH_TOKEN}" ]]; then
+            echo "Secret MODRINTH_TOKEN is missing or empty on this repository."
+            echo "GitHub → Settings → Secrets and variables → Actions → New repository secret."
+            echo "Name must be exactly MODRINTH_TOKEN. Without it mc-publish skips Modrinth and still exits 0."
+            exit 1
+          fi
 
       - name: Publish Modrinth
         uses: Kir-Antipov/mc-publish@v3.3
