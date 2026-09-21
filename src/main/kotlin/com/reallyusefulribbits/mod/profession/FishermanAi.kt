@@ -30,6 +30,8 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams
 import net.minecraft.world.phys.Vec3
 
 object FishermanAi {
+    private val chestProgress = HashMap<Int, Double>()
+
     fun ensureHaulGoal(ribbit: RibbitEntity) {
         if (ribbit.professionKind() != ProfessionKind.FISHERMAN) return
         val present = ribbit.goalSelector.availableGoals.any { it.goal is FisherHaulGoal }
@@ -184,18 +186,23 @@ object FishermanAi {
         val data = ribbit.work()
         val pos = data.containerPos ?: return
         LookAt.block(ribbit, pos, 0.5)
+        val center = Vec3(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
+        val chestDist = ribbit.distanceToSqr(center)
         val stand = standNear(level, pos, ribbit)
-        val arrived = if (stand != null) {
-            ribbit.distanceToSqr(stand) <= ModConfig.FISHER_DEPOSIT_REACH_SQ
-        } else {
-            val center = Vec3(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
-            ribbit.distanceToSqr(center) <= ModConfig.CONTAINER_REACH_SQ
-        }
-        if (!arrived) {
-            val goal = stand ?: Vec3(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
-            ribbit.navigation.moveTo(goal.x, goal.y, goal.z, 1.05)
+        val standDist = if (stand != null) ribbit.distanceToSqr(stand) else Double.MAX_VALUE
+        val arrived = chestDist <= ModConfig.CONTAINER_REACH_SQ || standDist <= 2.56
+        val previous = chestProgress[ribbit.id]
+        if (previous != null && chestDist >= previous - 0.02) data.navStuck++ else data.navStuck = 0
+        chestProgress[ribbit.id] = chestDist
+        val closeEnoughToGiveUp = data.navStuck >= 20 && chestDist <= 9.0
+        if (!arrived && !closeEnoughToGiveUp) {
+            val goal = stand ?: center
+            val walking = ribbit.navigation.moveTo(goal.x, goal.y, goal.z, 1.05)
+            if (!walking) ribbit.moveControl.setWantedPosition(goal.x, goal.y, goal.z, 1.05)
             return
         }
+        data.navStuck = 0
+        chestProgress.remove(ribbit.id)
         ribbit.navigation.stop()
         LookAt.block(ribbit, pos, 0.5)
         ContainerSupport.openBriefly(level, pos)

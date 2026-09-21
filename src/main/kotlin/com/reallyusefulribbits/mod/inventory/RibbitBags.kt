@@ -3,7 +3,7 @@ package com.reallyusefulribbits.mod.inventory
 import com.reallyusefulribbits.mod.attach.RibbitWorkData
 import com.reallyusefulribbits.mod.logic.InventoryRules
 import com.reallyusefulribbits.mod.logic.ProfessionKind
-import net.minecraft.core.component.DataComponents
+import com.reallyusefulribbits.mod.world.ContainerSupport
 import net.minecraft.world.item.ItemStack
 
 object RibbitBags {
@@ -39,7 +39,11 @@ object RibbitBags {
     fun insert(data: RibbitWorkData, kind: ProfessionKind, incoming: ItemStack): ItemStack {
         if (incoming.isEmpty) return ItemStack.EMPTY
         val used = data.usedSlots(kind)
-        for (i in 0 until used) data.releaseCarryCap(data.items[i])
+        if (kind == ProfessionKind.FISHERMAN) {
+            for (i in 0 until used) {
+                if (!data.items[i].isEmpty) data.items[i] = ContainerSupport.normalized(data.items[i])
+            }
+        }
         val limit = data.slotLimit(kind)
         val budget = if (kind == ProfessionKind.FISHERMAN) {
             (limit - carriedCount(data, used)).coerceAtLeast(0)
@@ -49,8 +53,9 @@ object RibbitBags {
         if (budget <= 0) return incoming
         val accepted = minOf(incoming.count, budget)
         val heldBack = incoming.count - accepted
-        val piece = incoming.copy()
+        var piece = incoming.copy()
         piece.count = accepted
+        if (kind == ProfessionKind.FISHERMAN) piece = ContainerSupport.normalized(piece)
         data.applyLimit(piece, kind)
         var remaining = piece.copy()
         for (i in 0 until used) {
@@ -95,7 +100,7 @@ object RibbitBags {
         val used = data.usedSlots(kind)
         val out = ArrayList<ItemStack>()
         for (i in 0 until used) {
-            if (!data.items[i].isEmpty) out += plainStack(data.items[i].copy())
+            if (!data.items[i].isEmpty) out += ContainerSupport.normalized(data.items[i])
             data.items[i] = ItemStack.EMPTY
         }
         return out
@@ -149,13 +154,4 @@ object RibbitBags {
     @Suppress("unused")
     fun capacityHint(kind: ProfessionKind): Pair<Int, Int> =
         InventoryRules.slotCount(kind) to InventoryRules.slotLimit(kind)
-
-    /** В сундук уходит обычная стопка, без лимита слота лягушки. */
-    private fun plainStack(stack: ItemStack): ItemStack {
-        val vanillaMax = stack.item.defaultMaxStackSize
-        if (stack.count <= vanillaMax && stack.has(DataComponents.MAX_STACK_SIZE)) {
-            stack.remove(DataComponents.MAX_STACK_SIZE)
-        }
-        return stack
-    }
 }

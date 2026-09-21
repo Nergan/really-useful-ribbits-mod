@@ -57,13 +57,17 @@ object ContainerSupport {
 
     fun insertAll(level: Level, pos: BlockPos, stacks: List<ItemStack>): List<ItemStack> {
         val itemHandler = handler(level, pos) ?: return stacks
-        val normalized = stacks.map { stripCarryCap(it.copy()) }.filter { !it.isEmpty }
+        val normalized = stacks.map { normalized(it) }.filter { !it.isEmpty }
         val leftover = ArrayList<ItemStack>()
-        val seen = HashSet<Item>()
+        val toCompact = HashSet<Item>()
         for (stack in normalized) {
-            if (!seen.add(stack.item)) continue
-            leftover += restackLimited(itemHandler, stack.item)
+            if (stack.item.defaultMaxStackSize > 1) toCompact += stack.item
         }
+        for (slot in 0 until itemHandler.slots) {
+            val peek = itemHandler.getStackInSlot(slot)
+            if (isPlain(peek) && peek.maxStackSize < peek.item.defaultMaxStackSize) toCompact += peek.item
+        }
+        for (item in toCompact) leftover += compactPlain(itemHandler, item)
         for (stack in normalized) {
             val rest = ItemHandlerHelper.insertItemStacked(itemHandler, stack, false)
             if (!rest.isEmpty) leftover += rest
@@ -71,34 +75,47 @@ object ContainerSupport {
         return leftover
     }
 
-    /** Старые стопки с урезанным лимитом (по 4) снова складываются до обычного размера. */
-    private fun restackLimited(handler: IItemHandler, item: Item): List<ItemStack> {
-        val gathered = ArrayList<ItemStack>()
-        for (slot in 0 until handler.slots) {
-            val peek = handler.getStackInSlot(slot)
-            if (peek.isEmpty || !peek.`is`(item) || !peek.has(DataComponents.MAX_STACK_SIZE)) continue
-            val forced = peek.get(DataComponents.MAX_STACK_SIZE) ?: continue
-            if (forced >= item.defaultMaxStackSize) continue
-            val taken = handler.extractItem(slot, peek.count, false)
-            if (!taken.isEmpty) gathered += stripCarryCap(taken)
-        }
-        val left = ArrayList<ItemStack>()
-        for (stack in gathered) {
-            val rest = ItemHandlerHelper.insertItemStacked(handler, stack, false)
-            if (!rest.isEmpty) left += rest
-        }
-        return left
+    /** Обычная стопка предмета, без снятого или урезанного размера стака. */
+    fun normalized(stack: ItemStack): ItemStack {
+        if (stack.isEmpty) return ItemStack.EMPTY
+        if (!isPlain(stack)) return stack.copy()
+        val count = stack.count.coerceAtMost(stack.item.defaultMaxStackSize.coerceAtLeast(1))
+        return ItemStack(stack.item, count)
     }
 
-    private fun stripCarryCap(stack: ItemStack): ItemStack {
-        if (stack.isEmpty || !stack.has(DataComponents.MAX_STACK_SIZE)) return stack
-        val forced = stack.get(DataComponents.MAX_STACK_SIZE) ?: return stack
-        val vanilla = stack.item.defaultMaxStackSize
-        if (forced > vanilla || stack.count > vanilla) return stack
-        val count = stack.count
-        stack.remove(DataComponents.MAX_STACK_SIZE)
-        stack.count = count
-        return stack
+    private fun isPlain(stack: ItemStack): Boolean {
+        if (stack.isEmpty || stack.isDamaged || stack.isEnchanted) return false
+        if (stack.has(DataComponents.CUSTOM_NAME)) return false
+        if (stack.has(DataComponents.STORED_ENCHANTMENTS)) return false
+        if (stack.has(DataComponents.POTION_CONTENTS)) return false
+        if (stack.has(DataComponents.WRITTEN_BOOK_CONTENT)) return false
+        if (stack.has(DataComponents.CONTAINER)) return false
+        return true
+    }
+
+    /** Собирает уже лежащие простые стопки того же предмета в обычные стаки по 64. */
+    private fun compactPlain(handler: IItemHandler, item: Item): List<ItemStack> {
+        val vanillaMax = item.defaultMaxStackSize
+        if (vanillaMax <= 1) return emptyList()
+        var total = 0
+        for (slot in 0 until handler.slots) {
+            val peek = handler.getStackInSlot(slot)
+            if (!isPlain(peek) || !peek.`is`(item)) continue
+            val taken = handler.extractItem(slot, peek.count, false)
+            total += taken.count
+        }
+        val left = ArrayList<ItemStack>()
+        while (total > 0) {
+            val stack = ItemStack(item, minOf(total, vanillaMax))
+            val rest = ItemHandlerHelper.insertItemStacked(handler, stack, false)
+            val placed = stack.count - rest.count
+            if (placed <= 0) {
+                left += ItemStack(item, total)
+                break
+            }
+            total -= placed
+        }
+        return left
     }
 
     fun extractMatching(level: Level, pos: BlockPos, test: (ItemStack) -> Boolean, count: Int): ItemStack {

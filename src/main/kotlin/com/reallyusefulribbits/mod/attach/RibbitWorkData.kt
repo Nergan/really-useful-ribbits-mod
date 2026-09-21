@@ -81,21 +81,9 @@ class RibbitWorkData {
             if (stack.count > wanted) stack.count = wanted
             return stack
         }
-        releaseCarryCap(stack)
         val cap = minOf(wanted, vanilla)
         if (stack.count > cap) stack.count = cap
         return stack
-    }
-
-    /** Снимает урезанный размер стопки, чтобы в сундуке рыба снова складывалась до 64. */
-    fun releaseCarryCap(stack: ItemStack) {
-        if (stack.isEmpty || !stack.has(DataComponents.MAX_STACK_SIZE)) return
-        val forced = stack.get(DataComponents.MAX_STACK_SIZE) ?: return
-        val vanilla = stack.item.defaultMaxStackSize
-        if (forced > vanilla || stack.count > vanilla) return
-        val count = stack.count
-        stack.remove(DataComponents.MAX_STACK_SIZE)
-        stack.count = count
     }
 
     fun save(provider: HolderLookup.Provider): CompoundTag {
