@@ -1,5 +1,6 @@
 package com.reallyusefulribbits.mod.ride
 
+import com.reallyusefulribbits.mod.attach.ModAttachments
 import com.reallyusefulribbits.mod.event.ModAdvancements
 import com.reallyusefulribbits.mod.mixin.RibbitEntityAccessor
 import com.reallyusefulribbits.mod.util.professionKind
@@ -25,7 +26,17 @@ object HeadRide {
         ribbit.setWatering(false)
         ribbit.setBuffing(false)
         ribbit.navigation.stop()
-        return ribbit.startRiding(player, true)
+        val mounted = ribbit.startRiding(player, true)
+        if (!mounted) {
+            data.riding = false
+            data.savedInstrument = "none"
+            ribbit.setPlayingInstrument(false)
+            return false
+        }
+        if (player is ServerPlayer) {
+            player.getData(ModAttachments.VISUAL.get()).headRideDismountArmed = false
+        }
+        return true
     }
 
     fun dismount(player: Player, ribbit: RibbitEntity) {

@@ -6,7 +6,6 @@ import net.minecraft.core.BlockPos
 import net.minecraft.tags.FluidTags
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Blocks
-import net.neoforged.neoforge.capabilities.Capabilities
 import kotlin.jvm.optionals.getOrNull
 
 object WorldScan {
@@ -37,7 +36,5 @@ object WorldScan {
         return filled.map { BlockPos(it.x, it.y, it.z) }
     }
 
-    fun hasItemHandler(level: Level, pos: BlockPos): Boolean {
-        return level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null as net.minecraft.core.Direction?) != null
-    }
+    fun hasItemHandler(level: Level, pos: BlockPos): Boolean = ContainerSupport.handler(level, pos) != null
 }

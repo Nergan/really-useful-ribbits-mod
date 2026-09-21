@@ -15,7 +15,7 @@ object ModNetworking {
             PlayerVisualPayload.TYPE,
             PlayerVisualPayload.STREAM_CODEC,
         ) { payload, _ ->
-            ClientVisuals.set(payload.playerId, payload.upsideDown)
+            ClientVisuals.set(payload.playerId, payload.upsideDown, payload.morphId)
         }
     }
 }

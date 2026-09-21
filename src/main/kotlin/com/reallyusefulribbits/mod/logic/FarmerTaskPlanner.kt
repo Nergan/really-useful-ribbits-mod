@@ -26,10 +26,10 @@ object FarmerTaskPlanner {
     fun next(view: FarmerWorldView): FarmerTask {
         if (view.inventoryFull && view.inventoryHasItems) return FarmerTask.DEPOSIT
         if (view.hasMatureCrop) return FarmerTask.HARVEST
-        if (view.hasTillable) return FarmerTask.TILL
         if (view.hasEmptyFarmland && view.hasPlantable) return FarmerTask.PLANT
-        if (view.inventoryHasItems) return FarmerTask.DEPOSIT
         if (view.hasImmatureCrop) return FarmerTask.WATER
+        if (view.hasTillable) return FarmerTask.TILL
+        if (view.inventoryHasItems) return FarmerTask.DEPOSIT
         return FarmerTask.IDLE
     }
 
@@ -57,9 +57,9 @@ object FarmerTaskPlanner {
     fun priority(task: FarmerTask): Int = when (task) {
         FarmerTask.DEPOSIT -> 0
         FarmerTask.HARVEST -> 1
-        FarmerTask.TILL -> 2
-        FarmerTask.PLANT -> 3
-        FarmerTask.WATER -> 4
+        FarmerTask.PLANT -> 2
+        FarmerTask.WATER -> 3
+        FarmerTask.TILL -> 4
         FarmerTask.IDLE -> 5
     }
 }

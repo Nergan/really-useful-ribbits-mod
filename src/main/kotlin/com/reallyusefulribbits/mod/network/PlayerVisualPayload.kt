@@ -11,6 +11,7 @@ import java.util.UUID
 data class PlayerVisualPayload(
     val playerId: UUID,
     val upsideDown: Boolean,
+    val morphId: String = "",
 ) : CustomPacketPayload {
 
     override fun type(): CustomPacketPayload.Type<out CustomPacketPayload> = TYPE
@@ -29,6 +30,8 @@ data class PlayerVisualPayload(
             PlayerVisualPayload::playerId,
             ByteBufCodecs.BOOL,
             PlayerVisualPayload::upsideDown,
+            ByteBufCodecs.STRING_UTF8,
+            PlayerVisualPayload::morphId,
             ::PlayerVisualPayload,
         )
     }

@@ -10,6 +10,7 @@ import com.reallyusefulribbits.mod.event.RibbitTickHandler
 import com.reallyusefulribbits.mod.highlight.HighlightMarkers
 import com.reallyusefulribbits.mod.item.ModItems
 import com.reallyusefulribbits.mod.network.ModNetworking
+import com.reallyusefulribbits.mod.profession.SorcererEvents
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.ModContainer
 import net.neoforged.fml.common.Mod
@@ -39,6 +40,7 @@ class ReallyUsefulRibbitsMod(modEventBus: IEventBus, modContainer: ModContainer)
         NeoForge.EVENT_BUS.register(RibbitTickHandler)
         NeoForge.EVENT_BUS.register(PlayerTickHandler)
         NeoForge.EVENT_BUS.register(HighlightMarkers)
+        NeoForge.EVENT_BUS.register(SorcererEvents)
         NeoForge.EVENT_BUS.register(RibbitGuideHandler)
     }
 }

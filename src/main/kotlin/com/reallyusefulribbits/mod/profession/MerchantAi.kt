@@ -1,5 +1,6 @@
 package com.reallyusefulribbits.mod.profession
 
+import com.reallyusefulribbits.mod.config.ModConfig
 import com.reallyusefulribbits.mod.config.ServerConfig
 import com.reallyusefulribbits.mod.inventory.RibbitBags
 import com.reallyusefulribbits.mod.logic.MerchantEconomy
@@ -9,6 +10,7 @@ import com.reallyusefulribbits.mod.logic.ProfessionKind
 import com.reallyusefulribbits.mod.util.work
 import com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity
 import com.yungnickyoung.minecraft.ribbits.module.SoundModule
+import net.minecraft.core.particles.ParticleTypes
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.entity.npc.Villager
@@ -68,11 +70,15 @@ object MerchantAi {
         val radius = ServerConfig.scanRadius().toDouble()
         val box = ribbit.boundingBox.inflate(radius)
         val traders = level.getEntitiesOfClass(net.minecraft.world.entity.Entity::class.java, box) {
-            it !== ribbit && it is Merchant
+            it !== ribbit && (it is WanderingTrader || it is Merchant)
         }
         val trader = traders.minByOrNull { it.distanceToSqr(ribbit) }
         if (trader == null) {
-            dataAdvance(ribbit, MerchantPhase.BUILD_OFFERS)
+            val data = ribbit.work()
+            data.merchantTicks++
+            if (data.merchantTicks >= ModConfig.MERCHANT_TRADER_WAIT_TICKS) {
+                dataAdvance(ribbit, MerchantPhase.BUILD_OFFERS)
+            }
             return
         }
         ribbit.navigation.moveTo(trader, 1.05)
@@ -143,6 +149,7 @@ object MerchantAi {
             }
             offers.add(offer)
         }
+        level.sendParticles(ParticleTypes.HAPPY_VILLAGER, ribbit.x, ribbit.y + 0.9, ribbit.z, 14, 0.35, 0.3, 0.35, 0.02)
         dataAdvance(ribbit, MerchantPhase.SEEK_PLAYER)
     }
 
@@ -156,6 +163,11 @@ object MerchantAi {
             ribbit.work().merchantTicks++
             if (ribbit.work().merchantTicks > 80) dataAdvance(ribbit, MerchantPhase.COOLDOWN)
             return
+        }
+        ribbit.navigation.moveTo(player, 1.1)
+        ribbit.lookControl.setLookAt(player)
+        if (ribbit.work().merchantTicks % ModConfig.MERCHANT_GLOW_INTERVAL == 0) {
+            level.sendParticles(ParticleTypes.GLOW, ribbit.x, ribbit.y + 0.65, ribbit.z, 4, 0.2, 0.25, 0.2, 0.0)
         }
         ribbit.work().merchantTargetId = player.id
         dataAdvance(ribbit, MerchantPhase.HARASS)
@@ -175,6 +187,9 @@ object MerchantAi {
         data.merchantTicks++
         ribbit.navigation.moveTo(target, 1.15)
         ribbit.lookControl.setLookAt(target)
+        if (data.merchantTicks % ModConfig.MERCHANT_GLOW_INTERVAL == 0) {
+            level.sendParticles(ParticleTypes.GLOW, ribbit.x, ribbit.y + 0.65, ribbit.z, 5, 0.22, 0.28, 0.22, 0.0)
+        }
         if (data.merchantTicks % MerchantEconomy.QUACK_INTERVAL_TICKS == 0) {
             level.playSound(
                 null,

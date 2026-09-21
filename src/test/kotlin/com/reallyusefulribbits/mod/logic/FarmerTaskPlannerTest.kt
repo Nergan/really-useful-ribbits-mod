@@ -23,6 +23,51 @@ class FarmerTaskPlannerTest {
     }
 
     @Test
+    @DisplayName("Посадка важнее вспашки, чтобы поле не расползалось")
+    fun plantBeatsTill() {
+        val view = FarmerWorldView(
+            inventoryFull = false,
+            inventoryHasItems = false,
+            hasMatureCrop = false,
+            hasTillable = true,
+            hasEmptyFarmland = true,
+            hasPlantable = true,
+            hasImmatureCrop = true,
+        )
+        assertEquals(FarmerTask.PLANT, FarmerTaskPlanner.next(view))
+    }
+
+    @Test
+    @DisplayName("Полив важнее вспашки")
+    fun waterBeatsTill() {
+        val view = FarmerWorldView(
+            inventoryFull = false,
+            inventoryHasItems = false,
+            hasMatureCrop = false,
+            hasTillable = true,
+            hasEmptyFarmland = false,
+            hasPlantable = false,
+            hasImmatureCrop = true,
+        )
+        assertEquals(FarmerTask.WATER, FarmerTaskPlanner.next(view))
+    }
+
+    @Test
+    @DisplayName("После работы оставшиеся предметы складывают в контейнер")
+    fun leftoverGoesToContainer() {
+        val view = FarmerWorldView(
+            inventoryFull = false,
+            inventoryHasItems = true,
+            hasMatureCrop = false,
+            hasTillable = false,
+            hasEmptyFarmland = false,
+            hasPlantable = false,
+            hasImmatureCrop = false,
+        )
+        assertEquals(FarmerTask.DEPOSIT, FarmerTaskPlanner.next(view))
+    }
+
+    @Test
     @DisplayName("Пока задача свежая, фермер её не бросает")
     fun doesNotFlickerEarly() {
         val watering = FarmerWorldView(

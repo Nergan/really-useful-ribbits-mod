@@ -13,4 +13,15 @@ object ModConfig {
     const val MAX_HIGHLIGHT_BLOCKS: Int = 48
     const val BERRY_REACH: Double = 2.75
     const val WORK_REACH_SQ: Double = 2.6
+    const val FISHER_SIT_REACH_SQ: Double = 0.85
+    const val GROUND_PICKUP_RANGE: Double = 2.75
+    const val FARM_MEMORY_CAP: Int = 2048
+    const val DIAMOND_RAIN_COUNT: Int = 256
+    const val DIAMOND_RAIN_WAVES: Int = 32
+    const val STRUCTURE_TRIP_TICKS: Int = 200
+    const val FLIGHT_TICKS: Int = 600
+    const val SPECTATOR_TICKS: Int = 500
+    const val GROW_RADIUS: Int = 10
+    const val MERCHANT_TRADER_WAIT_TICKS: Int = 60
+    const val MERCHANT_GLOW_INTERVAL: Int = 8
 }

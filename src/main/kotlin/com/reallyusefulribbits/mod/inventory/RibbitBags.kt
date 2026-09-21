@@ -77,6 +77,19 @@ object RibbitBags {
         return ItemStack.EMPTY
     }
 
+    fun canInsertAll(data: RibbitWorkData, kind: ProfessionKind, stacks: List<ItemStack>): Boolean {
+        val copy = RibbitWorkData()
+        val used = data.usedSlots(kind)
+        for (i in 0 until used) {
+            copy.items[i] = data.items[i].copy()
+        }
+        for (stack in stacks) {
+            if (stack.isEmpty) continue
+            if (!insert(copy, kind, stack.copy()).isEmpty) return false
+        }
+        return true
+    }
+
     fun takeOne(data: RibbitWorkData, kind: ProfessionKind, test: (ItemStack) -> Boolean): ItemStack {
         val used = data.usedSlots(kind)
         for (i in 0 until used) {

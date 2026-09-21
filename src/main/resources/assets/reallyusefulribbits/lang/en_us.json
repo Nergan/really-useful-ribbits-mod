@@ -4,11 +4,23 @@
 
   "reallyusefulribbits.configuration.work": "Work",
   "reallyusefulribbits.configuration.work.scan_radius": "Scan radius",
+  "reallyusefulribbits.configuration.sorcerer": "Sorcerer",
+  "reallyusefulribbits.configuration.sorcerer.chaos_level": "Chaos level",
 
   "advancements.reallyusefulribbits.new_home.title": "so I guess this is my new home now…",
   "advancements.reallyusefulribbits.new_home.description": "Set a ribbit down from your head and give it a new home point",
   "advancements.reallyusefulribbits.overdid_it.title": "You asked for it",
   "advancements.reallyusefulribbits.overdid_it.description": "A sorcerer ribbit summoned an ender dragon",
+  "advancements.reallyusefulribbits.foma.title": "Foma, is that you?",
+  "advancements.reallyusefulribbits.foma.description": "A sorcerer ribbit summoned a giant glowing phantom",
+  "advancements.reallyusefulribbits.get_it_off.title": "Get this off me!",
+  "advancements.reallyusefulribbits.get_it_off.description": "Cleanse a sorcerer ribbit's curses with an enchanted golden apple",
+  "advancements.reallyusefulribbits.ghost.title": "This ghost will be kind, right?",
+  "advancements.reallyusefulribbits.ghost.description": "A sorcerer ribbit sent you into spectator mode",
+  "advancements.reallyusefulribbits.no_magic_today.title": "no magic today",
+  "advancements.reallyusefulribbits.no_magic_today.description": "A sorcerer ribbit set off a blast several times stronger than TNT",
+  "advancements.reallyusefulribbits.hexed.title": "hexed :(",
+  "advancements.reallyusefulribbits.hexed.description": "A sorcerer ribbit turned you into a random mob",
 
   "reallyusefulribbits.guide.name": "Really Useful Ribbits",
   "reallyusefulribbits.guide.subtitle": "Jobs for swamp folk",
@@ -43,27 +55,27 @@
 
   "reallyusefulribbits.guide.entry.radius": "How Far They Look",
   "reallyusefulribbits.guide.page.radius.1": "Working ribbits scan a radius for water, farms, containers, luck, endermen and sorcerer plant-growth. The default is $(thing)64$() blocks. Several ribbits may share the same ground. They will not steal a reserved crop tile or water block from each other.",
-  "reallyusefulribbits.guide.page.radius.2": "The option is a $(thing)SERVER$() config: Mods → Really Useful Ribbits → Config, or the world file $(item)reallyusefulribbits-server.toml$(). In multiplayer only the server value matters. Singleplayer uses the ordinary world config.",
+  "reallyusefulribbits.guide.page.radius.2": "Scan radius and sorcerer chaos are a $(thing)SERVER$() config: Mods → Really Useful Ribbits → Config, or the world file $(item)reallyusefulribbits-server.toml$(). Higher chaos flattens sorcerer odds. In multiplayer only the server value matters.",
 
   "reallyusefulribbits.guide.entry.highlight": "Seeing the Binds",
-  "reallyusefulribbits.guide.page.highlight.1": "Right-click a fisher or a farmer $(thing)without sneaking$() to outline the ribbit, its container, and its water tile or farm. You will hear a beacon chime. The glow works like a spectral arrow.",
+  "reallyusefulribbits.guide.page.highlight.1": "Right-click a fisher or a farmer $(thing)without sneaking$() to outline the ribbit, its container, and its water tile or farm with a glass contour. You will hear a beacon chime. The chest stays visible, and nothing extra appears in the water.",
   "reallyusefulribbits.guide.page.highlight.2": "If that ribbit has no water, farm or container yet, it croaks in pain and angry particles appear instead. Give it time to look around, or move it closer to what it needs.",
 
   "reallyusefulribbits.guide.entry.fisherman": "The Fisher",
   "reallyusefulribbits.guide.page.fisherman.1": "A fisher binds one nearby water block and one container (chest, barrel, shulker, double chest, and the like). It sits on the bank with its fishing pose and fishes like a player: splashes gather at the bobber, then it reels in. The catch goes into a single slot that holds 16 items.",
-  "reallyusefulribbits.guide.page.fisherman.2": "A catch shows happy villager stars and the experience-orb pickup sound. When the bag is full — including unstackable junk — the fisher walks to its container, opens it with the usual animation and sound, empties the bag, and returns to the water.",
+  "reallyusefulribbits.guide.page.fisherman.2": "A catch shows happy villager stars, the fishing bobber splash, and a quiet orb ping. The fisher sits on the water's edge. Fish dropped nearby with $(thing)Q$() are picked up. When the bag is full it carries the catch to its container and returns.",
 
   "reallyusefulribbits.guide.entry.farmer": "The Gardener",
   "reallyusefulribbits.guide.page.farmer.1": "A gardener binds one connected farm and one container. A farm is a cluster of farmland (including Farmer's Delight farmland), soul sand, or sugar-cane bases that touch each other inside the scan radius. Inventory is four slots of 64.",
-  "reallyusefulribbits.guide.page.farmer.2": "It harvests ripe crops, plants seeds from its bag or the container, tills dirt-like blocks back into farmland, and waters immature crops (double growth chance for one tick). Melons and pumpkins are broken only if they grew from a stem. Cane is cut above the base. Nether wart and reachable glow berries are picked. Other mods' similar crops are treated the same way.",
+  "reallyusefulribbits.guide.page.farmer.2": "It harvests first (only if the bag can hold the drops), then replants, waters farmland, and only then tills dirt that already belonged to its farm — it will not expand the field. Pumpkins, melons, cane and nether wart are included. Seeds and produce dropped nearby with $(thing)Q$() are picked up. Harvested goods go into the bound container.",
 
   "reallyusefulribbits.guide.entry.merchant": "The Merchant",
   "reallyusefulribbits.guide.page.merchant.1": "A merchant has 27 slots of 256. It starts with a few random goods plus 256 emeralds and 256 amethyst shards. It hunts villagers, wandering traders, wandering ribbits, and any other creature that can trade, copies a buyable item (maxed trades, no stock limits), and builds amethyst offers.",
-  "reallyusefulribbits.guide.page.merchant.2": "Then it finds a player and croaks until you trade or ignore it. Right-click opens its offers. Sneak and right-click still puts it on your head. After the visit, or if you walk away, it cools down and starts the cycle again.",
+  "reallyusefulribbits.guide.page.merchant.2": "It copies offers from villagers and wandering traders. Happy villager stars appear when the stall refreshes. Glow particles follow it while it chases a player. Right-click opens its offers. Sneak and right-click still puts it on your head.",
 
   "reallyusefulribbits.guide.entry.sorcerer": "The Sorcerer",
-  "reallyusefulribbits.guide.page.sorcerer.1": "Right-click a sorcerer to roll a weighted table of trouble: a lasting effect or a cleanse, an enchantment, a launch, weather, day or night, a peaceful mob, lightning, a flipped or resized player, a new max health, sudden crop growth, a diamond rain (about one in a hundred), a random dimension, or — very rarely — an ender dragon and the secret advancement $(thing)You asked for it$().",
-  "reallyusefulribbits.guide.page.sorcerer.2": "Spell particles mark the cast. Endermen in the scan radius flee. Otherwise the sorcerer still wanders like an ordinary ribbit. Do not click it twice for luck. The table is already stacked against you.",
+  "reallyusefulribbits.guide.page.sorcerer.1": "Right-click a sorcerer with an $(item)amethyst shard$() — the shard is spent — and it looks at you, then rolls a spell that can actually happen. Growth, weather, a diamond rain, a safe dimension hop, lightning that does not hurt the frog, a fire ring, an invisible trip to a real structure, rare flight, 1–16 summoned mobs, or 1–8 tamed pets in random colors (modded pets included when they can be tamed).",
+  "reallyusefulribbits.guide.page.sorcerer.2": "Rarer rolls: a giant glowing phantom ($(thing)Foma, is that you?$()), a short spectator trip ($(thing)This ghost will be kind, right?$()), a blast several times stronger than TNT that the frog itself ignores ($(thing)no magic today$()), or turning you into a random mob while you keep your inventory ($(thing)hexed :($()). An $(item)enchanted golden apple$() on the sorcerer strips every curse it put on you and grants $(thing)Get this off me!$(). Chaos flattens the odds. Endermen flee. Very rarely — a dragon and $(thing)You asked for it$().",
 
   "reallyusefulribbits.guide.entry.nitwit": "The Nitwit",
   "reallyusefulribbits.guide.page.nitwit.1": "A nitwit does almost nothing, on purpose. Inside the scan radius it applies $(thing)Luck$() to whoever stands nearby. That is the entire job.",

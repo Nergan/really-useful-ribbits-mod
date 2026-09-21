@@ -3,6 +3,7 @@ package com.reallyusefulribbits.mod.world
 import com.reallyusefulribbits.mod.config.ModConfig
 import com.reallyusefulribbits.mod.util.DelayedTasks
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.Container
@@ -15,37 +16,46 @@ import net.neoforged.neoforge.capabilities.Capabilities
 import net.neoforged.neoforge.common.util.FakePlayerFactory
 import net.neoforged.neoforge.items.IItemHandler
 import net.neoforged.neoforge.items.ItemHandlerHelper
+import net.neoforged.neoforge.items.wrapper.InvWrapper
 
 object ContainerSupport {
     fun isStorage(level: Level, pos: BlockPos): Boolean {
         val state = level.getBlockState(pos)
         if (state.block is EnderChestBlock) return false
-        val be = level.getBlockEntity(pos)
-        if (be is Container) return true
-        return level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null as net.minecraft.core.Direction?) != null
+        if (level.getBlockEntity(pos) is Container) return true
+        return handler(level, pos) != null
     }
 
-    fun handler(level: Level, pos: BlockPos): IItemHandler? =
-        level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null as net.minecraft.core.Direction?)
+    fun handler(level: Level, pos: BlockPos): IItemHandler? {
+        val found = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null as Direction?)
+        if (found != null) return found
+        for (side in Direction.entries) {
+            val sided = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, side)
+            if (sided != null) return sided
+        }
+        val be = level.getBlockEntity(pos)
+        if (be is Container) return InvWrapper(be)
+        return null
+    }
 
     fun insertAll(level: Level, pos: BlockPos, stacks: List<ItemStack>): List<ItemStack> {
-        val handler = handler(level, pos) ?: return stacks
+        val itemHandler = handler(level, pos) ?: return stacks
         val leftover = ArrayList<ItemStack>()
         for (stack in stacks) {
-            val rest = ItemHandlerHelper.insertItemStacked(handler, stack, false)
+            val rest = ItemHandlerHelper.insertItemStacked(itemHandler, stack, false)
             if (!rest.isEmpty) leftover += rest
         }
         return leftover
     }
 
     fun extractMatching(level: Level, pos: BlockPos, test: (ItemStack) -> Boolean, count: Int): ItemStack {
-        val handler = handler(level, pos) ?: return ItemStack.EMPTY
+        val itemHandler = handler(level, pos) ?: return ItemStack.EMPTY
         var remaining = count
         var taken = ItemStack.EMPTY
-        for (slot in 0 until handler.slots) {
-            val peek = handler.getStackInSlot(slot)
+        for (slot in 0 until itemHandler.slots) {
+            val peek = itemHandler.getStackInSlot(slot)
             if (peek.isEmpty || !test(peek)) continue
-            val extracted = handler.extractItem(slot, remaining, false)
+            val extracted = itemHandler.extractItem(slot, remaining, false)
             if (extracted.isEmpty) continue
             if (taken.isEmpty) {
                 taken = extracted

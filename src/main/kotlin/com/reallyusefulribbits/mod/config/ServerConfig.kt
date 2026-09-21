@@ -23,9 +23,12 @@ class ServerConfig(builder: ModConfigSpec.Builder) {
         }
 
         fun scanRadius(): Int = ScanRadius.clamp(CONFIG.scanRadius.get())
+
+        fun chaosLevel(): Int = CONFIG.chaosLevel.get().coerceIn(0, 100)
     }
 
     val scanRadius: ModConfigSpec.IntValue
+    val chaosLevel: ModConfigSpec.IntValue
 
     init {
         builder.push("work")
@@ -36,6 +39,16 @@ class ServerConfig(builder: ModConfigSpec.Builder) {
             )
             .translation("$KEY_PREFIX.work.scan_radius")
             .defineInRange("scan_radius", ScanRadius.DEFAULT, ScanRadius.MIN, ScanRadius.MAX)
+        builder.pop()
+
+        builder.push("sorcerer")
+        chaosLevel = builder
+            .comment(
+                "How even sorcerer effect odds become. 0 keeps the default weighted table;",
+                "100 makes every effect almost equally likely.",
+            )
+            .translation("$KEY_PREFIX.sorcerer.chaos_level")
+            .defineInRange("chaos_level", 0, 0, 100)
         builder.pop()
     }
 }

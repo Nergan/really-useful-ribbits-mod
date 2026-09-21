@@ -38,6 +38,7 @@ class RibbitWorkData {
     var riding: Boolean = false
     var savedInstrument: String = "none"
     val items: NonNullList<ItemStack> = NonNullList.withSize(27, ItemStack.EMPTY)
+    val farmMemory: ArrayList<BlockPos> = ArrayList()
 
     fun fishingTimes(): FishingPhaseTimes = FishingPhaseTimes(fishingWait, fishingApproach, fishingBite)
 
@@ -92,6 +93,7 @@ class RibbitWorkData {
         tag.putBoolean("MerchantReady", merchantReady)
         tag.putBoolean("Riding", riding)
         tag.putString("SavedInstrument", savedInstrument)
+        tag.putLongArray("FarmMemory", farmMemory.map { it.asLong() }.toLongArray())
         val list = ListTag()
         for (stack in items) {
             val itemTag = CompoundTag()
@@ -130,6 +132,11 @@ class RibbitWorkData {
             data.merchantReady = tag.getBoolean("MerchantReady")
             data.riding = tag.getBoolean("Riding")
             data.savedInstrument = tag.getString("SavedInstrument").ifEmpty { "none" }
+            if (tag.contains("FarmMemory")) {
+                for (packed in tag.getLongArray("FarmMemory")) {
+                    data.farmMemory += BlockPos.of(packed)
+                }
+            }
             val list = tag.getList("Items", Tag.TAG_COMPOUND.toInt())
             for (i in 0 until minOf(list.size, data.items.size)) {
                 val itemTag = list.getCompound(i)

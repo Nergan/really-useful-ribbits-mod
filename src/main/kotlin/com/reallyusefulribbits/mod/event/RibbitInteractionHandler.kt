@@ -21,6 +21,7 @@ import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffects
+import net.minecraft.world.item.Items
 import net.neoforged.bus.api.EventPriority
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent
@@ -55,11 +56,30 @@ object RibbitInteractionHandler {
             ProfessionKind.SORCERER -> {
                 event.isCanceled = true
                 event.cancellationResult = InteractionResult.SUCCESS
-                SorcererAi.onRightClick(level, ribbit, serverPlayer)
+                handleSorcerer(level, ribbit, serverPlayer)
             }
             ProfessionKind.MERCHANT -> MerchantAi.onPlayerOpenedTrade(ribbit)
             else -> Unit
         }
+    }
+
+    private fun handleSorcerer(level: ServerLevel, ribbit: RibbitEntity, player: ServerPlayer) {
+        val held = player.mainHandItem
+        if (held.`is`(Items.ENCHANTED_GOLDEN_APPLE)) {
+            if (SorcererAi.cleanseWithApple(level, ribbit, player) && !player.abilities.instabuild) {
+                held.shrink(1)
+            }
+            return
+        }
+        if (held.`is`(Items.AMETHYST_SHARD)) {
+            if (SorcererAi.tryCast(level, ribbit, player) && !player.abilities.instabuild) {
+                held.shrink(1)
+            }
+            return
+        }
+        ribbit.lookControl.setLookAt(player, 180f, 180f)
+        ribbit.lookAt(player, 180f, 180f)
+        level.playSound(null, ribbit.blockPosition(), SoundEvents.AMETHYST_BLOCK_HIT, SoundSource.NEUTRAL, 0.5f, 1.6f)
     }
 
     private fun highlightWork(level: ServerLevel, ribbit: RibbitEntity, player: ServerPlayer) {

@@ -36,6 +36,7 @@ object CropSupport {
         val id = BuiltInRegistries.BLOCK.getKey(state.block)
         if (id.path.contains("farmland")) return true
         if (state.block is SugarCaneBlock && level.getBlockState(pos.below()).block !is SugarCaneBlock) return true
+        if (state.`is`(Blocks.SOUL_SAND)) return true
         return false
     }
 
@@ -88,6 +89,7 @@ object CropSupport {
         val block = plantableBlock(stack) ?: return false
         if (!canPlantOn(level, soil, block)) return false
         level.setBlock(soil.above(), block.defaultBlockState(), Block.UPDATE_ALL)
+        stack.shrink(1)
         level.playSound(null, soil, SoundEvents.CROP_PLANTED, SoundSource.BLOCKS, 1f, 1f)
         return true
     }
@@ -133,6 +135,30 @@ object CropSupport {
         return level.getBlockState(pos.above()).isAir
     }
 
+    fun needsWater(level: Level, pos: BlockPos): Boolean {
+        if (isImmatureCrop(level, pos)) return true
+        val state = level.getBlockState(pos)
+        if (state.block is FarmBlock && state.hasProperty(FarmBlock.MOISTURE)) {
+            val cropAbove = level.getBlockState(pos.above())
+            if (!cropAbove.isAir && state.getValue(FarmBlock.MOISTURE) < 7) return true
+        }
+        return false
+    }
+
+    fun previewDrops(level: ServerLevel, pos: BlockPos, harvester: Entity): List<ItemStack> {
+        val state = level.getBlockState(pos)
+        val block = state.block
+        return when {
+            CaveVines.hasGlowBerries(state) -> listOf(ItemStack(net.minecraft.world.item.Items.GLOW_BERRIES))
+            block is SugarCaneBlock -> previewCane(level, pos, harvester)
+            isStemFruit(state) -> {
+                if (!hasStemNeighbor(level, pos)) emptyList()
+                else Block.getDrops(state, level, pos, level.getBlockEntity(pos), harvester, ItemStack.EMPTY)
+            }
+            else -> Block.getDrops(state, level, pos, level.getBlockEntity(pos), harvester, ItemStack.EMPTY)
+        }
+    }
+
     fun harvest(level: ServerLevel, pos: BlockPos, harvester: Entity): List<ItemStack> {
         val state = level.getBlockState(pos)
         val block = state.block
@@ -173,10 +199,10 @@ object CropSupport {
     }
 
     fun water(level: ServerLevel, pos: BlockPos) {
+        hydrateFarmland(level, pos)
         val state = level.getBlockState(pos)
         val block = state.block
         if (block is BonemealableBlock && block.isValidBonemealTarget(level, pos, state)) {
-            // Extra random tick ≈ double the growth chance for this tick, not a full bone-meal.
             state.randomTick(level, pos, level.random)
         } else {
             state.randomTick(level, pos, level.random)
@@ -210,6 +236,37 @@ object CropSupport {
             if (neighbor.block is StemBlock || neighbor.block is AttachedStemBlock) return true
         }
         return false
+    }
+
+    fun hydrateFarmland(level: ServerLevel, pos: BlockPos) {
+        val candidates = listOf(pos, pos.below())
+        for (soil in candidates) {
+            val soilState = level.getBlockState(soil)
+            if (soilState.block is FarmBlock && soilState.hasProperty(FarmBlock.MOISTURE)) {
+                if (soilState.getValue(FarmBlock.MOISTURE) < 7) {
+                    level.setBlock(soil, soilState.setValue(FarmBlock.MOISTURE, 7), Block.UPDATE_ALL)
+                }
+            }
+        }
+    }
+
+    private fun previewCane(level: ServerLevel, pos: BlockPos, harvester: Entity): List<ItemStack> {
+        var top = pos
+        while (level.getBlockState(top.above()).block is SugarCaneBlock) {
+            top = top.above()
+        }
+        var bottom = pos
+        while (level.getBlockState(bottom.below()).block is SugarCaneBlock) {
+            bottom = bottom.below()
+        }
+        val drops = ArrayList<ItemStack>()
+        var cursor = top
+        while (cursor.y > bottom.y) {
+            val state = level.getBlockState(cursor)
+            drops += Block.getDrops(state, level, cursor, null, harvester, ItemStack.EMPTY)
+            cursor = cursor.below()
+        }
+        return drops
     }
 
     private fun harvestCane(level: ServerLevel, pos: BlockPos, harvester: Entity): List<ItemStack> {

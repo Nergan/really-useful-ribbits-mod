@@ -2,6 +2,7 @@ package com.reallyusefulribbits.mod.profession
 
 import com.reallyusefulribbits.mod.config.ModConfig
 import com.reallyusefulribbits.mod.config.ServerConfig
+import com.reallyusefulribbits.mod.inventory.GroundPickup
 import com.reallyusefulribbits.mod.inventory.RibbitBags
 import com.reallyusefulribbits.mod.logic.FishingTiming
 import com.reallyusefulribbits.mod.logic.ProfessionKind
@@ -26,6 +27,7 @@ object FishermanAi {
     fun tick(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
         val radius = ServerConfig.scanRadius()
+        GroundPickup.tick(level, ribbit, ProfessionKind.FISHERMAN)
         if (level.gameTime - data.lastScanAt >= ModConfig.BIND_SCAN_INTERVAL) {
             data.lastScanAt = level.gameTime
             if (data.waterPos == null || !isWater(level, data.waterPos!!)) {
@@ -49,8 +51,15 @@ object FishermanAi {
             return
         }
         val shore = shorePos(level, water) ?: water
-        val target = Vec3(shore.x + 0.5, shore.y + 1.0, shore.z + 0.5)
-        if (ribbit.distanceToSqr(target) > ModConfig.WORK_REACH_SQ) {
+        val sit = Vec3(shore.x + 0.5, shore.y + 1.0, shore.z + 0.5)
+        val waterCenter = Vec3(water.x + 0.5, sit.y, water.z + 0.5)
+        val towardWater = waterCenter.subtract(sit)
+        val target = if (towardWater.lengthSqr() > 1.0e-6) {
+            sit.add(towardWater.normalize().scale(0.35))
+        } else {
+            sit
+        }
+        if (ribbit.distanceToSqr(target) > ModConfig.FISHER_SIT_REACH_SQ) {
             ribbit.setFishing(false)
             data.fishingActive = false
             ribbit.navigation.moveTo(target.x, target.y, target.z, 1.0)
@@ -108,7 +117,9 @@ object FishermanAi {
             RibbitBags.insert(data, ProfessionKind.FISHERMAN, stack)
         }
         level.sendParticles(ParticleTypes.HAPPY_VILLAGER, ribbit.x, ribbit.y + 0.8, ribbit.z, 8, 0.3, 0.3, 0.3, 0.02)
-        level.playSound(null, ribbit.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.NEUTRAL, 0.7f, 1.2f)
+        level.sendParticles(ParticleTypes.BUBBLE, data.bobberX, data.bobberY, data.bobberZ, 10, 0.15, 0.1, 0.15, 0.03)
+        level.playSound(null, BlockPos.containing(data.bobberX, data.bobberY, data.bobberZ), SoundEvents.FISHING_BOBBER_SPLASH, SoundSource.NEUTRAL, 0.9f, 1.0f)
+        level.playSound(null, ribbit.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.NEUTRAL, 0.45f, 1.2f)
         data.fishingActive = false
         data.fishingElapsed = 0
     }
