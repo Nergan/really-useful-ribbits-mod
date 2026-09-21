@@ -1,0 +1,16 @@
+{
+  "name": "reallyusefulribbits.guide.entry.nitwit",
+  "icon": "minecraft:rabbit_foot",
+  "category": "reallyusefulribbits:jobs",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.nitwit.1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.nitwit.2"
+    }
+  ]
+}

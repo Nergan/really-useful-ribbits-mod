@@ -1,0 +1,71 @@
+{
+  "item.reallyusefulribbits.tab_icon": "Really Useful Ribbits",
+  "itemGroup.reallyusefulribbits": "Really Useful Ribbits",
+
+  "reallyusefulribbits.configuration.work": "Work",
+  "reallyusefulribbits.configuration.work.scan_radius": "Scan radius",
+
+  "advancements.reallyusefulribbits.new_home.title": "so I guess this is my new home now…",
+  "advancements.reallyusefulribbits.new_home.description": "Set a ribbit down from your head and give it a new home point",
+  "advancements.reallyusefulribbits.overdid_it.title": "You asked for it",
+  "advancements.reallyusefulribbits.overdid_it.description": "A sorcerer ribbit summoned an ender dragon",
+
+  "reallyusefulribbits.guide.name": "Really Useful Ribbits",
+  "reallyusefulribbits.guide.subtitle": "Jobs for swamp folk",
+  "reallyusefulribbits.guide.landing": "This book is an addon guide. Ribbits already have professions in the original $(item)Ribbits$() mod. This addon teaches those same frogs to fish, farm, trade, and cause trouble.$(br2)If you lose the book, craft another from an ordinary $(item)book$() and a $(item)giant lily pad$().",
+
+  "reallyusefulribbits.guide.cat.intro": "The Swamp Desk",
+  "reallyusefulribbits.guide.cat.intro.desc": "What this addon changes, and what it leaves to the original Ribbits mod.",
+  "reallyusefulribbits.guide.cat.carry": "On Your Head",
+  "reallyusefulribbits.guide.cat.carry.desc": "How to seat a ribbit on your head and give it a new home.",
+  "reallyusefulribbits.guide.cat.work": "Shared Ground",
+  "reallyusefulribbits.guide.cat.work.desc": "How far ribbits look, how they share a village, and how to see their binds.",
+  "reallyusefulribbits.guide.cat.jobs": "The Jobs",
+  "reallyusefulribbits.guide.cat.jobs.desc": "What each original profession does once this addon is installed.",
+
+  "reallyusefulribbits.guide.entry.welcome": "This Book",
+  "reallyusefulribbits.guide.page.welcome.1": "Welcome. This guide is for players who already have $(item)Ribbits$() and want those frogs to do more than wander and play. The chapters go from carrying a ribbit, to the work radius, to each profession.",
+  "reallyusefulribbits.guide.page.welcome.2": "You do not have to read it all at once. Open a page when a fisher will not bite, a farmer stares at dirt, or a merchant will not stop croaking.",
+  "reallyusefulribbits.guide.page.welcome.3": "A new copy can be made at a crafting table from an ordinary book and a giant lily pad from Ribbits.",
+  "reallyusefulribbits.guide.page.welcome.4": "If you found a bug or just want to share feedback, you can leave it here: $(l:https://github.com/Nergan/really-useful-ribbits-mod/issues)https://github.com/Nergan/really-useful-ribbits-mod/issues$(/l)",
+
+  "reallyusefulribbits.guide.entry.addon": "An Addon, Not New Jobs",
+  "reallyusefulribbits.guide.page.addon.1": "This addon does $(warn)not$() add new ribbit professions. Fishers, gardeners, merchants, sorcerers and nitwits already exist in $(item)Ribbits$(). They even have their own spawn eggs. What changes is what those frogs $(job)do$() after they spawn.",
+  "reallyusefulribbits.guide.page.addon.2": "A ribbit is still one creature. The original mod picks its profession. This addon only watches that profession and gives it work: fishing, farming, trading, luck, or chaos.",
+
+  "reallyusefulribbits.guide.entry.head": "Riding on a Head",
+  "reallyusefulribbits.guide.page.head.1": "Sneak and right-click a ribbit to seat it on your head. This wins over the merchant trade screen: even a trader will climb up instead of opening its offers. Walk wherever you like. The frog sits with its instrument pose, but the village band does not start.",
+  "reallyusefulribbits.guide.page.head.2": "Sneak again to set it down. The ribbit returns to walking on its own. You can carry any profession this way, including merchants.",
+
+  "reallyusefulribbits.guide.entry.home": "A New Home",
+  "reallyusefulribbits.guide.page.home.1": "When you set a ribbit down, its home point from the original Ribbits mod moves to that spot. That is how you relocate a worker without breaking the rest of its habits.",
+  "reallyusefulribbits.guide.page.home.2": "Doing this also grants the advancement $(thing)so I guess this is my new home now…$(). The title follows the language of the client, like the rest of this book.",
+
+  "reallyusefulribbits.guide.entry.radius": "How Far They Look",
+  "reallyusefulribbits.guide.page.radius.1": "Working ribbits scan a radius for water, farms, containers, luck, endermen and sorcerer plant-growth. The default is $(thing)64$() blocks. Several ribbits may share the same ground. They will not steal a reserved crop tile or water block from each other.",
+  "reallyusefulribbits.guide.page.radius.2": "The option is a $(thing)SERVER$() config: Mods → Really Useful Ribbits → Config, or the world file $(item)reallyusefulribbits-server.toml$(). In multiplayer only the server value matters. Singleplayer uses the ordinary world config.",
+
+  "reallyusefulribbits.guide.entry.highlight": "Seeing the Binds",
+  "reallyusefulribbits.guide.page.highlight.1": "Right-click a fisher or a farmer $(thing)without sneaking$() to outline the ribbit, its container, and its water tile or farm. You will hear a beacon chime. The glow works like a spectral arrow.",
+  "reallyusefulribbits.guide.page.highlight.2": "If that ribbit has no water, farm or container yet, it croaks in pain and angry particles appear instead. Give it time to look around, or move it closer to what it needs.",
+
+  "reallyusefulribbits.guide.entry.fisherman": "The Fisher",
+  "reallyusefulribbits.guide.page.fisherman.1": "A fisher binds one nearby water block and one container (chest, barrel, shulker, double chest, and the like). It sits on the bank with its fishing pose and fishes like a player: splashes gather at the bobber, then it reels in. The catch goes into a single slot that holds 16 items.",
+  "reallyusefulribbits.guide.page.fisherman.2": "A catch shows happy villager stars and the experience-orb pickup sound. When the bag is full — including unstackable junk — the fisher walks to its container, opens it with the usual animation and sound, empties the bag, and returns to the water.",
+
+  "reallyusefulribbits.guide.entry.farmer": "The Gardener",
+  "reallyusefulribbits.guide.page.farmer.1": "A gardener binds one connected farm and one container. A farm is a cluster of farmland (including Farmer's Delight farmland), soul sand, or sugar-cane bases that touch each other inside the scan radius. Inventory is four slots of 64.",
+  "reallyusefulribbits.guide.page.farmer.2": "It harvests ripe crops, plants seeds from its bag or the container, tills dirt-like blocks back into farmland, and waters immature crops (double growth chance for one tick). Melons and pumpkins are broken only if they grew from a stem. Cane is cut above the base. Nether wart and reachable glow berries are picked. Other mods' similar crops are treated the same way.",
+
+  "reallyusefulribbits.guide.entry.merchant": "The Merchant",
+  "reallyusefulribbits.guide.page.merchant.1": "A merchant has 27 slots of 256. It starts with a few random goods plus 256 emeralds and 256 amethyst shards. It hunts villagers, wandering traders, wandering ribbits, and any other creature that can trade, copies a buyable item (maxed trades, no stock limits), and builds amethyst offers.",
+  "reallyusefulribbits.guide.page.merchant.2": "Then it finds a player and croaks until you trade or ignore it. Right-click opens its offers. Sneak and right-click still puts it on your head. After the visit, or if you walk away, it cools down and starts the cycle again.",
+
+  "reallyusefulribbits.guide.entry.sorcerer": "The Sorcerer",
+  "reallyusefulribbits.guide.page.sorcerer.1": "Right-click a sorcerer to roll a weighted table of trouble: a lasting effect or a cleanse, an enchantment, a launch, weather, day or night, a peaceful mob, lightning, a flipped or resized player, a new max health, sudden crop growth, a diamond rain (about one in a hundred), a random dimension, or — very rarely — an ender dragon and the secret advancement $(thing)You asked for it$().",
+  "reallyusefulribbits.guide.page.sorcerer.2": "Spell particles mark the cast. Endermen in the scan radius flee. Otherwise the sorcerer still wanders like an ordinary ribbit. Do not click it twice for luck. The table is already stacked against you.",
+
+  "reallyusefulribbits.guide.entry.nitwit": "The Nitwit",
+  "reallyusefulribbits.guide.page.nitwit.1": "A nitwit does almost nothing, on purpose. Inside the scan radius it applies $(thing)Luck$() to whoever stands nearby. That is the entire job.",
+  "reallyusefulribbits.guide.page.nitwit.2": "It will not fish, farm, or trade. Carry it to a fishing hole or a raid if you want the luck there. Set it down to plant a new home, then let it loaf."
+}

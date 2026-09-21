@@ -1,0 +1,55 @@
+name: Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+  workflow_dispatch:
+
+# Раннеры GitHub Actions имеют полный доступ в интернет, поэтому
+# `gradle build` скачивает NeoForge/Minecraft/Ribbits с Maven
+# и собирает мод по-настоящему.
+#
+# Используем официальный gradle/actions/setup-gradle вместо `./gradlew`:
+# в репозитории намеренно нет бинарника gradle-wrapper.jar.
+# Если вы сгенерируете wrapper локально и закоммитите jar — можно
+# будет заменить шаги ниже на обычные `./gradlew build` / `./gradlew test`.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10'
+
+      - name: Build mod jar
+        run: gradle build --stacktrace
+
+      - name: Run unit tests
+        run: gradle test --stacktrace
+
+      - name: Upload mod jar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reallyusefulribbits-jar
+          path: build/libs/*.jar
+          if-no-files-found: error
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: build/reports/tests/test/
+          if-no-files-found: ignore

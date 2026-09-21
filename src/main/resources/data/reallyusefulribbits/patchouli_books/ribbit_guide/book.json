@@ -1,0 +1,23 @@
+{
+  "name": "reallyusefulribbits.guide.name",
+  "landing_text": "reallyusefulribbits.guide.landing",
+  "subtitle": "reallyusefulribbits.guide.subtitle",
+  "version": 1,
+  "creative_tab": "minecraft:tools_and_utilities",
+  "use_resource_pack": true,
+  "i18n": true,
+  "use_blocky_font": true,
+  "text_overflow_mode": "resize",
+  "show_progress": false,
+  "model": "reallyusefulribbits:ribbit_guide",
+  "book_texture": "patchouli:textures/gui/book_green.png",
+  "nameplate_color": "7CBC4A",
+  "header_color": "2D5A1E",
+  "text_color": "1B3314",
+  "link_color": "3D7A28",
+  "link_hover_color": "7CBC4A",
+  "macros": {
+    "$(job)": "$(#3D7A28)",
+    "$(warn)": "$(#B33A3A)"
+  }
+}

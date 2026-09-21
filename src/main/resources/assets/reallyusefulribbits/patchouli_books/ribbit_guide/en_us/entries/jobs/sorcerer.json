@@ -1,0 +1,16 @@
+{
+  "name": "reallyusefulribbits.guide.entry.sorcerer",
+  "icon": "minecraft:enchanted_book",
+  "category": "reallyusefulribbits:jobs",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.sorcerer.1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.sorcerer.2"
+    }
+  ]
+}

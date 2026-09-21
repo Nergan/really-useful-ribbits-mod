@@ -1,0 +1,16 @@
+{
+  "name": "reallyusefulribbits.guide.entry.farmer",
+  "icon": "minecraft:wheat",
+  "category": "reallyusefulribbits:jobs",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.farmer.1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.farmer.2"
+    }
+  ]
+}

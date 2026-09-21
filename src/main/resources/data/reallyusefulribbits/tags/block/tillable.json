@@ -1,0 +1,16 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:dirt",
+    "minecraft:grass_block",
+    "minecraft:dirt_path",
+    "minecraft:coarse_dirt",
+    "minecraft:rooted_dirt",
+    "minecraft:mycelium",
+    "minecraft:podzol",
+    {
+      "id": "farmersdelight:rich_soil",
+      "required": false
+    }
+  ]
+}

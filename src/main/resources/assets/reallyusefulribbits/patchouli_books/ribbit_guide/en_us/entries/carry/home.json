@@ -1,0 +1,16 @@
+{
+  "name": "reallyusefulribbits.guide.entry.home",
+  "icon": "minecraft:oak_door",
+  "category": "reallyusefulribbits:carry",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.home.1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.home.2"
+    }
+  ]
+}

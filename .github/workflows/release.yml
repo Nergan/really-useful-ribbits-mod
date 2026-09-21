@@ -1,0 +1,165 @@
+name: Release
+
+on:
+  push:
+    branches: ["main"]
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+# Пуш в main (и тег / ручной запуск) пересобирает мод и обновляет
+# GitHub Release для текущей mod_version: те же jar перезаписываются.
+# Новый номер версии в gradle.properties → новый релиз vX.Y.Z.
+# SHA-256 у каждого файла считает сам GitHub при загрузке.
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Read versions from gradle.properties
+        id: versions
+        run: |
+          set -euo pipefail
+          mod_version="$(grep -E '^mod_version=' gradle.properties | cut -d= -f2- | tr -d '\r')"
+          kff_version="$(grep -E '^kff_version=' gradle.properties | cut -d= -f2- | tr -d '\r')"
+          ribbits_version="$(grep -E '^ribbits_version=' gradle.properties | cut -d= -f2- | tr -d '\r')"
+          geckolib_version="$(grep -E '^geckolib_version=' gradle.properties | cut -d= -f2- | tr -d '\r')"
+          yungsapi_version="$(grep -E '^yungsapi_version=' gradle.properties | cut -d= -f2- | tr -d '\r')"
+          patchouli_version="$(grep -E '^patchouli_version=' gradle.properties | cut -d= -f2- | tr -d '\r')"
+          echo "mod_version=${mod_version}" >> "$GITHUB_OUTPUT"
+          echo "kff_version=${kff_version}" >> "$GITHUB_OUTPUT"
+          echo "ribbits_version=${ribbits_version}" >> "$GITHUB_OUTPUT"
+          echo "geckolib_version=${geckolib_version}" >> "$GITHUB_OUTPUT"
+          echo "yungsapi_version=${yungsapi_version}" >> "$GITHUB_OUTPUT"
+          echo "patchouli_version=${patchouli_version}" >> "$GITHUB_OUTPUT"
+          echo "mod_version=${mod_version}" >> "$GITHUB_ENV"
+
+      - name: Check tag matches mod_version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          set -euo pipefail
+          expected="v${{ steps.versions.outputs.mod_version }}"
+          actual="${GITHUB_REF_NAME}"
+          if [[ "${actual}" != "${expected}" ]]; then
+            echo "Tag ${actual} must be ${expected} (mod_version in gradle.properties)."
+            exit 1
+          fi
+
+      - name: Point version tag at this commit
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          tag="v${{ steps.versions.outputs.mod_version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f "${tag}" "${GITHUB_SHA}"
+          git push -f origin "refs/tags/${tag}"
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10"
+
+      - name: Build and test
+        run: gradle build --stacktrace
+
+      - name: Collect release jars
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          shopt -s nullglob
+          jars=(build/libs/reallyusefulribbits-*.jar)
+          if [[ ${#jars[@]} -eq 0 ]]; then
+            echo "No reallyusefulribbits jar in build/libs"
+            exit 1
+          fi
+          for jar in "${jars[@]}"; do
+            case "${jar}" in
+              *-sources.jar|*-javadoc.jar) continue ;;
+              *) cp -v "${jar}" release-assets/ ;;
+            esac
+          done
+          test -f "release-assets/reallyusefulribbits-${{ steps.versions.outputs.mod_version }}.jar"
+          chmod +x .github/scripts/fetch-companion-jars.sh
+          .github/scripts/fetch-companion-jars.sh \
+            release-assets \
+            "${{ steps.versions.outputs.kff_version }}" \
+            "${{ steps.versions.outputs.ribbits_version }}" \
+            "${{ steps.versions.outputs.geckolib_version }}" \
+            "${{ steps.versions.outputs.yungsapi_version }}" \
+            "${{ steps.versions.outputs.patchouli_version }}"
+          ls -lh release-assets
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.versions.outputs.mod_version }}
+          name: Really Useful Ribbits ${{ steps.versions.outputs.mod_version }}
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          overwrite_files: true
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            release-assets/reallyusefulribbits-*.jar
+            release-assets/kotlinforforge-*.jar
+            release-assets/Ribbits-*.jar
+            release-assets/geckolib-*.jar
+            release-assets/YungsApi-*.jar
+            release-assets/Patchouli-*.jar
+          body: |
+            Minecraft **1.21.1** / NeoForge. Put the jars you need into the `mods` folder.
+
+            | File | Required | Source |
+            | --- | --- | --- |
+            | `reallyusefulribbits-${{ steps.versions.outputs.mod_version }}.jar` | Yes | this addon |
+            | `kotlinforforge-${{ steps.versions.outputs.kff_version }}-all.jar` | Yes | [Kotlin for Forge](https://modrinth.com/mod/kotlin-for-forge) (LGPL-2.1) |
+            | `Ribbits-*-NeoForge-${{ steps.versions.outputs.ribbits_version }}.jar` | Yes | [Ribbits](https://modrinth.com/mod/ribbits) (LGPL-3.0) |
+            | `geckolib-*-${{ steps.versions.outputs.geckolib_version }}.jar` | Yes (for Ribbits) | [GeckoLib](https://modrinth.com/mod/geckolib) (MIT) |
+            | `YungsApi-${{ steps.versions.outputs.yungsapi_version }}.jar` | Yes (for Ribbits) | [YUNG's API](https://modrinth.com/mod/yungs-api) (LGPL-3.0) |
+            | `Patchouli-*-NEOFORGE.jar` | No, only for the guidebook | [Patchouli](https://modrinth.com/mod/patchouli) (CC-BY-NC-SA-3.0) |
+
+            Do not install `*-sources.jar`. Companion jars are official Modrinth builds, rehosted here for a one-page install. Patchouli is redistributed for non-commercial use with attribution to VazkiiMods. GitHub shows a SHA-256 digest next to each uploaded file.
+
+      - name: Publish Modrinth
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: really-useful-ribbits
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-featured: true
+          name: ${{ steps.versions.outputs.mod_version }}
+          version: ${{ steps.versions.outputs.mod_version }}
+          version-type: release
+          changelog: |
+            Minecraft 1.21.1 / NeoForge. Really Useful Ribbits ${{ steps.versions.outputs.mod_version }}.
+          loaders: |
+            neoforge
+          game-versions: |
+            1.21.1
+          java: |
+            21
+          files: release-assets/reallyusefulribbits-${{ steps.versions.outputs.mod_version }}.jar
+          dependencies: |
+            kotlin-for-forge(required){modrinth:ordsPcFz}
+            ribbits(required){modrinth:8YcE8y4T}
+            geckolib(required){modrinth:8BmcQJ2H}
+            yungs-api(required){modrinth:Ua7DFN59}
+            farmers-delight(optional){modrinth:R2OftAxM}
+            wandering-ribbit(optional){modrinth:qYSYk2ef}
+            patchouli(optional){modrinth:nU0bVIaL}

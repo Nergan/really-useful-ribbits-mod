@@ -1,0 +1,16 @@
+{
+  "name": "reallyusefulribbits.guide.entry.radius",
+  "icon": "minecraft:spyglass",
+  "category": "reallyusefulribbits:work",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.radius.1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.radius.2"
+    }
+  ]
+}

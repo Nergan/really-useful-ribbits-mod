@@ -1,0 +1,54 @@
+# ---- Gradle ----
+.gradle/
+build/
+out/
+.kotlin/
+local.properties
+
+# ---- Скомпилированные артефакты ----
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+*.hprof
+
+# Обёртка Gradle — её как раз нужно коммитить, когда появится.
+!gradle/wrapper/gradle-wrapper.jar
+
+# ---- NeoForge / ModDevGradle ----
+run/
+runs/
+logs/
+crash-reports/
+src/generated/
+
+# ---- Локальная копия исходников зависимостей (не коммитить) ----
+.deps/
+
+# ---- IDE ----
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+*.launch
+.metadata/
+
+# ---- ОС ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Прочее ----
+*.log
+eclipse/
+release-assets/
+.env
+_tmp/

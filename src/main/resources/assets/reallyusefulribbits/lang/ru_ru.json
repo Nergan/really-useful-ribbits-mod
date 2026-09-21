@@ -1,0 +1,71 @@
+{
+  "item.reallyusefulribbits.tab_icon": "Really Useful Ribbits",
+  "itemGroup.reallyusefulribbits": "Really Useful Ribbits",
+
+  "reallyusefulribbits.configuration.work": "Работа",
+  "reallyusefulribbits.configuration.work.scan_radius": "Радиус проверки",
+
+  "advancements.reallyusefulribbits.new_home.title": "значит теперь это мой новый дом…",
+  "advancements.reallyusefulribbits.new_home.description": "Снимите риббита с головы и задайте ему новую точку дома",
+  "advancements.reallyusefulribbits.overdid_it.title": "доигрался",
+  "advancements.reallyusefulribbits.overdid_it.description": "Чародей-риббит призвал эндер-дракона",
+
+  "reallyusefulribbits.guide.name": "Очень полезные риббиты",
+  "reallyusefulribbits.guide.subtitle": "Работа для болотного народа",
+  "reallyusefulribbits.guide.landing": "Это руководство к аддону. Профессии у риббитов уже есть в оригинальном моде $(item)Ribbits$(). Этот аддон учит тех же лягушек рыбачить, пахать, торговать и устраивать хаос.$(br2)Если книга потеряется, новую можно сделать из обычной $(item)книги$() и $(item)гигантской кувшинки$().",
+
+  "reallyusefulribbits.guide.cat.intro": "Болотная контора",
+  "reallyusefulribbits.guide.cat.intro.desc": "Что меняет этот аддон и что он оставляет оригинальному Ribbits.",
+  "reallyusefulribbits.guide.cat.carry": "На голову",
+  "reallyusefulribbits.guide.cat.carry.desc": "Как посадить риббита на голову и задать ему новый дом.",
+  "reallyusefulribbits.guide.cat.work": "Общая земля",
+  "reallyusefulribbits.guide.cat.work.desc": "Как далеко риббиты смотрят, как делят деревню и как увидеть их привязки.",
+  "reallyusefulribbits.guide.cat.jobs": "Профессии",
+  "reallyusefulribbits.guide.cat.jobs.desc": "Что делает каждая оригинальная профессия, когда установлен этот аддон.",
+
+  "reallyusefulribbits.guide.entry.welcome": "Эта книга",
+  "reallyusefulribbits.guide.page.welcome.1": "Добро пожаловать. Это руководство для тех, у кого уже стоит $(item)Ribbits$(), и кто хочет, чтобы лягушки делали больше, чем бродить и играть. Дальше — как носить риббита, какой у него радиус работы и что умеет каждая профессия.",
+  "reallyusefulribbits.guide.page.welcome.2": "Читать всё сразу не нужно. Откройте страницу, когда рыбак не клюёт, фермер смотрит в землю или торговец никак не замолчит.",
+  "reallyusefulribbits.guide.page.welcome.3": "Новую копию можно скрафтить на верстаке из обычной книги и гигантской кувшинки из Ribbits.",
+  "reallyusefulribbits.guide.page.welcome.4": "Если нашли ошибку или просто хотите написать, вот сюда: $(l:https://github.com/Nergan/really-useful-ribbits-mod/issues)https://github.com/Nergan/really-useful-ribbits-mod/issues$(/l)",
+
+  "reallyusefulribbits.guide.entry.addon": "Аддон, не новые профессии",
+  "reallyusefulribbits.guide.page.addon.1": "Этот аддон $(warn)не$() добавляет риббитам новые профессии. Рыбаки, садовники, торговцы, чародеи и nitwit уже есть в $(item)Ribbits$(). У них даже свои яйца призыва. Меняется то, что эти лягушки $(job)делают$() после появления.",
+  "reallyusefulribbits.guide.page.addon.2": "Риббит по-прежнему одно существо. Профессию выбирает оригинальный мод. Этот аддон только смотрит на неё и даёт работу: рыбалку, ферму, торговлю, удачу или хаос.",
+
+  "reallyusefulribbits.guide.entry.head": "На голове",
+  "reallyusefulribbits.guide.page.head.1": "Shift и ПКМ сажает риббита на голову. Это важнее меню торговли: даже торговец залезет наверх, а не откроет сделки. Идите куда угодно. Риббит сидит в позе с инструментом, но деревенская музыка не начинается.",
+  "reallyusefulribbits.guide.page.head.2": "Ещё раз нажмите Shift, чтобы снять его. Риббит снова ходит сам. Так можно носить любую профессию, в том числе торговца.",
+
+  "reallyusefulribbits.guide.entry.home": "Новый дом",
+  "reallyusefulribbits.guide.page.home.1": "Когда вы снимаете риббита, его точка дома из оригинального Ribbits переезжает на это место. Так рабочего можно перевезти, не ломая остальные привычки.",
+  "reallyusefulribbits.guide.page.home.2": "За это выдаётся достижение $(thing)значит теперь это мой новый дом…$(). Название берётся из языка клиента, как и остальной текст этой книги.",
+
+  "reallyusefulribbits.guide.entry.radius": "Как далеко смотрят",
+  "reallyusefulribbits.guide.page.radius.1": "Рабочие риббиты ищут в радиусе воду, ферму, контейнеры, удачу, эндерменов и рост растений чародея. По умолчанию это $(thing)64$() блока. Несколько риббитов могут делить одну землю. Зарезервированный блок культуры или воды друг у друга они не отбирают.",
+  "reallyusefulribbits.guide.page.radius.2": "Параметр — конфиг типа $(thing)SERVER$(): Mods → Really Useful Ribbits → Config или файл мира $(item)reallyusefulribbits-server.toml$(). В онлайне имеет значение только то, что стоит на сервере. В одиночной игре работает обычный конфиг мира.",
+
+  "reallyusefulribbits.guide.entry.highlight": "Увидеть привязки",
+  "reallyusefulribbits.guide.page.highlight.1": "ПКМ по рыбаку или фермеру $(thing)без Shift$() обрисует самого риббита, его контейнер и воду или ферму. Прозвучит маяк. Свечение такое же, как от спектральной стрелы.",
+  "reallyusefulribbits.guide.page.highlight.2": "Если воды, фермы или контейнера ещё нет, риббит квакнет от боли и появятся злые частицы. Дайте ему время осмотреться или перенесите ближе к тому, что ему нужно.",
+
+  "reallyusefulribbits.guide.entry.fisherman": "Рыбак",
+  "reallyusefulribbits.guide.page.fisherman.1": "Рыбак биндится на один ближайший блок воды и один контейнер (сундук, бочка, шалкер, двойной сундук и так далее). Садится на берег с удочкой и рыбачит как игрок: всплески собираются к поплавку, затем он вытаскивает улов. Добыча кладётся в один слот на 16 предметов.",
+  "reallyusefulribbits.guide.page.fisherman.2": "Улов сопровождают звёздочки жителя и звук подбора опыта. Когда сумка полная — в том числе нестакаемым хламом — рыбак идёт к контейнеру, открывает его с обычной анимацией и звуком, выкладывает всё и возвращается к воде.",
+
+  "reallyusefulribbits.guide.entry.farmer": "Садовник",
+  "reallyusefulribbits.guide.page.farmer.1": "Садовник биндится на одну связную ферму и один контейнер. Ферма — это пашня (в том числе пашня Farmer's Delight), песок душ или нижние блоки тростника, стоящие вплотную внутри радиуса. Инвентарь — четыре слота по 64.",
+  "reallyusefulribbits.guide.page.farmer.2": "Он собирает созревшее, сеет из сумки или контейнера, вспахивает землю обратно в пашню и поливает незрелое (удваивает шанс роста на один тик). Арбузы и тыквы ломает только если они выросли из стебля. Тростник режет выше основания. Адский нарост и доступные светоягоды срывает. Похожие культуры из других модов обрабатывает так же.",
+
+  "reallyusefulribbits.guide.entry.merchant": "Торговец",
+  "reallyusefulribbits.guide.page.merchant.1": "У торговца 27 слотов по 256. Сначала у него несколько случайных товаров плюс 256 изумрудов и 256 осколков аметиста. Он ищет жителей, странствующих торговцев, странствующих риббитов и любых других, с кем можно торговать, копирует покупаемый предмет (сделки на максимуме, без лимита склада) и собирает предложения за аметисты.",
+  "reallyusefulribbits.guide.page.merchant.2": "Потом находит игрока и квакает, пока вы не поторгуетесь или не проигнорируете его. ПКМ открывает сделки. Shift + ПКМ по-прежнему сажает его на голову. После визита или если вы ушли, он остывает и начинает цикл снова.",
+
+  "reallyusefulribbits.guide.entry.sorcerer": "Чародей",
+  "reallyusefulribbits.guide.page.sorcerer.1": "ПКМ по чародею бросает взвешенную таблицу неприятностей: вечный эффект или снятие всех, зачарование, подброс, погода, день или ночь, мирный моб, молния, переворот или размер игрока, новый запас здоровья, внезапный рост культур, дождь из алмазов (примерно один из ста), случайное измерение или — очень редко — эндер-дракон и секретное достижение $(thing)доигрался$().",
+  "reallyusefulribbits.guide.page.sorcerer.2": "Каст помечают частицы заклинания. Эндермены в радиусе убегают. В остальном чародей бродит как обычный риббит. Не кликайте дважды «на удачу». Таблица и так против вас.",
+
+  "reallyusefulribbits.guide.entry.nitwit": "Nitwit",
+  "reallyusefulribbits.guide.page.nitwit.1": "Nitwit почти ничего не делает — так и задумано. В радиусе проверки он накладывает $(thing)Удачу$() на тех, кто рядом. Это вся его работа.",
+  "reallyusefulribbits.guide.page.nitwit.2": "Он не рыбачит, не пашет и не торгует. Отнесите его к лунке или к рейду, если удача нужна там. Снимите, чтобы посадить новый дом, и дайте бездельничать."
+}

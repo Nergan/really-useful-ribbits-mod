@@ -1,0 +1,23 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:dragon_head"
+    },
+    "title": {
+      "translate": "advancements.reallyusefulribbits.overdid_it.title"
+    },
+    "description": {
+      "translate": "advancements.reallyusefulribbits.overdid_it.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "summoned_dragon": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

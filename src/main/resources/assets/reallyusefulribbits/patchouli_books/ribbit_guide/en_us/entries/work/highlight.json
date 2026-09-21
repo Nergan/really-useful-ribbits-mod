@@ -1,0 +1,16 @@
+{
+  "name": "reallyusefulribbits.guide.entry.highlight",
+  "icon": "minecraft:spectral_arrow",
+  "category": "reallyusefulribbits:work",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.highlight.1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.highlight.2"
+    }
+  ]
+}

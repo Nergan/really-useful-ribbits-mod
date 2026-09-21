@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:farmland",
+    "minecraft:soul_sand",
+    {
+      "id": "farmersdelight:rich_soil_farmland",
+      "required": false
+    }
+  ]
+}

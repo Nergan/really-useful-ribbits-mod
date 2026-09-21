@@ -1,0 +1,16 @@
+{
+  "name": "reallyusefulribbits.guide.entry.head",
+  "icon": "minecraft:player_head",
+  "category": "reallyusefulribbits:carry",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.head.1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.head.2"
+    }
+  ]
+}

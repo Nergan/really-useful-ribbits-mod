@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.reallyusefulribbits.mod.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "PlayerHeadRideMixin",
+    "RibbitEntityAccessor",
+    "RibbitEntityMixin"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

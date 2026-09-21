@@ -1,0 +1,23 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:amethyst_shard"
+    },
+    "title": {
+      "translate": "advancements.reallyusefulribbits.new_home.title"
+    },
+    "description": {
+      "translate": "advancements.reallyusefulribbits.new_home.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "set_home": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

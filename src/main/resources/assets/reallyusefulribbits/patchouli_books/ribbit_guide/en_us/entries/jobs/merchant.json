@@ -1,0 +1,16 @@
+{
+  "name": "reallyusefulribbits.guide.entry.merchant",
+  "icon": "minecraft:amethyst_shard",
+  "category": "reallyusefulribbits:jobs",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.merchant.1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.merchant.2"
+    }
+  ]
+}

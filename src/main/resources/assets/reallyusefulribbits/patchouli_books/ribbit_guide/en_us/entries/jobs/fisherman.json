@@ -1,0 +1,16 @@
+{
+  "name": "reallyusefulribbits.guide.entry.fisherman",
+  "icon": "minecraft:fishing_rod",
+  "category": "reallyusefulribbits:jobs",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.fisherman.1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.fisherman.2"
+    }
+  ]
+}

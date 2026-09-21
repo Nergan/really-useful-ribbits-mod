@@ -1,0 +1,25 @@
+{
+  "name": "reallyusefulribbits.guide.entry.welcome",
+  "icon": "minecraft:book",
+  "category": "reallyusefulribbits:intro",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.welcome.1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.welcome.2"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "reallyusefulribbits:ribbit_guide",
+      "text": "reallyusefulribbits.guide.page.welcome.3"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "reallyusefulribbits.guide.page.welcome.4"
+    }
+  ]
+}
