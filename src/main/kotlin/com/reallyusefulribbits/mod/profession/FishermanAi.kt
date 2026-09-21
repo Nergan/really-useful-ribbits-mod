@@ -88,10 +88,12 @@ object FishermanAi {
             stand
         }
         LookAt.block(ribbit, water, 0.85)
-        if (ribbit.distanceToSqr(sit) > ModConfig.FISHER_SIT_REACH_SQ) {
+        val feet = ribbit.blockPosition()
+        val onShore = feet == shore.above() || feet.below() == shore
+        if (ribbit.distanceToSqr(sit) > ModConfig.FISHER_SIT_REACH_SQ && !onShore) {
             ribbit.setFishing(false)
             data.fishingActive = false
-            ribbit.navigation.moveTo(sit.x, sit.y, sit.z, 1.0)
+            approach(ribbit, sit, 1.0)
             data.navStuck++
             if (data.navStuck >= ModConfig.FISHER_STUCK_TICKS) {
                 data.waterPos = null
@@ -196,9 +198,7 @@ object FishermanAi {
         chestProgress[ribbit.id] = chestDist
         val closeEnoughToGiveUp = data.navStuck >= 20 && chestDist <= 9.0
         if (!arrived && !closeEnoughToGiveUp) {
-            val goal = stand ?: center
-            val walking = ribbit.navigation.moveTo(goal.x, goal.y, goal.z, 1.05)
-            if (!walking) ribbit.moveControl.setWantedPosition(goal.x, goal.y, goal.z, 1.05)
+            approach(ribbit, stand ?: center, 1.05)
             return
         }
         data.navStuck = 0
@@ -208,6 +208,13 @@ object FishermanAi {
         ContainerSupport.openBriefly(level, pos)
         val leftover = ContainerSupport.insertAll(level, pos, RibbitBags.extractAll(data, ProfessionKind.FISHERMAN))
         leftover.forEach { RibbitBags.insert(data, ProfessionKind.FISHERMAN, it) }
+    }
+
+    /** Не пересобирает путь каждый тик: иначе лягушка идёт на месте. */
+    private fun approach(ribbit: RibbitEntity, target: Vec3, speed: Double) {
+        val nav = ribbit.navigation
+        if (nav.isInProgress && ribbit.tickCount % 10 != 0) return
+        nav.moveTo(target.x, target.y, target.z, speed)
     }
 
     private fun standNear(level: ServerLevel, container: BlockPos, ribbit: RibbitEntity): Vec3? {

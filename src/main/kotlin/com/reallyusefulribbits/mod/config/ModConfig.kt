@@ -21,7 +21,7 @@ object ModConfig {
     const val MAX_HIGHLIGHT_BLOCKS: Int = 48
     const val BERRY_REACH: Double = 2.75
     const val WORK_REACH_SQ: Double = 2.6
-    const val FISHER_SIT_REACH_SQ: Double = 2.25
+    const val FISHER_SIT_REACH_SQ: Double = 4.0
     const val FISHER_DEPOSIT_REACH_SQ: Double = 1.0
     const val FISHER_STUCK_TICKS: Int = 100
     const val FLEE_TICKS: Int = 80
