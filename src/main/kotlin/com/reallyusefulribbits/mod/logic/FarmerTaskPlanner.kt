@@ -12,6 +12,7 @@ enum class FarmerTask {
 data class FarmerWorldView(
     val inventoryFull: Boolean,
     val inventoryHasItems: Boolean,
+    val hasProduce: Boolean,
     val hasMatureCrop: Boolean,
     val hasTillable: Boolean,
     val hasEmptyFarmland: Boolean,
@@ -26,6 +27,7 @@ object FarmerTaskPlanner {
     fun next(view: FarmerWorldView): FarmerTask {
         if (view.inventoryFull && view.inventoryHasItems) return FarmerTask.DEPOSIT
         if (view.hasMatureCrop) return FarmerTask.HARVEST
+        if (view.hasProduce) return FarmerTask.DEPOSIT
         if (view.hasEmptyFarmland && view.hasPlantable) return FarmerTask.PLANT
         if (view.inventoryHasItems) return FarmerTask.DEPOSIT
         if (view.hasImmatureCrop) return FarmerTask.WATER
@@ -40,10 +42,11 @@ object FarmerTaskPlanner {
     ): Boolean {
         if (current == FarmerTask.IDLE) return false
         val stillValid = when (current) {
-            FarmerTask.DEPOSIT -> view.inventoryHasItems
+            FarmerTask.DEPOSIT -> view.hasProduce || view.inventoryFull ||
+                (view.inventoryHasItems && !view.hasEmptyFarmland && !view.hasMatureCrop)
             FarmerTask.HARVEST -> view.hasMatureCrop
             FarmerTask.TILL -> view.hasTillable
-            FarmerTask.PLANT -> view.hasEmptyFarmland && view.hasPlantable
+            FarmerTask.PLANT -> view.hasEmptyFarmland && view.hasPlantable && !view.hasProduce
             FarmerTask.WATER -> view.hasImmatureCrop
             FarmerTask.IDLE -> false
         }

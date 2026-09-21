@@ -13,6 +13,7 @@ class FarmerTaskPlannerTest {
         val view = FarmerWorldView(
             inventoryFull = true,
             inventoryHasItems = true,
+            hasProduce = true,
             hasMatureCrop = true,
             hasTillable = true,
             hasEmptyFarmland = true,
@@ -28,6 +29,7 @@ class FarmerTaskPlannerTest {
         val view = FarmerWorldView(
             inventoryFull = false,
             inventoryHasItems = false,
+            hasProduce = false,
             hasMatureCrop = false,
             hasTillable = true,
             hasEmptyFarmland = true,
@@ -43,6 +45,7 @@ class FarmerTaskPlannerTest {
         val view = FarmerWorldView(
             inventoryFull = false,
             inventoryHasItems = false,
+            hasProduce = false,
             hasMatureCrop = false,
             hasTillable = true,
             hasEmptyFarmland = false,
@@ -58,6 +61,7 @@ class FarmerTaskPlannerTest {
         val view = FarmerWorldView(
             inventoryFull = false,
             inventoryHasItems = true,
+            hasProduce = true,
             hasMatureCrop = false,
             hasTillable = false,
             hasEmptyFarmland = false,
@@ -73,6 +77,7 @@ class FarmerTaskPlannerTest {
         val view = FarmerWorldView(
             inventoryFull = false,
             inventoryHasItems = true,
+            hasProduce = false,
             hasMatureCrop = false,
             hasTillable = false,
             hasEmptyFarmland = false,
@@ -88,6 +93,7 @@ class FarmerTaskPlannerTest {
         val watering = FarmerWorldView(
             inventoryFull = false,
             inventoryHasItems = false,
+            hasProduce = false,
             hasMatureCrop = false,
             hasTillable = false,
             hasEmptyFarmland = false,
@@ -95,5 +101,37 @@ class FarmerTaskPlannerTest {
             hasImmatureCrop = true,
         )
         assertTrue(FarmerTaskPlanner.shouldKeep(FarmerTask.WATER, 5, watering))
+    }
+
+    @Test
+    @DisplayName("Собранный урожай сдаётся раньше новой посадки")
+    fun produceBeatsPlant() {
+        val view = FarmerWorldView(
+            inventoryFull = false,
+            inventoryHasItems = true,
+            hasProduce = true,
+            hasMatureCrop = false,
+            hasTillable = false,
+            hasEmptyFarmland = true,
+            hasPlantable = true,
+            hasImmatureCrop = false,
+        )
+        assertEquals(FarmerTask.DEPOSIT, FarmerTaskPlanner.next(view))
+    }
+
+    @Test
+    @DisplayName("Спелая пшеница собирается раньше сдачи уже лежащего урожая")
+    fun harvestBeatsStoredProduce() {
+        val view = FarmerWorldView(
+            inventoryFull = false,
+            inventoryHasItems = true,
+            hasProduce = true,
+            hasMatureCrop = true,
+            hasTillable = false,
+            hasEmptyFarmland = true,
+            hasPlantable = true,
+            hasImmatureCrop = false,
+        )
+        assertEquals(FarmerTask.HARVEST, FarmerTaskPlanner.next(view))
     }
 }

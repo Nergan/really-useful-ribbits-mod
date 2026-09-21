@@ -20,15 +20,18 @@ import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.ai.goal.Goal
+import net.minecraft.world.item.Item
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.CaveVines
 import net.minecraft.world.phys.Vec3
 import java.util.EnumSet
 
 object FarmerAi {
-    private val walks = HashMap<Int, WalkOrder>()
-    private val carried = HashMap<Int, WalkOrder>()
-    private val applied = HashMap<Int, WalkOrder>()
+    private val drove = HashSet<Int>()
+    private val busy = HashSet<Int>()
+    private val hikes = HashMap<Int, Hike>()
     private val plantLocks = HashMap<Int, BlockPos>()
+    private val bans = HashMap<Int, HashMap<Long, Long>>()
 
     fun ensureWorkGoal(ribbit: RibbitEntity) {
         if (ribbit.professionKind() != ProfessionKind.FARMER) return
@@ -37,31 +40,21 @@ object FarmerAi {
         ribbit.goalSelector.addGoal(0, FarmerWorkGoal(ribbit))
     }
 
-    fun hasWalk(ribbit: RibbitEntity): Boolean = walks.containsKey(ribbit.id)
+    fun isBusy(ribbit: RibbitEntity): Boolean = busy.contains(ribbit.id)
 
-    /** Путь ставится из цели, до navigation.tick. Иначе прогулка риббита его стирает. */
-    fun follow(ribbit: RibbitEntity) {
-        val order = walks[ribbit.id] ?: return
-        val nav = ribbit.navigation
-        val previous = applied[ribbit.id]
-        val changed = previous == null || previous.x != order.x || previous.y != order.y || previous.z != order.z
-        if (changed || !nav.isInProgress || ribbit.tickCount % 10 == 0) {
-            nav.moveTo(order.x, order.y, order.z, order.speed)
-            applied[ribbit.id] = order
-        }
+    /** Вызывается из цели до navigation.tick, чтобы прогулка риббита не стирала путь. */
+    fun drive(ribbit: RibbitEntity) {
+        val level = ribbit.level() as? ServerLevel ?: return
+        drove.add(ribbit.id)
+        perform(level, ribbit)
     }
 
     fun tick(level: ServerLevel, ribbit: RibbitEntity) {
-        val kept = walks.remove(ribbit.id)
-        if (kept != null) carried[ribbit.id] = kept
-        try {
-            tickWork(level, ribbit)
-        } finally {
-            carried.remove(ribbit.id)
-        }
+        if (drove.remove(ribbit.id)) return
+        perform(level, ribbit)
     }
 
-    private fun tickWork(level: ServerLevel, ribbit: RibbitEntity) {
+    private fun perform(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
         val radius = ServerConfig.scanRadius()
         GroundPickup.tick(level, ribbit, ProfessionKind.FARMER)
@@ -80,7 +73,11 @@ object FarmerAi {
             }
         }
         if (data.cooldown > 0) data.cooldown--
-        val origin = data.farmOrigin ?: return
+        val origin = data.farmOrigin
+        if (origin == null) {
+            busy.remove(ribbit.id)
+            return
+        }
         if (data.farmMemory.isEmpty() || level.gameTime - data.lastFarmScanAt >= ModConfig.FARM_RESCAN_INTERVAL) {
             data.lastFarmScanAt = level.gameTime
             data.farmMemory.clear()
@@ -91,6 +88,7 @@ object FarmerAi {
         val view = FarmerWorldView(
             inventoryFull = RibbitBags.isFull(data, ProfessionKind.FARMER),
             inventoryHasItems = RibbitBags.hasItems(data, ProfessionKind.FARMER),
+            hasProduce = hasProduce(data),
             hasMatureCrop = jobs.harvest != null,
             hasTillable = jobs.till != null,
             hasEmptyFarmland = jobs.plant != null,
@@ -111,8 +109,12 @@ object FarmerAi {
             FarmerTask.TILL -> actOn(level, ribbit, jobs.till) { CropSupport.till(level, it) }
             FarmerTask.PLANT -> plant(level, ribbit, jobs.plant)
             FarmerTask.WATER -> water(level, ribbit, jobs.water)
-            FarmerTask.IDLE -> ribbit.setWatering(false)
+            FarmerTask.IDLE -> {
+                ribbit.setWatering(false)
+                hikes.remove(ribbit.id)
+            }
         }
+        if (task == FarmerTask.IDLE) busy.remove(ribbit.id) else busy.add(ribbit.id)
     }
 
     private data class Jobs(
@@ -154,7 +156,7 @@ object FarmerAi {
                 harvest = pos
                 harvestDist = dist
             }
-            if (dist < plantDist && CropSupport.isEmptyFarmland(level, pos)) {
+            if (dist < plantDist && CropSupport.isEmptyFarmland(level, pos) && !isBanned(ribbit.id, pos, now)) {
                 plant = pos
                 plantDist = dist
             }
@@ -179,7 +181,7 @@ object FarmerAi {
                 tillDist = dist
             }
         }
-        val plantTarget = stick(ribbit.id, plant) { CropSupport.isEmptyFarmland(level, it) }
+        val plantTarget = stick(level, ribbit, plant) { CropSupport.isEmptyFarmland(level, it) }
         listOfNotNull(harvest, till, plantTarget, water).forEach {
             BlockReservation.tryClaim(level, it, ribbit.id, now)
         }
@@ -187,10 +189,18 @@ object FarmerAi {
         return Jobs(harvest, till, plantTarget, water)
     }
 
-    /** Одна грядка, пока не посадит: иначе цель прыгает каждый тик и путь собирается заново. */
-    private fun stick(id: Int, nearest: BlockPos?, still: (BlockPos) -> Boolean): BlockPos? {
+    /** Держит одну дальнюю грядку, но если рядом уже есть пустая — сажает её сразу. */
+    private fun stick(level: ServerLevel, ribbit: RibbitEntity, nearest: BlockPos?, still: (BlockPos) -> Boolean): BlockPos? {
+        val id = ribbit.id
+        val now = level.gameTime
         val locked = plantLocks[id]
-        if (locked != null && still(locked)) return locked
+        if (locked != null && still(locked) && !isBanned(id, locked, now)) {
+            if (nearest != null && ribbit.distanceToSqr(nearest.x + 0.5, nearest.y.toDouble(), nearest.z + 0.5) <= ModConfig.WORK_REACH_SQ) {
+                plantLocks[id] = nearest
+                return nearest
+            }
+            return locked
+        }
         if (nearest != null) plantLocks[id] = nearest else plantLocks.remove(id)
         return nearest
     }
@@ -232,7 +242,7 @@ object FarmerAi {
         val pocket = RibbitBags.find(data, ProfessionKind.FARMER) { CropSupport.plantableBlock(it) != null }
         if (pocket.isEmpty) {
             val chest = data.containerPos ?: return
-            if (!walkTo(level, ribbit, chest, Math.sqrt(ModConfig.CONTAINER_REACH_SQ), 1.15, false)) return
+            if (!walkTo(level, ribbit, chest, Math.sqrt(ModConfig.CONTAINER_REACH_SQ), 1.2, false)) return
             LookAt.block(ribbit, chest, 0.5)
             ContainerSupport.openBriefly(level, chest)
             var grabbed = 0
@@ -277,13 +287,60 @@ object FarmerAi {
 
     private fun deposit(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
+        if (data.containerPos == null || !ContainerSupport.isStorage(level, data.containerPos!!)) {
+            data.containerPos = WorldScan.nearestContainer(level, ribbit.blockPosition(), ServerConfig.scanRadius())
+        }
         val pos = data.containerPos ?: return
-        if (!walkTo(level, ribbit, pos, Math.sqrt(ModConfig.CONTAINER_REACH_SQ), 1.15, false)) return
+        if (!walkTo(level, ribbit, pos, Math.sqrt(ModConfig.CONTAINER_REACH_SQ), 1.2, false)) return
         LookAt.block(ribbit, pos, 0.5)
         ContainerSupport.openBriefly(level, pos)
-        val leftover = ContainerSupport.insertAll(level, pos, RibbitBags.extractAll(data, ProfessionKind.FARMER))
+        val cargo = takeProduce(data)
+        val dumping = if (cargo.isNotEmpty()) cargo else RibbitBags.extractAll(data, ProfessionKind.FARMER)
+        val leftover = ContainerSupport.insertAll(level, pos, dumping)
         leftover.forEach { RibbitBags.insert(data, ProfessionKind.FARMER, it) }
         data.taskTicks = FarmerTaskPlanner.MIN_TASK_TICKS + FarmerTaskPlanner.SWITCH_COOLDOWN_TICKS
+    }
+
+    /** Пшеница и прочий урожай, не семена. Семена одного вида оставляет до стака. */
+    private fun hasProduce(data: com.reallyusefulribbits.mod.attach.RibbitWorkData): Boolean {
+        val kept = HashMap<Item, Int>()
+        val used = data.usedSlots(ProfessionKind.FARMER)
+        for (i in 0 until used) {
+            val stack = data.items[i]
+            if (stack.isEmpty) continue
+            if (CropSupport.plantableBlock(stack) == null) return true
+            val already = kept.getOrDefault(stack.item, 0)
+            if (already + stack.count > 64) return true
+            kept[stack.item] = already + stack.count
+        }
+        return false
+    }
+
+    private fun takeProduce(data: com.reallyusefulribbits.mod.attach.RibbitWorkData): List<ItemStack> {
+        val kept = HashMap<Item, Int>()
+        val out = ArrayList<ItemStack>()
+        val used = data.usedSlots(ProfessionKind.FARMER)
+        for (i in 0 until used) {
+            val stack = data.items[i]
+            if (stack.isEmpty) continue
+            if (CropSupport.plantableBlock(stack) == null) {
+                out += stack.copy()
+                data.items[i] = ItemStack.EMPTY
+                continue
+            }
+            val already = kept.getOrDefault(stack.item, 0)
+            val room = (64 - already).coerceAtLeast(0)
+            if (stack.count <= room) {
+                kept[stack.item] = already + stack.count
+                continue
+            }
+            val extra = stack.copy()
+            extra.count = stack.count - room
+            out += extra
+            if (room <= 0) data.items[i] = ItemStack.EMPTY else stack.count = room
+            kept[stack.item] = already + room
+        }
+        return out
     }
 
     private fun hasPlantable(level: ServerLevel, ribbit: RibbitEntity): Boolean {
@@ -302,30 +359,56 @@ object FarmerAi {
         ribbit: RibbitEntity,
         pos: BlockPos,
         reach: Double = Math.sqrt(ModConfig.WORK_REACH_SQ),
-        speed: Double = 1.15,
+        speed: Double = 1.2,
         allowStuckArrive: Boolean = false,
     ): Boolean {
         val target = Vec3(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
         if (ribbit.distanceToSqr(target) <= reach * reach) {
             ribbit.navigation.stop()
             ribbit.work().navStuck = 0
-            applied.remove(ribbit.id)
+            hikes.remove(ribbit.id)
             return true
         }
-        val previous = carried[ribbit.id]
-        val order = if (previous != null && previous.work == pos.asLong()) {
-            previous.copy(speed = speed)
-        } else {
-            val spot = standSpot(level, ribbit, pos, reach)
-            WalkOrder(pos.asLong(), spot.x, spot.y, spot.z, speed)
+        val nav = ribbit.navigation
+        val hike = hikes[ribbit.id]
+        if (hike != null && hike.work == pos.asLong()) {
+            val moved = ribbit.distanceToSqr(hike.lastX, ribbit.y, hike.lastZ) > 0.002
+            hike.lastX = ribbit.x
+            hike.lastZ = ribbit.z
+            if (moved) hike.still = 0 else hike.still++
+            if (hike.still >= 30) {
+                ban(ribbit.id, pos, level.gameTime + 100)
+                if (plantLocks[ribbit.id] == pos) plantLocks.remove(ribbit.id)
+                hikes.remove(ribbit.id)
+                nav.stop()
+                return false
+            }
+            if (nav.isInProgress) return false
         }
-        walks[ribbit.id] = order
-        ribbit.work().navStuck++
-        if (allowStuckArrive && ribbit.work().navStuck > 80 && ribbit.distanceToSqr(target) < 4.0) {
+        val spot = standSpot(level, ribbit, pos, reach)
+        nav.moveTo(spot.x, spot.y, spot.z, speed)
+        val still = if (hike != null && hike.work == pos.asLong()) hike.still else 0
+        hikes[ribbit.id] = Hike(pos.asLong(), ribbit.x, ribbit.z, still)
+        ribbit.work().navStuck = still
+        if (allowStuckArrive && still > 80 && ribbit.distanceToSqr(target) < 4.0) {
             ribbit.work().navStuck = 0
             return true
         }
         return false
+    }
+
+    private fun ban(id: Int, pos: BlockPos, until: Long) {
+        bans.getOrPut(id) { HashMap() }[pos.asLong()] = until
+    }
+
+    private fun isBanned(id: Int, pos: BlockPos, now: Long): Boolean {
+        val table = bans[id] ?: return false
+        val until = table[pos.asLong()] ?: return false
+        if (now >= until) {
+            table.remove(pos.asLong())
+            return false
+        }
+        return true
     }
 
     /** Ноги в воздухе над блоком или на соседней клетке, а не внутри пашни. */
@@ -370,12 +453,11 @@ object FarmerAi {
         return !groundState.getCollisionShape(level, ground).isEmpty || CropSupport.isFarmBlock(level, ground)
     }
 
-    private data class WalkOrder(
+    private data class Hike(
         val work: Long,
-        val x: Double,
-        val y: Double,
-        val z: Double,
-        val speed: Double,
+        var lastX: Double,
+        var lastZ: Double,
+        var still: Int,
     )
 }
 
@@ -384,17 +466,21 @@ private class FarmerWorkGoal(private val ribbit: RibbitEntity) : Goal() {
         setFlags(EnumSet.of(Flag.MOVE))
     }
 
-    override fun canUse(): Boolean = walking()
+    override fun canUse(): Boolean = working()
 
-    override fun canContinueToUse(): Boolean = walking()
+    override fun canContinueToUse(): Boolean = working()
 
     override fun tick() {
-        FarmerAi.follow(ribbit)
+        FarmerAi.drive(ribbit)
     }
 
-    private fun walking(): Boolean {
+    override fun stop() {
+        ribbit.navigation.stop()
+    }
+
+    private fun working(): Boolean {
         if (ribbit.professionKind() != ProfessionKind.FARMER) return false
         if (ribbit.work().fleeTicks > 0) return false
-        return FarmerAi.hasWalk(ribbit)
+        return FarmerAi.isBusy(ribbit)
     }
 }
