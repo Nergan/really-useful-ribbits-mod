@@ -20,7 +20,7 @@ object ModConfig {
     const val SORCERER_CLICK_COOLDOWN: Int = 30
     const val MAX_HIGHLIGHT_BLOCKS: Int = 1024
     const val BERRY_REACH: Double = 2.75
-    const val WORK_REACH_SQ: Double = 2.6
+    const val WORK_REACH_SQ: Double = 4.0
     const val FISHER_SIT_REACH_SQ: Double = 4.0
     const val FISHER_DEPOSIT_REACH_SQ: Double = 1.0
     const val FISHER_STUCK_TICKS: Int = 100

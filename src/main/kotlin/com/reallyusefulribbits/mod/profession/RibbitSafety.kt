@@ -22,6 +22,7 @@ object RibbitSafety {
             merchantSpeed(ribbit)
         }
         FishermanAi.ensureHaulGoal(ribbit)
+        FarmerAi.ensureWorkGoal(ribbit)
         val data = ribbit.work()
         if (data.goalsReady) return
         data.goalsReady = true
