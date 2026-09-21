@@ -7,8 +7,9 @@ data class LogicSlot(
 )
 
 object InventoryRules {
-    const val FISHER_SLOTS = 1
+    const val FISHER_SLOTS = 4
     const val FISHER_STACK = 4
+    const val FISHER_CARRY = 4
     const val FARMER_SLOTS = 4
     const val FARMER_STACK = 64
     const val MERCHANT_SLOTS = 27
@@ -35,22 +36,32 @@ object InventoryRules {
     fun maxForSlot(slotLimit: Int, itemMaxStack: Int): Int =
         if (itemMaxStack <= 1) 1 else slotLimit
 
-    fun isFull(slots: List<LogicSlot?>, slotLimit: Int): Boolean {
+    fun carried(slots: List<LogicSlot?>): Int = slots.sumOf { it?.count ?: 0 }
+
+    fun isFull(slots: List<LogicSlot?>, slotLimit: Int, carryLimit: Int? = null): Boolean {
+        if (carryLimit != null) return carried(slots) >= carryLimit
         if (slots.any { it == null }) return false
         return slots.all { slot ->
             slot != null && slot.count >= maxForSlot(slotLimit, slot.itemMaxStack)
         }
     }
 
-    fun canInsert(slots: List<LogicSlot?>, slotLimit: Int, incoming: LogicSlot): Boolean {
+    fun canInsert(
+        slots: List<LogicSlot?>,
+        slotLimit: Int,
+        incoming: LogicSlot,
+        carryLimit: Int? = null,
+    ): Boolean {
         if (incoming.count <= 0) return true
-        var remaining = incoming.count
+        val room = if (carryLimit == null) incoming.count else carryLimit - carried(slots)
+        if (room <= 0) return false
+        var remaining = minOf(incoming.count, room)
         val copies = slots.toMutableList()
         for (i in copies.indices) {
             val slot = copies[i] ?: continue
             if (slot.itemId != incoming.itemId) continue
-            val room = maxForSlot(slotLimit, incoming.itemMaxStack) - slot.count
-            if (room > 0) remaining -= room
+            val space = maxForSlot(slotLimit, incoming.itemMaxStack) - slot.count
+            if (space > 0) remaining -= space
             if (remaining <= 0) return true
         }
         val empty = copies.count { it == null }
@@ -58,9 +69,22 @@ object InventoryRules {
         return remaining <= empty * perEmpty
     }
 
-    fun insert(slots: MutableList<LogicSlot?>, slotLimit: Int, incoming: LogicSlot): LogicSlot? {
+    fun insert(
+        slots: MutableList<LogicSlot?>,
+        slotLimit: Int,
+        incoming: LogicSlot,
+        carryLimit: Int? = null,
+    ): LogicSlot? {
         if (incoming.count <= 0) return null
-        var remaining = incoming.count
+        val budget = if (carryLimit == null) {
+            incoming.count
+        } else {
+            (carryLimit - carried(slots)).coerceAtLeast(0)
+        }
+        if (budget <= 0) return incoming
+        val accepted = minOf(incoming.count, budget)
+        val heldBack = incoming.count - accepted
+        var remaining = accepted
         for (i in slots.indices) {
             val slot = slots[i] ?: continue
             if (slot.itemId != incoming.itemId) continue
@@ -70,17 +94,20 @@ object InventoryRules {
             val moved = minOf(room, remaining)
             slots[i] = slot.copy(count = slot.count + moved)
             remaining -= moved
-            if (remaining <= 0) return null
+            if (remaining <= 0) break
         }
-        for (i in slots.indices) {
-            if (slots[i] != null) continue
-            val max = maxForSlot(slotLimit, incoming.itemMaxStack)
-            val moved = minOf(max, remaining)
-            slots[i] = incoming.copy(count = moved)
-            remaining -= moved
-            if (remaining <= 0) return null
+        if (remaining > 0) {
+            for (i in slots.indices) {
+                if (slots[i] != null) continue
+                val max = maxForSlot(slotLimit, incoming.itemMaxStack)
+                val moved = minOf(max, remaining)
+                slots[i] = incoming.copy(count = moved)
+                remaining -= moved
+                if (remaining <= 0) break
+            }
         }
-        return incoming.copy(count = remaining)
+        val leftover = remaining + heldBack
+        return if (leftover <= 0) null else incoming.copy(count = leftover)
     }
 
     fun extractAll(slots: MutableList<LogicSlot?>): List<LogicSlot> {

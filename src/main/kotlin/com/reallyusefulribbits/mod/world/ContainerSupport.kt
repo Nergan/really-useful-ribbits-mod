@@ -10,6 +10,8 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.Container
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.inventory.InventoryMenu
+import net.minecraft.core.component.DataComponents
+import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.BarrelBlock
@@ -55,12 +57,48 @@ object ContainerSupport {
 
     fun insertAll(level: Level, pos: BlockPos, stacks: List<ItemStack>): List<ItemStack> {
         val itemHandler = handler(level, pos) ?: return stacks
+        val normalized = stacks.map { stripCarryCap(it.copy()) }.filter { !it.isEmpty }
         val leftover = ArrayList<ItemStack>()
-        for (stack in stacks) {
+        val seen = HashSet<Item>()
+        for (stack in normalized) {
+            if (!seen.add(stack.item)) continue
+            leftover += restackLimited(itemHandler, stack.item)
+        }
+        for (stack in normalized) {
             val rest = ItemHandlerHelper.insertItemStacked(itemHandler, stack, false)
             if (!rest.isEmpty) leftover += rest
         }
         return leftover
+    }
+
+    /** Старые стопки с урезанным лимитом (по 4) снова складываются до обычного размера. */
+    private fun restackLimited(handler: IItemHandler, item: Item): List<ItemStack> {
+        val gathered = ArrayList<ItemStack>()
+        for (slot in 0 until handler.slots) {
+            val peek = handler.getStackInSlot(slot)
+            if (peek.isEmpty || !peek.`is`(item) || !peek.has(DataComponents.MAX_STACK_SIZE)) continue
+            val forced = peek.get(DataComponents.MAX_STACK_SIZE) ?: continue
+            if (forced >= item.defaultMaxStackSize) continue
+            val taken = handler.extractItem(slot, peek.count, false)
+            if (!taken.isEmpty) gathered += stripCarryCap(taken)
+        }
+        val left = ArrayList<ItemStack>()
+        for (stack in gathered) {
+            val rest = ItemHandlerHelper.insertItemStacked(handler, stack, false)
+            if (!rest.isEmpty) left += rest
+        }
+        return left
+    }
+
+    private fun stripCarryCap(stack: ItemStack): ItemStack {
+        if (stack.isEmpty || !stack.has(DataComponents.MAX_STACK_SIZE)) return stack
+        val forced = stack.get(DataComponents.MAX_STACK_SIZE) ?: return stack
+        val vanilla = stack.item.defaultMaxStackSize
+        if (forced > vanilla || stack.count > vanilla) return stack
+        val count = stack.count
+        stack.remove(DataComponents.MAX_STACK_SIZE)
+        stack.count = count
+        return stack
     }
 
     fun extractMatching(level: Level, pos: BlockPos, test: (ItemStack) -> Boolean, count: Int): ItemStack {

@@ -21,6 +21,7 @@ object RibbitSafety {
         if (ribbit.professionKind() == ProfessionKind.MERCHANT) {
             merchantSpeed(ribbit)
         }
+        FishermanAi.ensureHaulGoal(ribbit)
         val data = ribbit.work()
         if (data.goalsReady) return
         data.goalsReady = true

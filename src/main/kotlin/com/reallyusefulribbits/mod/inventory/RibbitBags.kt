@@ -9,6 +9,9 @@ import net.minecraft.world.item.ItemStack
 object RibbitBags {
     fun isFull(data: RibbitWorkData, kind: ProfessionKind): Boolean {
         val used = data.usedSlots(kind)
+        if (kind == ProfessionKind.FISHERMAN) {
+            return carriedCount(data, used) >= data.slotLimit(kind)
+        }
         val limit = data.slotLimit(kind)
         for (i in 0 until used) {
             val stack = data.items[i]
@@ -19,6 +22,15 @@ object RibbitBags {
         return used > 0
     }
 
+    fun carriedCount(data: RibbitWorkData, used: Int): Int {
+        var total = 0
+        for (i in 0 until used) {
+            val stack = data.items[i]
+            if (!stack.isEmpty) total += stack.count
+        }
+        return total
+    }
+
     fun hasItems(data: RibbitWorkData, kind: ProfessionKind): Boolean {
         val used = data.usedSlots(kind)
         return (0 until used).any { !data.items[it].isEmpty }
@@ -26,10 +38,21 @@ object RibbitBags {
 
     fun insert(data: RibbitWorkData, kind: ProfessionKind, incoming: ItemStack): ItemStack {
         if (incoming.isEmpty) return ItemStack.EMPTY
-        data.applyLimit(incoming, kind)
         val used = data.usedSlots(kind)
+        for (i in 0 until used) data.releaseCarryCap(data.items[i])
         val limit = data.slotLimit(kind)
-        var remaining = incoming.copy()
+        val budget = if (kind == ProfessionKind.FISHERMAN) {
+            (limit - carriedCount(data, used)).coerceAtLeast(0)
+        } else {
+            incoming.count
+        }
+        if (budget <= 0) return incoming
+        val accepted = minOf(incoming.count, budget)
+        val heldBack = incoming.count - accepted
+        val piece = incoming.copy()
+        piece.count = accepted
+        data.applyLimit(piece, kind)
+        var remaining = piece.copy()
         for (i in 0 until used) {
             val slot = data.items[i]
             if (slot.isEmpty || !ItemStack.isSameItemSameComponents(slot, remaining)) continue
@@ -39,7 +62,7 @@ object RibbitBags {
             val moved = minOf(room, remaining.count)
             slot.grow(moved)
             remaining.shrink(moved)
-            if (remaining.isEmpty) return ItemStack.EMPTY
+            if (remaining.isEmpty) return unplaced(incoming, heldBack)
         }
         for (i in 0 until used) {
             if (!data.items[i].isEmpty) continue
@@ -53,10 +76,19 @@ object RibbitBags {
                 data.items[i] = placed
             } else {
                 data.items[i] = placed
-                return ItemStack.EMPTY
+                return unplaced(incoming, heldBack)
             }
         }
+        if (heldBack > 0 && !remaining.isEmpty) remaining.grow(heldBack)
+        if (remaining.isEmpty) return unplaced(incoming, heldBack)
         return remaining
+    }
+
+    private fun unplaced(incoming: ItemStack, count: Int): ItemStack {
+        if (count <= 0) return ItemStack.EMPTY
+        val out = incoming.copy()
+        out.count = count
+        return out
     }
 
     fun extractAll(data: RibbitWorkData, kind: ProfessionKind): List<ItemStack> {

@@ -7,24 +7,36 @@ import com.reallyusefulribbits.mod.inventory.RibbitBags
 import com.reallyusefulribbits.mod.logic.FishingTiming
 import com.reallyusefulribbits.mod.logic.ProfessionKind
 import com.reallyusefulribbits.mod.util.LookAt
+import com.reallyusefulribbits.mod.util.professionKind
 import com.reallyusefulribbits.mod.util.work
 import com.reallyusefulribbits.mod.world.ContainerSupport
 import com.reallyusefulribbits.mod.world.WorldScan
 import com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 import net.minecraft.core.particles.ParticleTypes
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
+import net.minecraft.world.entity.item.ItemEntity
+import net.minecraft.world.entity.ai.goal.Goal
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.storage.loot.BuiltInLootTables
+import java.util.EnumSet
 import net.minecraft.world.level.storage.loot.LootParams
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams
 import net.minecraft.world.phys.Vec3
 
 object FishermanAi {
+    fun ensureHaulGoal(ribbit: RibbitEntity) {
+        if (ribbit.professionKind() != ProfessionKind.FISHERMAN) return
+        val present = ribbit.goalSelector.availableGoals.any { it.goal is FisherHaulGoal }
+        if (present) return
+        ribbit.goalSelector.addGoal(0, FisherHaulGoal(ribbit))
+    }
+
     fun tick(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
         val radius = ServerConfig.scanRadius()
@@ -39,10 +51,13 @@ object FishermanAi {
             }
         }
 
-        if (RibbitBags.isFull(data, ProfessionKind.FISHERMAN) && data.containerPos != null) {
+        if (RibbitBags.isFull(data, ProfessionKind.FISHERMAN)) {
             ribbit.setFishing(false)
             data.fishingActive = false
-            goDeposit(level, ribbit)
+            if (data.containerPos == null || !ContainerSupport.isStorage(level, data.containerPos!!)) {
+                data.containerPos = WorldScan.nearestContainer(level, ribbit.blockPosition(), radius)
+            }
+            if (data.containerPos != null) goDeposit(level, ribbit)
             return
         }
 
@@ -133,7 +148,15 @@ object FishermanAi {
         val data = ribbit.work()
         val loot = rollLoot(level, ribbit, Vec3(data.bobberX, data.bobberY, data.bobberZ))
         for (stack in loot) {
-            RibbitBags.insert(data, ProfessionKind.FISHERMAN, stack)
+            val leftover = RibbitBags.insert(data, ProfessionKind.FISHERMAN, stack)
+            if (!leftover.isEmpty) {
+                val drop = ItemEntity(level, ribbit.x, ribbit.y + 0.2, ribbit.z, leftover)
+                drop.setPickUpDelay(20)
+                level.addFreshEntity(drop)
+            }
+        }
+        if (RibbitBags.isFull(data, ProfessionKind.FISHERMAN)) {
+            ribbit.setFishing(false)
         }
         level.sendParticles(ParticleTypes.HAPPY_VILLAGER, ribbit.x, ribbit.y + 0.8, ribbit.z, 8, 0.3, 0.3, 0.3, 0.02)
         level.sendParticles(ParticleTypes.BUBBLE, data.bobberX, data.bobberY, data.bobberZ, 10, 0.15, 0.1, 0.15, 0.03)
@@ -160,15 +183,45 @@ object FishermanAi {
     private fun goDeposit(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
         val pos = data.containerPos ?: return
-        val target = Vec3(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
-        if (ribbit.distanceToSqr(target) > ModConfig.CONTAINER_REACH_SQ) {
-            ribbit.navigation.moveTo(target.x, target.y, target.z, 1.05)
+        LookAt.block(ribbit, pos, 0.5)
+        val stand = standNear(level, pos, ribbit)
+        val arrived = if (stand != null) {
+            ribbit.distanceToSqr(stand) <= ModConfig.FISHER_DEPOSIT_REACH_SQ
+        } else {
+            val center = Vec3(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
+            ribbit.distanceToSqr(center) <= ModConfig.CONTAINER_REACH_SQ
+        }
+        if (!arrived) {
+            val goal = stand ?: Vec3(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
+            ribbit.navigation.moveTo(goal.x, goal.y, goal.z, 1.05)
             return
         }
         ribbit.navigation.stop()
+        LookAt.block(ribbit, pos, 0.5)
         ContainerSupport.openBriefly(level, pos)
         val leftover = ContainerSupport.insertAll(level, pos, RibbitBags.extractAll(data, ProfessionKind.FISHERMAN))
         leftover.forEach { RibbitBags.insert(data, ProfessionKind.FISHERMAN, it) }
+    }
+
+    private fun standNear(level: ServerLevel, container: BlockPos, ribbit: RibbitEntity): Vec3? {
+        var best: Vec3? = null
+        var bestDist = Double.MAX_VALUE
+        for (dir in Direction.Plane.HORIZONTAL) {
+            val side = container.relative(dir)
+            for (feet in listOf(side, side.above())) {
+                if (!level.getBlockState(feet).isAir) continue
+                if (!level.getFluidState(feet).isEmpty) continue
+                val ground = feet.below()
+                if (!canStandOn(level, ground)) continue
+                val spot = Vec3(feet.x + 0.5, feet.y.toDouble(), feet.z + 0.5)
+                val dist = ribbit.distanceToSqr(spot)
+                if (dist < bestDist) {
+                    bestDist = dist
+                    best = spot
+                }
+            }
+        }
+        return best
     }
 
     private fun isWater(level: ServerLevel, pos: BlockPos): Boolean =
@@ -201,5 +254,37 @@ object FishermanAi {
         val feet = ground.above()
         if (!level.getFluidState(feet).isEmpty) return false
         return level.getBlockState(feet).isAir
+    }
+
+    fun haul(level: ServerLevel, ribbit: RibbitEntity) {
+        ribbit.setFishing(false)
+        ribbit.work().fishingActive = false
+        goDeposit(level, ribbit)
+    }
+}
+
+private class FisherHaulGoal(private val ribbit: RibbitEntity) : Goal() {
+    init {
+        setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK))
+    }
+
+    override fun canUse(): Boolean = hauling()
+
+    override fun canContinueToUse(): Boolean = hauling()
+
+    override fun start() {
+        ribbit.setFishing(false)
+        ribbit.work().fishingActive = false
+    }
+
+    override fun tick() {
+        val level = ribbit.level() as? ServerLevel ?: return
+        FishermanAi.haul(level, ribbit)
+    }
+
+    private fun hauling(): Boolean {
+        if (ribbit.professionKind() != ProfessionKind.FISHERMAN) return false
+        val data = ribbit.work()
+        return RibbitBags.isFull(data, ProfessionKind.FISHERMAN) && data.containerPos != null
     }
 }
