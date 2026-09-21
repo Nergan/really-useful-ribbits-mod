@@ -13,6 +13,8 @@ import net.minecraft.tags.ItemTags
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.item.BlockItem
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.Items
+import net.minecraft.world.level.block.LevelEvent
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.AttachedStemBlock
 import net.minecraft.world.level.block.Block
@@ -102,6 +104,27 @@ object CropSupport {
         level.setBlock(soil.above(), block.defaultBlockState(), Block.UPDATE_ALL)
         stack.shrink(1)
         level.playSound(null, soil, SoundEvents.CROP_PLANTED, SoundSource.BLOCKS, 1f, 1f)
+        return true
+    }
+
+    fun canBonemeal(level: Level, pos: BlockPos): Boolean {
+        val state = level.getBlockState(pos)
+        val block = state.block as? BonemealableBlock ?: return false
+        if (!block.isValidBonemealTarget(level, pos, state)) return false
+        if (block is CropBlock || block is StemBlock) return true
+        if (state.`is`(BlockTags.CROPS)) return true
+        return isCaveVine(state) && !CaveVines.hasGlowBerries(state)
+    }
+
+    fun applyBonemeal(level: ServerLevel, pos: BlockPos, stack: ItemStack): Boolean {
+        if (!stack.`is`(Items.BONE_MEAL) || !canBonemeal(level, pos)) return false
+        val state = level.getBlockState(pos)
+        val block = state.block as BonemealableBlock
+        if (block.isBonemealSuccess(level, level.random, pos, state)) {
+            block.performBonemeal(level, level.random, pos, state)
+        }
+        stack.shrink(1)
+        level.levelEvent(LevelEvent.PARTICLES_AND_SOUND_PLANT_GROWTH, pos, 0)
         return true
     }
 
@@ -243,8 +266,8 @@ object CropSupport {
         if (block is StemBlock || block is AttachedStemBlock) return false
         if (state.`is`(Blocks.MELON) || state.`is`(Blocks.PUMPKIN)) return true
         val path = BuiltInRegistries.BLOCK.getKey(block).path
-        if (path.contains("stem")) return false
-        return path.contains("melon") || path.contains("pumpkin")
+        if (path.contains("stem") || path.contains("carved") || path.contains("lantern") || path.contains("pie")) return false
+        return path.endsWith("melon") || path.endsWith("pumpkin")
     }
 
     private fun maybeGrowGlowBerries(level: ServerLevel, pos: BlockPos) {

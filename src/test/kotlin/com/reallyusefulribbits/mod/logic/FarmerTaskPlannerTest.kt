@@ -134,4 +134,24 @@ class FarmerTaskPlannerTest {
         )
         assertEquals(FarmerTask.HARVEST, FarmerTaskPlanner.next(view))
     }
+
+    @Test
+    @DisplayName("Костная мука важнее полива, но не посадки")
+    fun bonemealBetweenPlantAndWater() {
+        val grow = FarmerWorldView(
+            inventoryFull = false,
+            inventoryHasItems = true,
+            hasProduce = false,
+            hasMatureCrop = false,
+            hasTillable = true,
+            hasEmptyFarmland = false,
+            hasPlantable = false,
+            hasImmatureCrop = true,
+            hasBonemeal = true,
+            hasBonemealTarget = true,
+        )
+        assertEquals(FarmerTask.BONEMEAL, FarmerTaskPlanner.next(grow))
+        val plant = grow.copy(hasEmptyFarmland = true, hasPlantable = true)
+        assertEquals(FarmerTask.PLANT, FarmerTaskPlanner.next(plant))
+    }
 }

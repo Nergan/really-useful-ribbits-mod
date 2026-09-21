@@ -5,6 +5,7 @@ enum class FarmerTask {
     HARVEST,
     TILL,
     PLANT,
+    BONEMEAL,
     WATER,
     IDLE,
 }
@@ -18,6 +19,8 @@ data class FarmerWorldView(
     val hasEmptyFarmland: Boolean,
     val hasPlantable: Boolean,
     val hasImmatureCrop: Boolean,
+    val hasBonemeal: Boolean = false,
+    val hasBonemealTarget: Boolean = false,
 )
 
 object FarmerTaskPlanner {
@@ -29,6 +32,7 @@ object FarmerTaskPlanner {
         if (view.hasMatureCrop) return FarmerTask.HARVEST
         if (view.hasProduce) return FarmerTask.DEPOSIT
         if (view.hasEmptyFarmland && view.hasPlantable) return FarmerTask.PLANT
+        if (view.hasBonemeal && view.hasBonemealTarget) return FarmerTask.BONEMEAL
         if (view.inventoryHasItems) return FarmerTask.DEPOSIT
         if (view.hasImmatureCrop) return FarmerTask.WATER
         if (view.hasTillable) return FarmerTask.TILL
@@ -43,10 +47,11 @@ object FarmerTaskPlanner {
         if (current == FarmerTask.IDLE) return false
         val stillValid = when (current) {
             FarmerTask.DEPOSIT -> view.hasProduce || view.inventoryFull ||
-                (view.inventoryHasItems && !view.hasEmptyFarmland && !view.hasMatureCrop)
+                (view.inventoryHasItems && !view.hasEmptyFarmland && !view.hasMatureCrop && !view.hasBonemealTarget)
             FarmerTask.HARVEST -> view.hasMatureCrop
             FarmerTask.TILL -> view.hasTillable
             FarmerTask.PLANT -> view.hasEmptyFarmland && view.hasPlantable && !view.hasProduce
+            FarmerTask.BONEMEAL -> view.hasBonemeal && view.hasBonemealTarget
             FarmerTask.WATER -> view.hasImmatureCrop
             FarmerTask.IDLE -> false
         }
@@ -61,8 +66,9 @@ object FarmerTaskPlanner {
         FarmerTask.DEPOSIT -> 0
         FarmerTask.HARVEST -> 1
         FarmerTask.PLANT -> 2
-        FarmerTask.WATER -> 3
-        FarmerTask.TILL -> 4
-        FarmerTask.IDLE -> 5
+        FarmerTask.BONEMEAL -> 3
+        FarmerTask.WATER -> 4
+        FarmerTask.TILL -> 5
+        FarmerTask.IDLE -> 6
     }
 }

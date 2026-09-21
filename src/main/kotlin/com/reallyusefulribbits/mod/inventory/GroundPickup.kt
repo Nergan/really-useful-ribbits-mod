@@ -69,7 +69,8 @@ object GroundPickup {
             item == Items.SUGAR_CANE ||
             item == Items.GLOW_BERRIES ||
             item == Items.TORCHFLOWER_SEEDS ||
-            item == Items.PITCHER_POD
+            item == Items.PITCHER_POD ||
+            item == Items.BONE_MEAL
     }
 
     fun isFisherLoot(stack: ItemStack): Boolean {
