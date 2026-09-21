@@ -1,0 +1,23 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:ender_eye"
+    },
+    "title": {
+      "translate": "advancements.reallyusefulribbits.ghost.title"
+    },
+    "description": {
+      "translate": "advancements.reallyusefulribbits.ghost.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "became_ghost": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

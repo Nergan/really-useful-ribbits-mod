@@ -1,0 +1,23 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:enchanted_golden_apple"
+    },
+    "title": {
+      "translate": "advancements.reallyusefulribbits.get_it_off.title"
+    },
+    "description": {
+      "translate": "advancements.reallyusefulribbits.get_it_off.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "used_apple": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}
