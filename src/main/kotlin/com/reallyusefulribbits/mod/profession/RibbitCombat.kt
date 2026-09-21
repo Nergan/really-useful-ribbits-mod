@@ -62,7 +62,7 @@ object RibbitCombat {
         attr.removeModifier(FLEE_SPEED)
         if (on) {
             attr.addTransientModifier(
-                AttributeModifier(FLEE_SPEED, 0.5, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
+                AttributeModifier(FLEE_SPEED, 0.75, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
             )
         }
     }

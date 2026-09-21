@@ -71,7 +71,7 @@
 
   "reallyusefulribbits.guide.entry.merchant": "The Merchant",
   "reallyusefulribbits.guide.page.merchant.1": "A merchant has 27 slots of 256. It starts with a few random goods plus 256 emeralds and 256 amethyst shards. It visits other traders and copies the items they sell, then builds up to twice as many amethyst sell offers as a typical stall — an average of the shops it has seen.",
-  "reallyusefulribbits.guide.page.merchant.2": "Happy villager stars appear when the stall refreshes. Glow particles follow it while it chases a player. Right-click opens its offers. Each item type appears only once. It always walks a little faster than other ribbits.",
+  "reallyusefulribbits.guide.page.merchant.2": "Happy villager stars appear when the stall refreshes. Glow particles follow it while it chases a player. Right-click opens its offers. Each item type appears only once. It always walks at 1.5× speed.",
 
   "reallyusefulribbits.guide.entry.sorcerer": "The Sorcerer",
   "reallyusefulribbits.guide.page.sorcerer.1": "Right-click a sorcerer with an $(item)amethyst shard$() — the shard is spent — and it looks at you, then rolls a spell that can actually happen. Growth, weather, a diamond rain, a safe dimension hop, lightning that does not hurt the frog, a fire ring, an invisible trip to a real structure, rare flight, 1–16 summoned mobs, or 1–8 tamed pets in random colors (modded pets included when they can be tamed).",

@@ -2,6 +2,7 @@ package com.reallyusefulribbits.mod.event
 
 import com.reallyusefulribbits.mod.profession.RibbitBrain
 import com.reallyusefulribbits.mod.util.DelayedTasks
+import com.reallyusefulribbits.mod.world.ContainerSupport
 import com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity
 import net.minecraft.server.level.ServerLevel
 import net.neoforged.bus.api.SubscribeEvent
@@ -19,5 +20,6 @@ object RibbitTickHandler {
     @SubscribeEvent
     fun onServerTick(event: ServerTickEvent.Post) {
         DelayedTasks.tick(event.server)
+        ContainerSupport.tick(event.server)
     }
 }

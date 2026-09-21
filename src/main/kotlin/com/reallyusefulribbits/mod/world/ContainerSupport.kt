@@ -1,17 +1,23 @@
 package com.reallyusefulribbits.mod.world
 
 import com.reallyusefulribbits.mod.config.ModConfig
-import com.reallyusefulribbits.mod.util.DelayedTasks
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.resources.ResourceKey
+import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.Container
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.inventory.InventoryMenu
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.BarrelBlock
 import net.minecraft.world.level.block.EnderChestBlock
 import net.minecraft.world.level.block.entity.BlockEntity
+import net.minecraft.world.level.block.entity.ContainerOpenersCounter
+import net.minecraft.world.phys.AABB
+import net.minecraft.world.phys.Vec3
 import net.neoforged.neoforge.capabilities.Capabilities
 import net.neoforged.neoforge.common.util.FakePlayerFactory
 import net.neoforged.neoforge.items.IItemHandler
@@ -19,6 +25,15 @@ import net.neoforged.neoforge.items.ItemHandlerHelper
 import net.neoforged.neoforge.items.wrapper.InvWrapper
 
 object ContainerSupport {
+    private data class OpenLid(
+        val dimension: ResourceKey<Level>,
+        val pos: BlockPos,
+        var until: Int,
+        val player: Player,
+    )
+
+    private val openLids = ArrayList<OpenLid>()
+
     fun isStorage(level: Level, pos: BlockPos): Boolean {
         val state = level.getBlockState(pos)
         if (state.block is EnderChestBlock) return false
@@ -71,11 +86,62 @@ object ContainerSupport {
     fun openBriefly(level: ServerLevel, pos: BlockPos, actor: Player? = null) {
         val be = level.getBlockEntity(pos) ?: return
         if (be !is Container) return
+        val existing = openLids.firstOrNull { it.dimension == level.dimension() && it.pos == pos }
+        if (existing != null) {
+            existing.until = level.server.tickCount + ModConfig.CONTAINER_OPEN_TICKS
+            return
+        }
         val player = actor ?: FakePlayerFactory.getMinecraft(level)
         be.startOpen(player)
-        DelayedTasks.later(level.server, ModConfig.CONTAINER_OPEN_TICKS) {
-            val later: BlockEntity = level.getBlockEntity(pos) ?: return@later
-            if (later is Container) later.stopOpen(player)
+        openLids += OpenLid(level.dimension(), pos, level.server.tickCount + ModConfig.CONTAINER_OPEN_TICKS, player)
+    }
+
+    fun tick(server: MinecraftServer) {
+        if (openLids.isEmpty()) return
+        val now = server.tickCount
+        val due = openLids.filter { it.until <= now }
+        openLids.removeAll(due.toSet())
+        for (lid in due) {
+            val level = server.getLevel(lid.dimension) ?: continue
+            val be = level.getBlockEntity(lid.pos)
+            if (be is Container) be.stopOpen(lid.player)
+            if (!playerIsUsing(level, lid.pos)) {
+                zeroOpenCount(be)
+                val state = level.getBlockState(lid.pos)
+                if (state.block is BarrelBlock && state.getValue(BarrelBlock.OPEN)) {
+                    level.setBlock(lid.pos, state.setValue(BarrelBlock.OPEN, false), 3)
+                }
+                level.blockEvent(lid.pos, state.block, 1, 0)
+            }
+        }
+    }
+
+    private fun playerIsUsing(level: ServerLevel, pos: BlockPos): Boolean {
+        val center = Vec3.atCenterOf(pos)
+        val box = AABB(center, center).inflate(8.0)
+        return level.getEntitiesOfClass(Player::class.java, box).any { player ->
+            player.containerMenu !is InventoryMenu
+        }
+    }
+
+    private fun zeroOpenCount(be: BlockEntity?) {
+        if (be == null) return
+        val counterField = be.javaClass.declaredFields.firstOrNull { field ->
+            ContainerOpenersCounter::class.java.isAssignableFrom(field.type)
+        } ?: return
+        counterField.isAccessible = true
+        val counter = counterField.get(be) ?: return
+        var type: Class<*>? = counter.javaClass
+        while (type != null) {
+            val count = type.declaredFields.firstOrNull { field ->
+                field.type == Int::class.javaPrimitiveType && !java.lang.reflect.Modifier.isStatic(field.modifiers)
+            }
+            if (count != null) {
+                count.isAccessible = true
+                count.setInt(counter, 0)
+                return
+            }
+            type = type.superclass
         }
     }
 

@@ -15,8 +15,12 @@ import net.minecraft.world.level.pathfinder.PathType
 
 object RibbitSafety {
     private val MERCHANT_SPEED = ResourceLocation.fromNamespaceAndPath(ReallyUsefulRibbitsMod.MOD_ID, "merchant_speed")
+    private const val MERCHANT_SPEED_BONUS = 0.5
 
     fun ensure(ribbit: RibbitEntity) {
+        if (ribbit.professionKind() == ProfessionKind.MERCHANT) {
+            merchantSpeed(ribbit)
+        }
         val data = ribbit.work()
         if (data.goalsReady) return
         data.goalsReady = true
@@ -24,14 +28,6 @@ object RibbitSafety {
         ribbit.setPathfindingMalus(PathType.DANGER_FIRE, 16f)
         ribbit.setPathfindingMalus(PathType.LAVA, 16f)
         ribbit.setPathfindingMalus(PathType.DAMAGE_OTHER, 8f)
-        if (ribbit.professionKind() == ProfessionKind.MERCHANT) {
-            val attr = ribbit.getAttribute(Attributes.MOVEMENT_SPEED)
-            if (attr != null && attr.getModifier(MERCHANT_SPEED) == null) {
-                attr.addPermanentModifier(
-                    AttributeModifier(MERCHANT_SPEED, 0.25, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
-                )
-            }
-        }
         if (ribbit.professionKind() == ProfessionKind.SORCERER) {
             ribbit.goalSelector.addGoal(
                 3,
@@ -43,5 +39,15 @@ object RibbitSafety {
                 ),
             )
         }
+    }
+
+    private fun merchantSpeed(ribbit: RibbitEntity) {
+        val attr = ribbit.getAttribute(Attributes.MOVEMENT_SPEED) ?: return
+        val current = attr.getModifier(MERCHANT_SPEED)
+        if (current != null && current.amount() == MERCHANT_SPEED_BONUS) return
+        attr.removeModifier(MERCHANT_SPEED)
+        attr.addPermanentModifier(
+            AttributeModifier(MERCHANT_SPEED, MERCHANT_SPEED_BONUS, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
+        )
     }
 }

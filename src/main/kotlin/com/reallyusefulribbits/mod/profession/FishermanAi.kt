@@ -51,20 +51,30 @@ object FishermanAi {
             ribbit.setFishing(false)
             return
         }
-        val shore = shorePos(level, water) ?: water
-        val shoreCenter = Vec3(shore.x + 0.5, shore.y + 1.0, shore.z + 0.5)
-        val waterCenter = Vec3(water.x + 0.5, shoreCenter.y, water.z + 0.5)
-        val towardWater = waterCenter.subtract(shoreCenter)
-        val sit = if (towardWater.lengthSqr() > 1.0e-6) {
-            waterCenter.add(shoreCenter.subtract(waterCenter).normalize().scale(0.32))
-        } else {
-            shoreCenter
-        }
-        LookAt.block(ribbit, water, 0.35)
-        if (ribbit.distanceToSqr(shoreCenter) > ModConfig.FISHER_SIT_REACH_SQ) {
+        val shore = shorePos(level, water)
+        if (shore == null) {
             ribbit.setFishing(false)
             data.fishingActive = false
-            ribbit.navigation.moveTo(shoreCenter.x, shoreCenter.y, shoreCenter.z, 1.0)
+            return
+        }
+        val stand = Vec3(shore.x + 0.5, shore.y + 1.0, shore.z + 0.5)
+        val waterCenter = Vec3(water.x + 0.5, stand.y, water.z + 0.5)
+        val towardWater = waterCenter.subtract(stand)
+        val sit = if (towardWater.lengthSqr() > 1.0e-6) {
+            val nudged = stand.add(towardWater.normalize().scale(0.35))
+            Vec3(
+                nudged.x.coerceIn(shore.x + 0.2, shore.x + 0.8),
+                stand.y,
+                nudged.z.coerceIn(shore.z + 0.2, shore.z + 0.8),
+            )
+        } else {
+            stand
+        }
+        LookAt.block(ribbit, water, 0.85)
+        if (ribbit.distanceToSqr(sit) > ModConfig.FISHER_SIT_REACH_SQ) {
+            ribbit.setFishing(false)
+            data.fishingActive = false
+            ribbit.navigation.moveTo(sit.x, sit.y, sit.z, 1.0)
             data.navStuck++
             if (data.navStuck >= ModConfig.FISHER_STUCK_TICKS) {
                 data.waterPos = null
@@ -77,7 +87,7 @@ object FishermanAi {
         ribbit.navigation.stop()
         ribbit.moveTo(sit.x, sit.y, sit.z, ribbit.yRot, ribbit.xRot)
         ribbit.setFishing(true)
-        LookAt.block(ribbit, water, 0.35)
+        LookAt.block(ribbit, water, 0.85)
         if (!data.fishingActive) {
             startSession(ribbit, water)
         }
@@ -165,13 +175,31 @@ object FishermanAi {
         !level.getFluidState(pos).isEmpty
 
     private fun shorePos(level: ServerLevel, water: BlockPos): BlockPos? {
+        var best: BlockPos? = null
+        var bestDist = Double.MAX_VALUE
         for (dx in -1..1) {
             for (dz in -1..1) {
                 if (dx == 0 && dz == 0) continue
-                val pos = water.offset(dx, 0, dz)
-                if (level.getFluidState(pos).isEmpty && level.getBlockState(pos.above()).isAir) return pos
+                for (dy in 0..1) {
+                    val ground = water.offset(dx, dy, dz)
+                    if (!canStandOn(level, ground)) continue
+                    val dist = ground.distSqr(water)
+                    if (dist < bestDist) {
+                        bestDist = dist
+                        best = ground
+                    }
+                }
             }
         }
-        return null
+        return best
+    }
+
+    private fun canStandOn(level: ServerLevel, ground: BlockPos): Boolean {
+        if (!level.getFluidState(ground).isEmpty) return false
+        val below = level.getBlockState(ground)
+        if (!below.isFaceSturdy(level, ground, net.minecraft.core.Direction.UP)) return false
+        val feet = ground.above()
+        if (!level.getFluidState(feet).isEmpty) return false
+        return level.getBlockState(feet).isAir
     }
 }
