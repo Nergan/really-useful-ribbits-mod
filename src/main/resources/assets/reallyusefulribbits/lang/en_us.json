@@ -78,6 +78,6 @@
   "reallyusefulribbits.guide.page.sorcerer.2": "Rarer rolls: a giant glowing phantom ($(thing)Foma, is that you?$()), an hour as a spectator ($(thing)This ghost will be kind, right?$()), a blast ten times larger that the frog itself ignores ($(thing)no magic today$()), or a rare morph ($(thing)hexed :($()) — only humanoid mobs can still place, break and open things. Anyone else can only feed the sorcerer an $(item)enchanted golden apple$(). That apple also follows the frog the same way an amethyst shard does, and strips every curse for $(thing)Get this off me!$(). Clicking empty-handed makes the frog angry. Chaos starts a bit higher. Endermen flee. Very rarely — a dragon and $(thing)You asked for it$().",
 
   "reallyusefulribbits.guide.entry.nitwit": "The Nitwit",
-  "reallyusefulribbits.guide.page.nitwit.1": "A nitwit does almost nothing, on purpose. Inside the scan radius it applies $(thing)Luck$() to whoever stands nearby. That is the entire job.",
-  "reallyusefulribbits.guide.page.nitwit.2": "It will not fish, farm, or trade. Walk it to a fishing hole or a raid if you want the luck there, then click it with a maraca to plant a new home."
+  "reallyusefulribbits.guide.page.nitwit.1": "A nitwit still applies $(thing)Luck$() inside the scan radius. It also picks up loot on the ground: it walks to the item and takes it. The bag is 27 slots of 64.",
+  "reallyusefulribbits.guide.page.nitwit.2": "Once it is carrying something, it sometimes walks up to a player and tosses the items the way a player drops them with $(thing)Q$(). It will not fish, farm, or trade. A maraca still sets its home."
 }

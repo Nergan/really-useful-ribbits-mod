@@ -10,6 +10,12 @@ object ModConfig {
     const val CONTAINER_REACH_SQ: Double = 3.24
     const val NITWIT_LUCK_INTERVAL: Int = 40
     const val NITWIT_LUCK_DURATION: Int = 80
+    const val NITWIT_GIFT_MIN_TICKS: Int = 160
+    const val NITWIT_GIFT_EXTRA_TICKS: Int = 240
+    const val NITWIT_TOSS_INTERVAL: Int = 6
+    const val NITWIT_PICKUP_REACH_SQ: Double = 2.56
+    const val NITWIT_PLAYER_REACH_SQ: Double = 9.0
+    const val NITWIT_GIFT_IGNORE_TICKS: Int = 200
     const val ENDERMAN_FLEE_INTERVAL: Int = 20
     const val SORCERER_CLICK_COOLDOWN: Int = 30
     const val MAX_HIGHLIGHT_BLOCKS: Int = 48

@@ -63,4 +63,11 @@ class InventoryRulesTest {
         InventoryRules.insert(slots, InventoryRules.MERCHANT_STACK, LogicSlot("minecraft:emerald", 256, 64))
         assertEquals(256, slots[0]!!.count)
     }
+
+    @Test
+    @DisplayName("Nitwit носит 27 слотов по 64")
+    fun nitwitBagSize() {
+        assertEquals(27, InventoryRules.slotCount(ProfessionKind.NITWIT))
+        assertEquals(64, InventoryRules.slotLimit(ProfessionKind.NITWIT))
+    }
 }

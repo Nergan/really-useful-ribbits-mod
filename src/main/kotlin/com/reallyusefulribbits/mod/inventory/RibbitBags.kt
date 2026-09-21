@@ -90,6 +90,17 @@ object RibbitBags {
         return true
     }
 
+    fun takeSlot(data: RibbitWorkData, kind: ProfessionKind): ItemStack? {
+        val used = data.usedSlots(kind)
+        for (i in 0 until used) {
+            val stack = data.items[i]
+            if (stack.isEmpty) continue
+            data.items[i] = ItemStack.EMPTY
+            return stack
+        }
+        return null
+    }
+
     fun takeOne(data: RibbitWorkData, kind: ProfessionKind, test: (ItemStack) -> Boolean): ItemStack {
         val used = data.usedSlots(kind)
         for (i in 0 until used) {

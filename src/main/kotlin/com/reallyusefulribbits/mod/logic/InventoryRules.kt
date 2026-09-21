@@ -13,11 +13,14 @@ object InventoryRules {
     const val FARMER_STACK = 64
     const val MERCHANT_SLOTS = 27
     const val MERCHANT_STACK = 256
+    const val NITWIT_SLOTS = 27
+    const val NITWIT_STACK = 64
 
     fun slotLimit(kind: ProfessionKind): Int = when (kind) {
         ProfessionKind.FISHERMAN -> FISHER_STACK
         ProfessionKind.FARMER -> FARMER_STACK
         ProfessionKind.MERCHANT -> MERCHANT_STACK
+        ProfessionKind.NITWIT -> NITWIT_STACK
         else -> 64
     }
 
@@ -25,6 +28,7 @@ object InventoryRules {
         ProfessionKind.FISHERMAN -> FISHER_SLOTS
         ProfessionKind.FARMER -> FARMER_SLOTS
         ProfessionKind.MERCHANT -> MERCHANT_SLOTS
+        ProfessionKind.NITWIT -> NITWIT_SLOTS
         else -> 0
     }
 

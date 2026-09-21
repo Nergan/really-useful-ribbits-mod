@@ -60,6 +60,7 @@ class RibbitWorkData {
         ProfessionKind.FISHERMAN -> 16
         ProfessionKind.FARMER -> 64
         ProfessionKind.MERCHANT -> 256
+        ProfessionKind.NITWIT -> 64
         else -> 64
     }
 
@@ -67,6 +68,7 @@ class RibbitWorkData {
         ProfessionKind.FISHERMAN -> 1
         ProfessionKind.FARMER -> 4
         ProfessionKind.MERCHANT -> 27
+        ProfessionKind.NITWIT -> 27
         else -> 0
     }
 
