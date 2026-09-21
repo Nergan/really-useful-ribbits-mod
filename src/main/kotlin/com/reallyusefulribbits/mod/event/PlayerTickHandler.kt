@@ -4,8 +4,6 @@ import com.reallyusefulribbits.mod.attach.ModAttachments
 import com.reallyusefulribbits.mod.morph.PlayerMorph
 import com.reallyusefulribbits.mod.morph.SorcererCurse
 import com.reallyusefulribbits.mod.network.PlayerVisualPayload
-import com.reallyusefulribbits.mod.ride.HeadRide
-import com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.damagesource.DamageTypes
 import net.minecraft.world.level.GameType
@@ -19,9 +17,6 @@ object PlayerTickHandler {
     @SubscribeEvent
     fun onPlayerTick(event: PlayerTickEvent.Post) {
         val player = event.entity
-        for (ribbit in player.passengers.filterIsInstance<RibbitEntity>()) {
-            HeadRide.holdOnHead(player, ribbit)
-        }
         if (player.level().isClientSide) return
         val serverPlayer = player as? ServerPlayer ?: return
         val visual = player.getData(ModAttachments.VISUAL.get())

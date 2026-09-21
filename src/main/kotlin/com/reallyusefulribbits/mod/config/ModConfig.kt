@@ -5,7 +5,9 @@ object ModConfig {
     const val BIND_SCAN_INTERVAL: Int = 80
     const val FARM_RESCAN_INTERVAL: Int = 200
     const val CONTAINER_OPEN_TICKS: Int = 20
-    const val WATERING_ANIM_TICKS: Int = 34
+    const val WATERING_ANIM_TICKS: Int = 12
+    const val WATER_COOLDOWN_TICKS: Int = 200
+    const val CONTAINER_REACH_SQ: Double = 3.24
     const val NITWIT_LUCK_INTERVAL: Int = 40
     const val NITWIT_LUCK_DURATION: Int = 80
     const val ENDERMAN_FLEE_INTERVAL: Int = 20
@@ -13,7 +15,7 @@ object ModConfig {
     const val MAX_HIGHLIGHT_BLOCKS: Int = 48
     const val BERRY_REACH: Double = 2.75
     const val WORK_REACH_SQ: Double = 2.6
-    const val FISHER_SIT_REACH_SQ: Double = 4.0
+    const val FISHER_SIT_REACH_SQ: Double = 2.25
     const val FISHER_STUCK_TICKS: Int = 100
     const val FLEE_TICKS: Int = 80
     const val GROUND_PICKUP_RANGE: Double = 2.75

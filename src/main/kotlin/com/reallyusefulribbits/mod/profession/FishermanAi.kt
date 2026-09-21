@@ -52,19 +52,19 @@ object FishermanAi {
             return
         }
         val shore = shorePos(level, water) ?: water
-        val sit = Vec3(shore.x + 0.5, shore.y + 1.0, shore.z + 0.5)
-        val waterCenter = Vec3(water.x + 0.5, sit.y, water.z + 0.5)
-        val towardWater = waterCenter.subtract(sit)
-        val target = if (towardWater.lengthSqr() > 1.0e-6) {
-            sit.add(towardWater.normalize().scale(1.35))
+        val shoreCenter = Vec3(shore.x + 0.5, shore.y + 1.0, shore.z + 0.5)
+        val waterCenter = Vec3(water.x + 0.5, shoreCenter.y, water.z + 0.5)
+        val towardWater = waterCenter.subtract(shoreCenter)
+        val sit = if (towardWater.lengthSqr() > 1.0e-6) {
+            waterCenter.add(shoreCenter.subtract(waterCenter).normalize().scale(0.32))
         } else {
-            sit
+            shoreCenter
         }
         LookAt.block(ribbit, water, 0.35)
-        if (ribbit.distanceToSqr(target) > ModConfig.FISHER_SIT_REACH_SQ) {
+        if (ribbit.distanceToSqr(shoreCenter) > ModConfig.FISHER_SIT_REACH_SQ) {
             ribbit.setFishing(false)
             data.fishingActive = false
-            ribbit.navigation.moveTo(target.x, target.y, target.z, 1.0)
+            ribbit.navigation.moveTo(shoreCenter.x, shoreCenter.y, shoreCenter.z, 1.0)
             data.navStuck++
             if (data.navStuck >= ModConfig.FISHER_STUCK_TICKS) {
                 data.waterPos = null
@@ -74,8 +74,8 @@ object FishermanAi {
             return
         }
         data.navStuck = 0
-
         ribbit.navigation.stop()
+        ribbit.moveTo(sit.x, sit.y, sit.z, ribbit.yRot, ribbit.xRot)
         ribbit.setFishing(true)
         LookAt.block(ribbit, water, 0.35)
         if (!data.fishingActive) {
@@ -151,7 +151,7 @@ object FishermanAi {
         val data = ribbit.work()
         val pos = data.containerPos ?: return
         val target = Vec3(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
-        if (ribbit.distanceToSqr(target) > 4.0) {
+        if (ribbit.distanceToSqr(target) > ModConfig.CONTAINER_REACH_SQ) {
             ribbit.navigation.moveTo(target.x, target.y, target.z, 1.05)
             return
         }

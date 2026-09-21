@@ -52,7 +52,7 @@ object RibbitCombat {
         val nz = if (len < 0.01) 0.0 else dz / len * 10.0
         ribbit.setFishing(false)
         ribbit.setWatering(false)
-        ribbit.navigation.moveTo(ribbit.x + nx, ribbit.y, ribbit.z + nz, 2.0)
+        ribbit.navigation.moveTo(ribbit.x + nx, ribbit.y, ribbit.z + nz, 1.0)
         if (data.fleeTicks <= 0) applyFleeSpeed(ribbit, false)
         return true
     }
@@ -62,7 +62,7 @@ object RibbitCombat {
         attr.removeModifier(FLEE_SPEED)
         if (on) {
             attr.addTransientModifier(
-                AttributeModifier(FLEE_SPEED, 1.0, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
+                AttributeModifier(FLEE_SPEED, 0.5, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL),
             )
         }
     }

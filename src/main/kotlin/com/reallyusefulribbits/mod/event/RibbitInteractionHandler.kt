@@ -3,10 +3,10 @@ package com.reallyusefulribbits.mod.event
 import com.reallyusefulribbits.mod.config.ModConfig
 import com.reallyusefulribbits.mod.config.ServerConfig
 import com.reallyusefulribbits.mod.highlight.HighlightMarkers
+import com.reallyusefulribbits.mod.home.HomePoint
 import com.reallyusefulribbits.mod.logic.ProfessionKind
 import com.reallyusefulribbits.mod.profession.MerchantAi
 import com.reallyusefulribbits.mod.profession.SorcererAi
-import com.reallyusefulribbits.mod.ride.HeadRide
 import com.reallyusefulribbits.mod.util.professionKind
 import com.reallyusefulribbits.mod.util.work
 import com.reallyusefulribbits.mod.world.WorldScan
@@ -33,13 +33,11 @@ object RibbitInteractionHandler {
         val ribbit = event.target as? RibbitEntity ?: return
         if (event.hand != InteractionHand.MAIN_HAND) return
         val player = event.entity
-        if (player.isShiftKeyDown) {
+        if (HomePoint.isMaraca(player.mainHandItem)) {
             event.isCanceled = true
             event.cancellationResult = InteractionResult.sidedSuccess(event.level.isClientSide)
-            if (ribbit.vehicle == player) {
-                HeadRide.dismount(player, ribbit)
-            } else {
-                HeadRide.mount(player, ribbit)
+            if (!event.level.isClientSide) {
+                HomePoint.setHere(player, ribbit)
             }
             return
         }
@@ -50,7 +48,7 @@ object RibbitInteractionHandler {
             ProfessionKind.FISHERMAN, ProfessionKind.FARMER -> {
                 event.isCanceled = true
                 event.cancellationResult = InteractionResult.SUCCESS
-                highlightWork(level, ribbit, serverPlayer)
+                highlightWork(level, ribbit)
             }
             ProfessionKind.SORCERER -> {
                 event.isCanceled = true
@@ -82,7 +80,7 @@ object RibbitInteractionHandler {
         level.playSound(null, ribbit.blockPosition(), SoundEvents.AMETHYST_BLOCK_HIT, SoundSource.NEUTRAL, 0.5f, 1.6f)
     }
 
-    private fun highlightWork(level: ServerLevel, ribbit: RibbitEntity, player: ServerPlayer) {
+    private fun highlightWork(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
         val kind = ribbit.professionKind()
         val missing = when (kind) {

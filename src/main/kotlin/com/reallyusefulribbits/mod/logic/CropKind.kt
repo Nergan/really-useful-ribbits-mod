@@ -23,5 +23,5 @@ object CropRules {
         return kotlin.math.abs(entityEyeY - (berryY + 0.5)) <= reach
     }
 
-    fun waterDoublesGrowth(): Boolean = true
+    fun waterDoublesGrowth(): Boolean = false
 }

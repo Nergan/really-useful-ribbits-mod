@@ -1,7 +1,6 @@
 package com.reallyusefulribbits.mod.profession
 
 import com.reallyusefulribbits.mod.logic.ProfessionKind
-import com.reallyusefulribbits.mod.ride.HeadRide
 import com.reallyusefulribbits.mod.util.professionKind
 import com.reallyusefulribbits.mod.util.work
 import com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity
@@ -11,19 +10,11 @@ object RibbitBrain {
     fun tick(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
         RibbitSafety.ensure(ribbit)
-        if (RibbitCombat.tickFlee(ribbit)) return
         if (ribbit.isPassenger) {
-            data.riding = true
-            ribbit.navigation.stop()
-            ribbit.setFishing(false)
-            ribbit.setWatering(false)
-            val vehicle = ribbit.vehicle
-            if (vehicle is net.minecraft.world.entity.player.Player) {
-                HeadRide.holdOnHead(vehicle, ribbit)
-            }
-            return
+            ribbit.stopRiding()
+            data.riding = false
         }
-        if (data.riding) data.riding = false
+        if (RibbitCombat.tickFlee(ribbit)) return
         when (ribbit.professionKind()) {
             ProfessionKind.FISHERMAN -> FishermanAi.tick(level, ribbit)
             ProfessionKind.FARMER -> FarmerAi.tick(level, ribbit)

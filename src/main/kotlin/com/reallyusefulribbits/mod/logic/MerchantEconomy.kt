@@ -57,21 +57,22 @@ object MerchantEconomy {
         val fallback = (inventoryIds + listOfNotNull(copiedId)).filter { it.isNotBlank() }.distinct()
         if (visitPool.isEmpty() && fallback.isEmpty()) return emptyList()
         val avg = averagePrice(visitPool.map { it.second }, 4)
+        val unique = LinkedHashMap<String, Int>()
+        for ((id, price) in visitPool) {
+            unique.putIfAbsent(id, price)
+        }
+        for (id in fallback) {
+            unique.putIfAbsent(id, avg)
+        }
         val offers = ArrayList<MerchantOfferPlan>(count)
-        repeat(count) {
-            val pick = if (visitPool.isNotEmpty()) {
-                visitPool[Math.floorMod(random(0, visitPool.size), visitPool.size)]
-            } else {
-                val id = fallback[Math.floorMod(random(0, fallback.size), fallback.size)]
-                id to avg
-            }
-            val max = itemMax(pick.first).coerceAtLeast(1)
-            val itemPrices = visitPool.filter { it.first == pick.first }.map { it.second }
+        for (pick in unique.entries.take(count)) {
+            val max = itemMax(pick.key).coerceAtLeast(1)
+            val itemPrices = visitPool.filter { it.first == pick.key }.map { it.second }
             offers += MerchantOfferPlan(
                 kind = MerchantOfferKind.SELL_FOR_AMETHYST,
-                itemId = pick.first,
+                itemId = pick.key,
                 itemCount = itemCountFor(max, random),
-                amethystCount = averagePrice(itemPrices, pick.second.coerceAtLeast(1)),
+                amethystCount = averagePrice(itemPrices, pick.value.coerceAtLeast(1)),
             )
         }
         return offers

@@ -204,12 +204,9 @@ object CropSupport {
 
     fun water(level: ServerLevel, pos: BlockPos) {
         hydrateFarmland(level, pos)
-        nudgeGrowth(level, pos)
-        nudgeGrowth(level, pos.above())
-        val state = level.getBlockState(pos)
-        if (isCaveVine(state) && state.block is BonemealableBlock && level.random.nextInt(4) == 0) {
-            state.randomTick(level, pos, level.random)
-        }
+        maybeGrowGlowBerries(level, pos)
+        maybeGrowGlowBerries(level, pos.above())
+        maybeGrowGlowBerries(level, pos.below())
         level.sendParticles(
             net.minecraft.core.particles.ParticleTypes.RAIN,
             pos.x + 0.5,
@@ -241,15 +238,13 @@ object CropSupport {
         return path.contains("melon") || path.contains("pumpkin")
     }
 
-    private fun nudgeGrowth(level: ServerLevel, pos: BlockPos) {
+    private fun maybeGrowGlowBerries(level: ServerLevel, pos: BlockPos) {
         val state = level.getBlockState(pos)
-        val block = state.block
-        if (block is StemBlock || block is CropBlock || block is NetherWartBlock || block is SugarCaneBlock) {
-            state.randomTick(level, pos, level.random)
-            return
-        }
-        if (block is BonemealableBlock && (state.`is`(BlockTags.CROPS) || block is BushBlock)) {
-            state.randomTick(level, pos, level.random)
+        if (!isCaveVine(state) || CaveVines.hasGlowBerries(state)) return
+        if (level.random.nextInt(3) != 0) return
+        val berries = net.minecraft.world.level.block.state.properties.BlockStateProperties.BERRIES
+        if (state.hasProperty(berries)) {
+            level.setBlock(pos, state.setValue(berries, true), Block.UPDATE_ALL)
         }
     }
 

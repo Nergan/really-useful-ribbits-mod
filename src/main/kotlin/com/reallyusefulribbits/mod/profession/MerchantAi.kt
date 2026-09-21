@@ -80,7 +80,7 @@ object MerchantAi {
             }
             return
         }
-        ribbit.navigation.moveTo(trader, 1.05)
+        ribbit.navigation.moveTo(trader, 1.0)
         if (ribbit.distanceToSqr(trader) < 9.0) {
             rememberVisit(ribbit, trader as Merchant)
             dataAdvance(ribbit, MerchantPhase.BUILD_OFFERS)
@@ -128,13 +128,19 @@ object MerchantAi {
         val data = ribbit.work()
         val offers = ribbit.offers
         if (offers.size < MerchantEconomy.SLOT_COUNT) {
+            val used = offers.map { offerItemKey(it) }.toHashSet()
             val needed = MerchantEconomy.SLOT_COUNT - offers.size
-            for (offer in createOffers(ribbit, needed)) {
+            for (offer in createOffers(ribbit, needed, used)) {
                 offers.add(offer)
+                used += offerItemKey(offer)
             }
         } else {
             val start = MerchantEconomy.quarterStart(data.offerQuarter)
-            val replacements = createOffers(ribbit, MerchantEconomy.QUARTER_SIZE)
+            val used = offers.indices
+                .filter { it < start || it >= start + MerchantEconomy.QUARTER_SIZE }
+                .map { offerItemKey(offers[it]) }
+                .toHashSet()
+            val replacements = createOffers(ribbit, MerchantEconomy.QUARTER_SIZE, used)
             val kept = ArrayList(offers)
             for (i in replacements.indices) {
                 val index = start + i
@@ -152,7 +158,7 @@ object MerchantAi {
         dataAdvance(ribbit, MerchantPhase.SEEK_PLAYER)
     }
 
-    private fun createOffers(ribbit: RibbitEntity, count: Int): List<MerchantOffer> {
+    private fun createOffers(ribbit: RibbitEntity, count: Int, exclude: Set<String>): List<MerchantOffer> {
         val data = ribbit.work()
         val copies = data.copiedGoods.mapIndexedNotNull { index, stack ->
             if (stack.isEmpty) null else stack to data.copiedTradePrices.getOrElse(index) { 4 }
@@ -164,15 +170,23 @@ object MerchantAi {
         val pool = if (copies.isNotEmpty()) copies else fallback
         if (pool.isEmpty()) return emptyList()
         val random = { min: Int, max: Int -> if (max <= min) min else ribbit.random.nextInt(min, max) }
-        return List(count) {
-            val pick = pool[ribbit.random.nextInt(pool.size)]
+        val used = exclude.toHashSet()
+        val order = pool.indices.toMutableList()
+        order.shuffle(java.util.Random(ribbit.random.nextLong()))
+        val offers = ArrayList<MerchantOffer>(count)
+        for (index in order) {
+            if (offers.size >= count) break
+            val pick = pool[index]
+            val key = itemKey(pick.first)
+            if (key in used) continue
+            used += key
             val goods = pick.first.copy()
             goods.count = MerchantEconomy.itemCountFor(goods.maxStackSize, random)
             val price = MerchantEconomy.averagePrice(
                 copies.filter { it.first.item == goods.item }.map { it.second },
                 pick.second,
             )
-            MerchantOffer(
+            offers += MerchantOffer(
                 ItemCost(Items.AMETHYST_SHARD, price),
                 goods,
                 999,
@@ -180,7 +194,13 @@ object MerchantAi {
                 0.05f,
             )
         }
+        return offers
     }
+
+    private fun offerItemKey(offer: MerchantOffer): String = itemKey(offer.result)
+
+    private fun itemKey(stack: ItemStack): String =
+        net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.item).toString()
 
     private fun seekPlayer(level: ServerLevel, ribbit: RibbitEntity) {
         val radius = ServerConfig.scanRadius().toDouble()
@@ -193,7 +213,7 @@ object MerchantAi {
             if (ribbit.work().merchantTicks > 80) dataAdvance(ribbit, MerchantPhase.COOLDOWN)
             return
         }
-        ribbit.navigation.moveTo(player, 1.1)
+        ribbit.navigation.moveTo(player, 1.0)
         ribbit.lookControl.setLookAt(player)
         if (ribbit.work().merchantTicks % ModConfig.MERCHANT_GLOW_INTERVAL == 0) {
             level.sendParticles(ParticleTypes.GLOW, ribbit.x, ribbit.y + 0.65, ribbit.z, 4, 0.2, 0.25, 0.2, 0.0)
@@ -214,7 +234,7 @@ object MerchantAi {
             return
         }
         data.merchantTicks++
-        ribbit.navigation.moveTo(target, 1.15)
+        ribbit.navigation.moveTo(target, 1.0)
         ribbit.lookControl.setLookAt(target)
         if (data.merchantTicks % ModConfig.MERCHANT_GLOW_INTERVAL == 0) {
             level.sendParticles(ParticleTypes.GLOW, ribbit.x, ribbit.y + 0.65, ribbit.z, 5, 0.22, 0.28, 0.22, 0.0)

@@ -2,7 +2,7 @@
 
 **[English](README.md)** · **[Русский](README.ru.md)**
 
-A **Minecraft 1.21.1** NeoForge addon for [Ribbits](https://modrinth.com/mod/ribbits). Carry a ribbit on your head, then let fishers, farmers, merchants, sorcerers and nitwits actually do something. Written in Kotlin with [Kotlin for Forge](https://modrinth.com/mod/kotlin-for-forge).
+A **Minecraft 1.21.1** NeoForge addon for [Ribbits](https://modrinth.com/mod/ribbits). Set a ribbit's home with a maraca, then let fishers, farmers, merchants, sorcerers and nitwits actually do something. Written in Kotlin with [Kotlin for Forge](https://modrinth.com/mod/kotlin-for-forge).
 
 The UI and in-game guidebook are available in English and Russian (the language follows the client).
 
@@ -30,11 +30,11 @@ Optional extras (not attached to the release, install them yourself if you want 
 
 ## Features
 
-- **On your head.** Sneak + right-click a ribbit to seat it on your head. This wins over the merchant trade screen. Sneak again to set it down. Ribbits have no sit-without-instrument animation, so the rider uses the sit-with-instrument pose **without** starting band music. Putting a ribbit down sets its home point there and grants *so I guess this is my new home now…*
+- **A new home.** Right-click a ribbit with a **maraca** from the original Ribbits mod to set its home point where it is standing. Merchant ribbits sell maracas. This grants *so I guess this is my new home now…* You cannot seat a ribbit on your head.
 - **Shared territory.** Every working ribbit scans a configurable radius (64 blocks by default). Several ribbits can work the same area. They do not steal each other’s reserved crop or water tile.
 - **Fisher.** Binds one nearby water block and one container. Sits on the bank with the fishing animation, runs vanilla-style fishing (splashes toward the bobber, then a catch), and stores loot in a single slot of 16. A full bag is emptied into the container with the matching open animation and sound. Right-click outlines the ribbit, the water tile and the container. Missing a bind plays the hurt croak and angry particles.
-- **Farmer.** Binds one connected farm (farmland, Farmer's Delight farmland, soul sand, sugar-cane bases) and one container. Harvests, plants, tills, waters (double growth chance for one tick), and handles melons/pumpkins that grew from a stem, cane, nether wart and reachable glow berries. Inventory is 4×64. Right-click outlines the farm and the container.
-- **Merchant.** 27 slots of 256. Starts with random goods plus 256 emeralds and 256 amethysts. Hunts villagers, wandering traders, wandering ribbits and any other merchant, copies a buyable item (maxed trades, no stock limits), builds amethyst offers, then croaks at a player until you trade or ignore them.
+- **Farmer.** Binds one connected farm (farmland, Farmer's Delight farmland, soul sand, sugar-cane bases) and one container. Harvests, plants, tills, waters farmland, and sometimes coaxes glow berries onto vines. Melons, pumpkins, cane and nether wart are included. It walks up to its chest before inserting or taking items. Inventory is 4×64. Right-click sprinkles particles on the farm and the container.
+- **Merchant.** 27 slots of 256. Starts with random goods plus 256 emeralds and 256 amethysts. Hunts villagers, wandering traders, wandering ribbits and any other merchant, copies a buyable item (maxed trades, no stock limits), builds up to 16 unique-item amethyst offers, then croaks at a player until you trade or ignore them. Always walks at 1.25× speed.
 - **Sorcerer.** Right-click rolls a weighted chaos table: infinite effect or cleanse, enchant, launch, weather, day/night, peaceful summon, lightning, flip, scale, max health, grow plants, diamond rain (~1%), random dimension, or a very rare ender dragon (*You asked for it*). Endermen in range flee. Otherwise it still wanders like a normal ribbit.
 - **Nitwit.** Applies Luck in the scan radius. Nothing else.
 - **Guidebook (optional).** With [Patchouli](https://modrinth.com/mod/patchouli) installed, the first join into a world gives *Really Useful Ribbits*. Craft it with a book and a giant lily pad. The book is also in this addon's creative tab. Without Patchouli the rest of the addon works as usual. Professions themselves come from Ribbits; this addon only gives those frogs jobs.

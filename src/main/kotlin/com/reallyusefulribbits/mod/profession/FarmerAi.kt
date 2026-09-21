@@ -40,6 +40,7 @@ object FarmerAi {
                 }
             }
         }
+        if (data.cooldown > 0) data.cooldown--
         val origin = data.farmOrigin ?: return
         if (data.farmMemory.isEmpty() || level.gameTime - data.lastFarmScanAt >= ModConfig.FARM_RESCAN_INTERVAL) {
             data.lastFarmScanAt = level.gameTime
@@ -55,7 +56,7 @@ object FarmerAi {
             hasTillable = jobs.till != null,
             hasEmptyFarmland = jobs.plant != null,
             hasPlantable = hasPlantable(level, ribbit),
-            hasImmatureCrop = jobs.water != null,
+            hasImmatureCrop = jobs.water != null && data.cooldown <= 0,
         )
         var task = data.farmerTask()
         if (!FarmerTaskPlanner.shouldKeep(task, data.taskTicks, view)) {
@@ -166,17 +167,23 @@ object FarmerAi {
 
     private fun plant(level: ServerLevel, ribbit: RibbitEntity, soil: BlockPos?) {
         if (soil == null) return
-        if (!walkTo(ribbit, soil)) return
         val data = ribbit.work()
         var seed = RibbitBags.takeOne(data, ProfessionKind.FARMER) { CropSupport.plantableBlock(it) != null }
-        if (seed.isEmpty && data.containerPos != null) {
-            val taken = ContainerSupport.extractMatching(level, data.containerPos!!, { CropSupport.plantableBlock(it) != null }, 1)
-            if (!taken.isEmpty) {
-                ContainerSupport.openBriefly(level, data.containerPos!!)
-                seed = taken
-            }
+        if (seed.isEmpty) {
+            val chest = data.containerPos ?: return
+            if (!walkTo(ribbit, chest, Math.sqrt(ModConfig.CONTAINER_REACH_SQ), 1.15, false)) return
+            LookAt.block(ribbit, chest, 0.5)
+            val taken = ContainerSupport.extractMatching(level, chest, { CropSupport.plantableBlock(it) != null }, 1)
+            if (taken.isEmpty) return
+            ContainerSupport.openBriefly(level, chest)
+            RibbitBags.insert(data, ProfessionKind.FARMER, taken)
+            return
         }
-        if (!seed.isEmpty && !CropSupport.plant(level, soil, seed) && !seed.isEmpty) {
+        if (!walkTo(ribbit, soil)) {
+            RibbitBags.insert(data, ProfessionKind.FARMER, seed)
+            return
+        }
+        if (!CropSupport.plant(level, soil, seed) && !seed.isEmpty) {
             RibbitBags.insert(data, ProfessionKind.FARMER, seed)
         }
         data.taskTicks = FarmerTaskPlanner.MIN_TASK_TICKS + FarmerTaskPlanner.SWITCH_COOLDOWN_TICKS
@@ -195,6 +202,7 @@ object FarmerAi {
             LookAt.block(ribbit, pos, 0.4)
             CropSupport.water(level, pos)
             ribbit.setWatering(false)
+            ribbit.work().cooldown = ModConfig.WATER_COOLDOWN_TICKS
             ribbit.work().taskTicks = FarmerTaskPlanner.MIN_TASK_TICKS + FarmerTaskPlanner.SWITCH_COOLDOWN_TICKS
         }
     }
@@ -202,7 +210,8 @@ object FarmerAi {
     private fun deposit(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
         val pos = data.containerPos ?: return
-        if (!walkTo(ribbit, pos, 2.6, 1.25)) return
+        if (!walkTo(ribbit, pos, Math.sqrt(ModConfig.CONTAINER_REACH_SQ), 1.15, false)) return
+        LookAt.block(ribbit, pos, 0.5)
         ContainerSupport.openBriefly(level, pos)
         val leftover = ContainerSupport.insertAll(level, pos, RibbitBags.extractAll(data, ProfessionKind.FARMER))
         leftover.forEach { RibbitBags.insert(data, ProfessionKind.FARMER, it) }
@@ -225,6 +234,7 @@ object FarmerAi {
         pos: BlockPos,
         reach: Double = Math.sqrt(ModConfig.WORK_REACH_SQ),
         speed: Double = 1.15,
+        allowStuckArrive: Boolean = false,
     ): Boolean {
         val target = Vec3(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
         if (ribbit.distanceToSqr(target) <= reach * reach) {
@@ -234,7 +244,7 @@ object FarmerAi {
         }
         ribbit.navigation.moveTo(target.x, target.y, target.z, speed)
         ribbit.work().navStuck++
-        if (ribbit.work().navStuck > 80 && ribbit.distanceToSqr(target) < 16.0) {
+        if (allowStuckArrive && ribbit.work().navStuck > 80 && ribbit.distanceToSqr(target) < 4.0) {
             ribbit.work().navStuck = 0
             return true
         }

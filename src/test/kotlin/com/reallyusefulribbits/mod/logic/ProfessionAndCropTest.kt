@@ -52,7 +52,8 @@ class ProfessionAndCropTest {
             random = random,
             itemMax = { if (it == "minecraft:book") 16 else 64 },
         )
-        assertEquals(MerchantEconomy.OFFER_COUNT, plans.size)
+        assertEquals(3, plans.size)
+        assertEquals(3, plans.map { it.itemId }.toSet().size)
         assertTrue(plans.all { it.kind == MerchantOfferKind.SELL_FOR_AMETHYST })
         assertTrue(plans.all { it.amethystCount in 1..32 })
     }
