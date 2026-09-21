@@ -31,7 +31,6 @@ object FarmerAi {
     private val busy = HashSet<Int>()
     private val hikes = HashMap<Int, Hike>()
     private val plantLocks = HashMap<Int, BlockPos>()
-    private val bans = HashMap<Int, HashMap<Long, Long>>()
 
     fun ensureWorkGoal(ribbit: RibbitEntity) {
         if (ribbit.professionKind() != ProfessionKind.FARMER) return
@@ -157,7 +156,7 @@ object FarmerAi {
                 harvest = pos
                 harvestDist = dist
             }
-            if (dist < plantDist && CropSupport.isEmptyFarmland(level, pos) && !isBanned(ribbit.id, pos, now)) {
+            if (dist < plantDist && CropSupport.isEmptyFarmland(level, pos)) {
                 plant = pos
                 plantDist = dist
             }
@@ -182,7 +181,7 @@ object FarmerAi {
                 tillDist = dist
             }
         }
-        val plantTarget = stick(level, ribbit, plant) { CropSupport.isEmptyFarmland(level, it) }
+        val plantTarget = stick(ribbit, plant) { CropSupport.isEmptyFarmland(level, it) }
         listOfNotNull(harvest, till, plantTarget, water).forEach {
             BlockReservation.tryClaim(level, it, ribbit.id, now)
         }
@@ -191,11 +190,10 @@ object FarmerAi {
     }
 
     /** Держит одну дальнюю грядку, но если рядом уже есть пустая — сажает её сразу. */
-    private fun stick(level: ServerLevel, ribbit: RibbitEntity, nearest: BlockPos?, still: (BlockPos) -> Boolean): BlockPos? {
+    private fun stick(ribbit: RibbitEntity, nearest: BlockPos?, still: (BlockPos) -> Boolean): BlockPos? {
         val id = ribbit.id
-        val now = level.gameTime
         val locked = plantLocks[id]
-        if (locked != null && still(locked) && !isBanned(id, locked, now)) {
+        if (locked != null && still(locked)) {
             if (nearest != null && ribbit.distanceToSqr(nearest.x + 0.5, nearest.y.toDouble(), nearest.z + 0.5) <= ModConfig.WORK_REACH_SQ) {
                 plantLocks[id] = nearest
                 return nearest
@@ -243,7 +241,7 @@ object FarmerAi {
         val pocket = RibbitBags.find(data, ProfessionKind.FARMER) { CropSupport.plantableBlock(it) != null }
         if (pocket.isEmpty) {
             val chest = data.containerPos ?: return
-            if (!walkTo(level, ribbit, chest, Math.sqrt(ModConfig.CONTAINER_REACH_SQ), 1.2, false)) return
+            if (!walkTo(level, ribbit, chest, Math.sqrt(ModConfig.CONTAINER_REACH_SQ), 1.35, false)) return
             LookAt.block(ribbit, chest, 0.5)
             ContainerSupport.openBriefly(level, chest)
             var grabbed = 0
@@ -292,7 +290,7 @@ object FarmerAi {
             data.containerPos = WorldScan.nearestContainer(level, ribbit.blockPosition(), ServerConfig.scanRadius())
         }
         val pos = data.containerPos ?: return
-        if (!walkTo(level, ribbit, pos, Math.sqrt(ModConfig.CONTAINER_REACH_SQ), 1.2, false)) return
+        if (!walkTo(level, ribbit, pos, Math.sqrt(ModConfig.CONTAINER_REACH_SQ), 1.35, false)) return
         LookAt.block(ribbit, pos, 0.5)
         ContainerSupport.openBriefly(level, pos)
         val cargo = takeProduce(data)
@@ -360,7 +358,7 @@ object FarmerAi {
         ribbit: RibbitEntity,
         pos: BlockPos,
         reach: Double = Math.sqrt(ModConfig.WORK_REACH_SQ),
-        speed: Double = 1.2,
+        speed: Double = 1.35,
         allowStuckArrive: Boolean = false,
     ): Boolean {
         val target = Vec3(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
@@ -370,46 +368,50 @@ object FarmerAi {
             hikes.remove(ribbit.id)
             return true
         }
-        val nav = ribbit.navigation
-        val hike = hikes[ribbit.id]
-        if (hike != null && hike.work == pos.asLong()) {
-            val moved = ribbit.distanceToSqr(hike.lastX, ribbit.y, hike.lastZ) > 0.002
-            hike.lastX = ribbit.x
-            hike.lastZ = ribbit.z
-            if (moved) hike.still = 0 else hike.still++
-            if (hike.still >= 30) {
-                ban(ribbit.id, pos, level.gameTime + 100)
-                if (plantLocks[ribbit.id] == pos) plantLocks.remove(ribbit.id)
-                hikes.remove(ribbit.id)
-                nav.stop()
-                return false
-            }
-            if (nav.isInProgress) return false
-        }
         val spot = standSpot(level, ribbit, pos, reach)
-        nav.moveTo(spot.x, spot.y, spot.z, speed)
-        val still = if (hike != null && hike.work == pos.asLong()) hike.still else 0
-        hikes[ribbit.id] = Hike(pos.asLong(), ribbit.x, ribbit.z, still)
-        ribbit.work().navStuck = still
-        if (allowStuckArrive && still > 80 && ribbit.distanceToSqr(target) < 4.0) {
+        val nav = ribbit.navigation
+        val previous = hikes[ribbit.id]
+        val hike = if (previous != null && previous.work == pos.asLong()) {
+            previous
+        } else {
+            Hike(pos.asLong(), ribbit.x, ribbit.z, 0, false)
+        }
+        val moved = ribbit.distanceToSqr(hike.lastX, ribbit.y, hike.lastZ) > 0.01
+        if (moved) hike.still = 0 else if (previous != null && previous.work == pos.asLong()) hike.still++
+        hike.lastX = ribbit.x
+        hike.lastZ = ribbit.z
+        if (!hike.direct && hike.still >= 8) hike.direct = true
+        hikes[ribbit.id] = hike
+        ribbit.work().navStuck = hike.still
+        if (hike.direct) {
+            nav.stop()
+            val aim = sidestep(ribbit, spot, hike.still)
+            ribbit.moveControl.setWantedPosition(aim.x, aim.y, aim.z, speed)
+        } else if (!nav.isInProgress) {
+            if (!nav.moveTo(spot.x, spot.y, spot.z, speed)) {
+                hike.direct = true
+                ribbit.moveControl.setWantedPosition(spot.x, spot.y, spot.z, speed)
+            }
+        }
+        if (allowStuckArrive && hike.still > 80 && ribbit.distanceToSqr(target) < 4.0) {
             ribbit.work().navStuck = 0
             return true
         }
         return false
     }
 
-    private fun ban(id: Int, pos: BlockPos, until: Long) {
-        bans.getOrPut(id) { HashMap() }[pos.asLong()] = until
-    }
-
-    private fun isBanned(id: Int, pos: BlockPos, now: Long): Boolean {
-        val table = bans[id] ?: return false
-        val until = table[pos.asLong()] ?: return false
-        if (now >= until) {
-            table.remove(pos.asLong())
-            return false
-        }
-        return true
+    /** Если прямой шаг упёрся в бочку или воду, сместиться вбок и обойти. */
+    private fun sidestep(ribbit: RibbitEntity, spot: Vec3, still: Int): Vec3 {
+        if (still < 15) return spot
+        val dx = spot.x - ribbit.x
+        val dz = spot.z - ribbit.z
+        val len = kotlin.math.sqrt(dx * dx + dz * dz).coerceAtLeast(0.01)
+        val side = if ((still / 15) % 2 == 0) 1.25 else -1.25
+        return Vec3(
+            ribbit.x + dx / len * 2.0 + (-dz / len) * side,
+            spot.y,
+            ribbit.z + dz / len * 2.0 + (dx / len) * side,
+        )
     }
 
     /** Ноги в воздухе над блоком или на соседней клетке, а не внутри пашни. */
@@ -459,6 +461,7 @@ object FarmerAi {
         var lastX: Double,
         var lastZ: Double,
         var still: Int,
+        var direct: Boolean,
     )
 }
 
