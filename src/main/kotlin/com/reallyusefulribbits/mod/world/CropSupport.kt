@@ -14,7 +14,6 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.item.BlockItem
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
-import net.minecraft.world.level.block.LevelEvent
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.AttachedStemBlock
 import net.minecraft.world.level.block.Block
@@ -124,8 +123,29 @@ object CropSupport {
             block.performBonemeal(level, level.random, pos, state)
         }
         stack.shrink(1)
-        level.levelEvent(LevelEvent.PARTICLES_AND_SOUND_PLANT_GROWTH, pos, 0)
+        growthStars(level, pos)
+        level.playSound(null, pos, SoundEvents.BONE_MEAL_USE, SoundSource.BLOCKS, 1f, 1f)
         return true
+    }
+
+    /** Зелёные звёздочки, как у костной муки в ванили. */
+    private fun growthStars(level: ServerLevel, pos: BlockPos) {
+        val state = level.getBlockState(pos)
+        if (state.isAir) return
+        val solid = state.isSolidRender(level, pos)
+        val count = if (solid) 24 else 14
+        val ySpan = if (solid) 0.6 else state.getShape(level, pos).max(Direction.Axis.Y).coerceAtLeast(0.25)
+        level.sendParticles(
+            net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER,
+            pos.x + 0.5,
+            pos.y + ySpan * 0.65,
+            pos.z + 0.5,
+            count,
+            0.35,
+            ySpan * 0.35,
+            0.35,
+            0.0,
+        )
     }
 
     fun isMatureCrop(level: Level, pos: BlockPos): Boolean {
@@ -280,12 +300,28 @@ object CropSupport {
         }
     }
 
+    /** Плод вырос: присоединённый стебель смотрит на него и это стебель того же плода. */
     fun hasStemNeighbor(level: Level, pos: BlockPos): Boolean {
+        val fruit = level.getBlockState(pos)
+        if (!isStemFruit(fruit)) return false
         for (dir in Direction.Plane.HORIZONTAL) {
             val neighbor = level.getBlockState(pos.relative(dir))
-            if (neighbor.block is StemBlock || neighbor.block is AttachedStemBlock) return true
+            val stem = neighbor.block as? AttachedStemBlock ?: continue
+            if (neighbor.getValue(AttachedStemBlock.FACING) != dir.opposite) continue
+            if (stemMatchesFruit(stem, fruit)) return true
         }
         return false
+    }
+
+    private fun stemMatchesFruit(stem: AttachedStemBlock, fruit: BlockState): Boolean {
+        if (stem === Blocks.ATTACHED_MELON_STEM) return fruit.`is`(Blocks.MELON)
+        if (stem === Blocks.ATTACHED_PUMPKIN_STEM) return fruit.`is`(Blocks.PUMPKIN)
+        val stemPath = BuiltInRegistries.BLOCK.getKey(stem).path
+        val fruitPath = BuiltInRegistries.BLOCK.getKey(fruit.block).path
+        val stemKind = stemPath.removePrefix("attached_").removeSuffix("_stem")
+        if (stemKind != stemPath && (fruitPath == stemKind || fruitPath.endsWith("_$stemKind"))) return true
+        return stemPath.contains("melon") && fruitPath.endsWith("melon") ||
+            stemPath.contains("pumpkin") && !stemPath.contains("melon") && fruitPath.endsWith("pumpkin")
     }
 
     fun hydrateFarmland(level: ServerLevel, pos: BlockPos) {

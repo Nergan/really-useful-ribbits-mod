@@ -20,9 +20,9 @@ class ProfessionAndCropTest {
     }
 
     @Test
-    @DisplayName("Арбуз собирают даже без стебля, тростник оставляют нижний блок")
+    @DisplayName("Арбуз собирают только со стеблем, тростник оставляют нижний блок")
     fun specialCrops() {
-        assertTrue(CropRules.shouldHarvestStemFruit(false))
+        assertFalse(CropRules.shouldHarvestStemFruit(false))
         assertTrue(CropRules.shouldHarvestStemFruit(true))
         assertEquals(5..7, CropRules.caneHarvestYs(4, 7))
         assertTrue(CropRules.caneHarvestYs(4, 4).isEmpty())
