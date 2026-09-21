@@ -22,7 +22,7 @@ object HighlightMarkers {
             val tag = CompoundTag()
             display.saveWithoutId(tag)
             val state = CompoundTag()
-            state.putString("Name", "minecraft:light_blue_stained_glass")
+            state.putString("Name", "minecraft:barrier")
             tag.put("block_state", state)
             display.load(tag)
             display.moveTo(pos.x.toDouble(), pos.y.toDouble(), pos.z.toDouble(), 0f, 0f)

@@ -3,6 +3,7 @@ package com.reallyusefulribbits.mod.client
 import com.mojang.math.Axis
 import com.reallyusefulribbits.mod.event.RibbitGuideHandler
 import com.reallyusefulribbits.mod.item.ModItems
+import com.reallyusefulribbits.mod.morph.PlayerMorph
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.player.Player
@@ -19,7 +20,7 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory
 import net.neoforged.neoforge.common.NeoForge
 
 object ClientModEvents {
-    private const val BOOK_TINT = 0x6BB04A
+    private val BOOK_TINT: Int = 0xFF6BB04A.toInt()
 
     fun init(modBus: IEventBus, modContainer: ModContainer) {
         NeoForge.EVENT_BUS.register(this)
@@ -64,7 +65,8 @@ object ClientModEvents {
     @SubscribeEvent
     fun onRenderHand(event: RenderHandEvent) {
         val player = net.minecraft.client.Minecraft.getInstance().player ?: return
-        if (ClientVisuals.morphType(player.uuid) != null) {
+        val type = ClientVisuals.morphType(player.uuid) ?: return
+        if (!PlayerMorph.isHumanoidType(type)) {
             event.isCanceled = true
         }
     }

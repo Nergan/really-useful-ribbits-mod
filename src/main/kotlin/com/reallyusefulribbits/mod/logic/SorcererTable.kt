@@ -29,7 +29,7 @@ data class Weighted<T>(val value: T, val weight: Int)
 
 object SorcererTable {
     val WEIGHTS: List<Weighted<SorcererAction>> = listOf(
-        Weighted(SorcererAction.EFFECT_OR_CLEANSE, 1530),
+        Weighted(SorcererAction.EFFECT_OR_CLEANSE, 1592),
         Weighted(SorcererAction.ENCHANT, 1220),
         Weighted(SorcererAction.LAUNCH, 1040),
         Weighted(SorcererAction.GROW_PLANTS, 850),
@@ -44,7 +44,7 @@ object SorcererTable {
         Weighted(SorcererAction.MAX_HEALTH, 225),
         Weighted(SorcererAction.STRUCTURE_TRIP, 200),
         Weighted(SorcererAction.DIAMOND_RAIN, 100),
-        Weighted(SorcererAction.MORPH, 80),
+        Weighted(SorcererAction.MORPH, 18),
         Weighted(SorcererAction.SUMMON_GIANT_PHANTOM, 35),
         Weighted(SorcererAction.RANDOM_DIMENSION, 30),
         Weighted(SorcererAction.SPECTATOR, 25),
@@ -107,7 +107,7 @@ object SorcererTable {
 
     fun phantomSize(roll: Int): Int = 8 + Math.floorMod(roll, 5)
 
-    fun explosionPower(roll: Int): Float = 12f + Math.floorMod(roll, 5)
+    fun explosionPower(roll: Int): Float = 120f + 10f * Math.floorMod(roll, 5)
 
     fun hostileSummonChance(): Double = 0.18
 }

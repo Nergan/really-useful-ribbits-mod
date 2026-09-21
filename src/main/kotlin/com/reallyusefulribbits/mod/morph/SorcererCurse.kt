@@ -38,7 +38,6 @@ object SorcererCurse {
         rememberBase(player)
         val dummy = type.create(player.serverLevel()) as? net.minecraft.world.entity.LivingEntity ?: return
         copyLiveAttribute(player, Attributes.MAX_HEALTH, dummy.getAttribute(Attributes.MAX_HEALTH)?.baseValue)
-        copyLiveAttribute(player, Attributes.MOVEMENT_SPEED, dummy.getAttribute(Attributes.MOVEMENT_SPEED)?.baseValue)
         copyLiveAttribute(player, Attributes.ATTACK_DAMAGE, dummy.getAttribute(Attributes.ATTACK_DAMAGE)?.baseValue)
         copyLiveAttribute(player, Attributes.ATTACK_KNOCKBACK, dummy.getAttribute(Attributes.ATTACK_KNOCKBACK)?.baseValue)
         copyLiveAttribute(player, Attributes.STEP_HEIGHT, dummy.getAttribute(Attributes.STEP_HEIGHT)?.baseValue)

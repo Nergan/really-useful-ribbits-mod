@@ -22,6 +22,15 @@ object ClientVisuals {
     fun morphType(id: UUID): EntityType<*>? {
         val raw = morphs[id] ?: return null
         if (raw.isBlank()) return null
-        return BuiltInRegistries.ENTITY_TYPE.getOptional(ResourceLocation.parse(raw)).orElse(null)
+        return try {
+            BuiltInRegistries.ENTITY_TYPE.getOptional(ResourceLocation.parse(raw)).orElse(null)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun clear(id: UUID) {
+        upsideDown.remove(id)
+        morphs.remove(id)
     }
 }

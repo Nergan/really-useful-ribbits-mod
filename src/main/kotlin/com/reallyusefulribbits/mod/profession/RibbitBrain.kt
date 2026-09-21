@@ -9,12 +9,16 @@ import net.minecraft.server.level.ServerLevel
 object RibbitBrain {
     fun tick(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
-        if (ribbit.isPassenger || data.riding) {
+        RibbitSafety.ensure(ribbit)
+        if (RibbitCombat.tickFlee(ribbit)) return
+        if (ribbit.isPassenger) {
+            data.riding = true
             ribbit.navigation.stop()
             ribbit.setFishing(false)
             ribbit.setWatering(false)
             return
         }
+        if (data.riding) data.riding = false
         when (ribbit.professionKind()) {
             ProfessionKind.FISHERMAN -> FishermanAi.tick(level, ribbit)
             ProfessionKind.FARMER -> FarmerAi.tick(level, ribbit)

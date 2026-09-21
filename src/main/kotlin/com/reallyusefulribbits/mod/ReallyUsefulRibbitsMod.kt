@@ -3,10 +3,12 @@ package com.reallyusefulribbits.mod
 import com.reallyusefulribbits.mod.attach.ModAttachments
 import com.reallyusefulribbits.mod.config.ServerConfig
 import com.reallyusefulribbits.mod.event.ModSetup
+import com.reallyusefulribbits.mod.event.MorphInteractGuard
 import com.reallyusefulribbits.mod.event.PlayerTickHandler
 import com.reallyusefulribbits.mod.event.RibbitGuideHandler
 import com.reallyusefulribbits.mod.event.RibbitInteractionHandler
 import com.reallyusefulribbits.mod.event.RibbitTickHandler
+import com.reallyusefulribbits.mod.profession.RibbitCombat
 import com.reallyusefulribbits.mod.highlight.HighlightMarkers
 import com.reallyusefulribbits.mod.item.ModItems
 import com.reallyusefulribbits.mod.network.ModNetworking
@@ -41,6 +43,8 @@ class ReallyUsefulRibbitsMod(modEventBus: IEventBus, modContainer: ModContainer)
         NeoForge.EVENT_BUS.register(PlayerTickHandler)
         NeoForge.EVENT_BUS.register(HighlightMarkers)
         NeoForge.EVENT_BUS.register(SorcererEvents)
+        NeoForge.EVENT_BUS.register(RibbitCombat)
+        NeoForge.EVENT_BUS.register(MorphInteractGuard)
         NeoForge.EVENT_BUS.register(RibbitGuideHandler)
     }
 }

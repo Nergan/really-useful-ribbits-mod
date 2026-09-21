@@ -19,7 +19,7 @@ object FarmFloodFill {
             val pos = queue.removeFirst()
             if (!isFarm(pos) || pos.distSq(origin) > maxDist) continue
             out.add(pos)
-            for (next in pos.neighbors6()) {
+            for (next in pos.neighborsFarm()) {
                 if (seen.add(next) && next.distSq(origin) <= maxDist) {
                     queue.add(next)
                 }

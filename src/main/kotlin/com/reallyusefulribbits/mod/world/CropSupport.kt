@@ -31,12 +31,14 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty
 object CropSupport {
     fun isFarmBlock(level: Level, pos: BlockPos): Boolean {
         val state = level.getBlockState(pos)
+        val block = state.block
         if (state.`is`(ModTags.FARMLAND)) return true
-        if (state.block is FarmBlock) return true
-        val id = BuiltInRegistries.BLOCK.getKey(state.block)
+        if (block is FarmBlock) return true
+        val id = BuiltInRegistries.BLOCK.getKey(block)
         if (id.path.contains("farmland")) return true
         if (state.block is SugarCaneBlock && level.getBlockState(pos.below()).block !is SugarCaneBlock) return true
         if (state.`is`(Blocks.SOUL_SAND)) return true
+        if (block is CaveVines || state.`is`(Blocks.CAVE_VINES) || state.`is`(Blocks.CAVE_VINES_PLANT)) return true
         return false
     }
 
@@ -97,6 +99,7 @@ object CropSupport {
     fun isMatureCrop(level: Level, pos: BlockPos): Boolean {
         val state = level.getBlockState(pos)
         val block = state.block
+        if (block is StemBlock || block is AttachedStemBlock) return false
         if (block is CropBlock) return block.isMaxAge(state)
         if (block is NetherWartBlock) return state.getValue(NetherWartBlock.AGE) >= 3
         if (isStemFruit(state) && hasStemNeighbor(level, pos)) return true
@@ -114,6 +117,8 @@ object CropSupport {
         val state = level.getBlockState(pos)
         val block = state.block
         if (block is NetherWartBlock) return false
+        if (block is StemBlock || block is AttachedStemBlock) return false
+        if (isCaveVine(state) && !CaveVines.hasGlowBerries(state)) return true
         if (block is CropBlock) return !block.isMaxAge(state)
         if (state.`is`(BlockTags.CROPS) && block is BonemealableBlock) {
             return block.isValidBonemealTarget(level, pos, state)
@@ -129,6 +134,7 @@ object CropSupport {
     fun isEmptyFarmland(level: Level, pos: BlockPos): Boolean {
         if (!isFarmBlock(level, pos)) return false
         if (level.getBlockState(pos).block is SugarCaneBlock) return false
+        if (isCaveVine(level.getBlockState(pos))) return false
         if (level.getBlockState(pos).`is`(Blocks.SOUL_SAND)) {
             return level.getBlockState(pos.above()).isAir
         }
@@ -201,10 +207,7 @@ object CropSupport {
     fun water(level: ServerLevel, pos: BlockPos) {
         hydrateFarmland(level, pos)
         val state = level.getBlockState(pos)
-        val block = state.block
-        if (block is BonemealableBlock && block.isValidBonemealTarget(level, pos, state)) {
-            state.randomTick(level, pos, level.random)
-        } else {
+        if (isCaveVine(state) && state.block is BonemealableBlock && level.random.nextInt(4) == 0) {
             state.randomTick(level, pos, level.random)
         }
         level.sendParticles(
@@ -223,6 +226,11 @@ object CropSupport {
 
     fun canReachBerries(entityY: Double, pos: BlockPos): Boolean =
         CropRules.canReachBerries(entityY, pos.y.toDouble(), ModConfig.BERRY_REACH)
+
+    fun isCaveVine(state: BlockState): Boolean {
+        val block = state.block
+        return block is CaveVines || state.`is`(Blocks.CAVE_VINES) || state.`is`(Blocks.CAVE_VINES_PLANT)
+    }
 
     fun isStemFruit(state: BlockState): Boolean {
         if (state.`is`(Blocks.MELON) || state.`is`(Blocks.PUMPKIN)) return true

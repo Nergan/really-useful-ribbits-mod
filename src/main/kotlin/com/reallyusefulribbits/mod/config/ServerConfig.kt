@@ -48,7 +48,7 @@ class ServerConfig(builder: ModConfigSpec.Builder) {
                 "100 makes every effect almost equally likely.",
             )
             .translation("$KEY_PREFIX.sorcerer.chaos_level")
-            .defineInRange("chaos_level", 0, 0, 100)
+            .defineInRange("chaos_level", 25, 0, 100)
         builder.pop()
     }
 }

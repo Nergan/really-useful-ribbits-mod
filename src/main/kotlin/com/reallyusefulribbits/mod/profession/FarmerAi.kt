@@ -34,16 +34,18 @@ object FarmerAi {
                 val next = WorldScan.nearestFarmOrigin(level, ribbit.blockPosition(), radius)
                 if (next != data.farmOrigin) {
                     data.farmMemory.clear()
+                    data.lastFarmScanAt = 0
                     data.farmOrigin = next
                 }
             }
         }
         val origin = data.farmOrigin ?: return
-        val farm = WorldScan.farmBlocks(level, origin, radius)
-        if (level.gameTime - data.lastFarmScanAt >= ModConfig.FARM_RESCAN_INTERVAL) {
+        if (data.farmMemory.isEmpty() || level.gameTime - data.lastFarmScanAt >= ModConfig.FARM_RESCAN_INTERVAL) {
             data.lastFarmScanAt = level.gameTime
+            data.farmMemory.clear()
+            data.farmMemory += WorldScan.allWorkBlocks(level, origin, radius)
         }
-        rememberFarm(data, farm, origin, radius)
+        val farm = data.farmMemory.toList()
         val jobs = scanJobs(level, ribbit, farm)
         val view = FarmerWorldView(
             inventoryFull = RibbitBags.isFull(data, ProfessionKind.FARMER),
@@ -79,25 +81,6 @@ object FarmerAi {
         val water: BlockPos?,
     )
 
-    private fun rememberFarm(
-        data: com.reallyusefulribbits.mod.attach.RibbitWorkData,
-        farm: List<BlockPos>,
-        origin: BlockPos,
-        radius: Int,
-    ) {
-        val known = LinkedHashSet(data.farmMemory)
-        known.addAll(farm)
-        val radiusSq = radius * radius
-        data.farmMemory.clear()
-        for (pos in known) {
-            val dx = pos.x - origin.x
-            val dz = pos.z - origin.z
-            if (dx * dx + dz * dz > radiusSq) continue
-            data.farmMemory += pos
-            if (data.farmMemory.size >= ModConfig.FARM_MEMORY_CAP) break
-        }
-    }
-
     private fun scanJobs(level: ServerLevel, ribbit: RibbitEntity, farm: List<BlockPos>): Jobs {
         val now = level.gameTime
         val farmSet = farm.toHashSet()
@@ -109,11 +92,11 @@ object FarmerAi {
         val cropScan = LinkedHashSet<BlockPos>()
         for (pos in farm) {
             cropScan += pos
-            cropScan += pos.above()
             cropScan += pos.north()
             cropScan += pos.south()
             cropScan += pos.east()
             cropScan += pos.west()
+            for (dy in 0..8) cropScan += pos.above(dy)
         }
         for (pos in cropScan) {
             val state = level.getBlockState(pos)
@@ -155,7 +138,7 @@ object FarmerAi {
             val next = pos.relative(dir)
             if (farm.contains(next) || CropSupport.isFarmBlock(level, next)) neighbors++
         }
-        return neighbors >= 2
+        return neighbors >= 4
     }
 
     private fun actOn(level: ServerLevel, ribbit: RibbitEntity, pos: BlockPos?, action: (BlockPos) -> Unit) {
@@ -214,7 +197,7 @@ object FarmerAi {
     private fun deposit(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
         val pos = data.containerPos ?: return
-        if (!walkTo(ribbit, pos, 2.2)) return
+        if (!walkTo(ribbit, pos, 2.6, 1.25)) return
         ContainerSupport.openBriefly(level, pos)
         val leftover = ContainerSupport.insertAll(level, pos, RibbitBags.extractAll(data, ProfessionKind.FARMER))
         leftover.forEach { RibbitBags.insert(data, ProfessionKind.FARMER, it) }
@@ -232,13 +215,24 @@ object FarmerAi {
         return false
     }
 
-    private fun walkTo(ribbit: RibbitEntity, pos: BlockPos, reach: Double = Math.sqrt(ModConfig.WORK_REACH_SQ)): Boolean {
+    private fun walkTo(
+        ribbit: RibbitEntity,
+        pos: BlockPos,
+        reach: Double = Math.sqrt(ModConfig.WORK_REACH_SQ),
+        speed: Double = 1.15,
+    ): Boolean {
         val target = Vec3(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
         if (ribbit.distanceToSqr(target) <= reach * reach) {
             ribbit.navigation.stop()
+            ribbit.work().navStuck = 0
             return true
         }
-        ribbit.navigation.moveTo(target.x, target.y, target.z, 1.0)
+        ribbit.navigation.moveTo(target.x, target.y, target.z, speed)
+        ribbit.work().navStuck++
+        if (ribbit.work().navStuck > 80 && ribbit.distanceToSqr(target) < 16.0) {
+            ribbit.work().navStuck = 0
+            return true
+        }
         return false
     }
 }

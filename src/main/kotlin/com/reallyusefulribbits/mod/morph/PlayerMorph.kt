@@ -56,7 +56,11 @@ object PlayerMorph {
 
     fun parse(id: String): EntityType<*>? {
         if (id.isBlank()) return null
-        return BuiltInRegistries.ENTITY_TYPE.getOptional(ResourceLocation.parse(id)).orElse(null)
+        return try {
+            BuiltInRegistries.ENTITY_TYPE.getOptional(ResourceLocation.parse(id)).orElse(null)
+        } catch (_: Exception) {
+            null
+        }
     }
 
     fun canFly(level: Level, type: EntityType<*>): Boolean {
@@ -78,6 +82,28 @@ object PlayerMorph {
             dummy.discard()
             dies
         }
+    }
+
+    @JvmStatic
+    fun isHumanoidType(type: EntityType<*>): Boolean {
+        if (type == EntityType.PLAYER) return true
+        val path = BuiltInRegistries.ENTITY_TYPE.getKey(type).path
+        if (path.contains("horse") || path.contains("wolf") || path.contains("boat")) return false
+        return path.contains("villager") ||
+            path.contains("vindicator") ||
+            path.contains("pillager") ||
+            path.contains("evoker") ||
+            path.contains("illusioner") ||
+            path.contains("witch") ||
+            path.contains("enderman") ||
+            path.contains("piglin") ||
+            path.contains("husk") ||
+            path.contains("drowned") ||
+            path.contains("stray") ||
+            path.contains("bogged") ||
+            path == "giant" ||
+            path.contains("zombie") ||
+            path.contains("skeleton")
     }
 
     fun isMorphable(type: EntityType<*>): Boolean {

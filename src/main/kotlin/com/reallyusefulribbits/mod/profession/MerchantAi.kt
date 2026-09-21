@@ -83,27 +83,44 @@ object MerchantAi {
         }
         ribbit.navigation.moveTo(trader, 1.05)
         if (ribbit.distanceToSqr(trader) < 9.0) {
-            copyTradeItem(ribbit, trader as Merchant)
+            rememberVisit(ribbit, trader as Merchant)
             dataAdvance(ribbit, MerchantPhase.BUILD_OFFERS)
         }
     }
 
-    private fun copyTradeItem(ribbit: RibbitEntity, merchant: Merchant) {
-        val results = ArrayList<ItemStack>()
-        if (merchant is Villager) {
+    private fun rememberVisit(ribbit: RibbitEntity, merchant: Merchant) {
+        val data = ribbit.work()
+        val offers = merchant.offers
+        if (offers.isEmpty() && merchant is Villager) {
             val listings = VillagerTrades.TRADES[merchant.villagerData.profession]
             val master = listings?.get(5) ?: listings?.values?.lastOrNull()
             master?.forEach { listing ->
-                val offer = listing.getOffer(merchant, ribbit.random)
-                if (offer != null) results += offer.result.copy()
+                val offer = listing.getOffer(merchant, ribbit.random) ?: return@forEach
+                storeVisit(data, offer.result, offer.costA.count)
+            }
+        } else {
+            for (offer in offers) {
+                storeVisit(data, offer.result, offer.costA.count)
             }
         }
-        if (results.isEmpty()) {
-            merchant.offers.forEach { results += it.result.copy() }
+        if (data.copiedTradeIds.isNotEmpty()) {
+            val last = data.copiedTradeIds.last()
+            val item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(
+                net.minecraft.resources.ResourceLocation.parse(last),
+            )
+            RibbitBags.insert(data, ProfessionKind.MERCHANT, data.applyLimit(ItemStack(item, 1), ProfessionKind.MERCHANT))
         }
-        if (results.isEmpty()) return
-        val pick = results[ribbit.random.nextInt(results.size)]
-        RibbitBags.insert(ribbit.work(), ProfessionKind.MERCHANT, ribbit.work().applyLimit(pick, ProfessionKind.MERCHANT))
+    }
+
+    private fun storeVisit(data: com.reallyusefulribbits.mod.attach.RibbitWorkData, result: ItemStack, price: Int) {
+        if (result.isEmpty) return
+        val id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(result.item).toString()
+        data.copiedTradeIds += id
+        data.copiedTradePrices += price.coerceIn(1, 32)
+        while (data.copiedTradeIds.size > MerchantEconomy.MAX_COPIED_TRADES) {
+            data.copiedTradeIds.removeAt(0)
+            data.copiedTradePrices.removeAt(0)
+        }
     }
 
     private fun buildOffers(level: ServerLevel, ribbit: RibbitEntity) {
@@ -112,6 +129,7 @@ object MerchantAi {
             .map { data.items[it] }
             .filter { !it.isEmpty }
             .map { net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(it.item).toString() }
+        val visits = data.copiedTradeIds.indices.map { data.copiedTradeIds[it] to data.copiedTradePrices.getOrElse(it) { 4 } }
         val plans = MerchantEconomy.plan(
             inventoryIds = ids,
             copiedId = ids.lastOrNull(),
@@ -122,6 +140,7 @@ object MerchantAi {
                 )
                 item.defaultMaxStackSize
             },
+            visits = visits,
         )
         val offers = ribbit.offers
         offers.clear()

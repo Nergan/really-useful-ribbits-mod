@@ -55,7 +55,7 @@ object FishermanAi {
         val waterCenter = Vec3(water.x + 0.5, sit.y, water.z + 0.5)
         val towardWater = waterCenter.subtract(sit)
         val target = if (towardWater.lengthSqr() > 1.0e-6) {
-            sit.add(towardWater.normalize().scale(0.35))
+            sit.add(towardWater.normalize().scale(0.85))
         } else {
             sit
         }
@@ -63,8 +63,15 @@ object FishermanAi {
             ribbit.setFishing(false)
             data.fishingActive = false
             ribbit.navigation.moveTo(target.x, target.y, target.z, 1.0)
+            data.navStuck++
+            if (data.navStuck >= ModConfig.FISHER_STUCK_TICKS) {
+                data.waterPos = null
+                data.navStuck = 0
+                data.fishingActive = false
+            }
             return
         }
+        data.navStuck = 0
 
         ribbit.navigation.stop()
         ribbit.setFishing(true)

@@ -29,4 +29,17 @@ class FarmFloodFillTest {
         assertTrue(filled.all { it.x <= 8 })
         assertEquals(9, filled.size)
     }
+
+    @Test
+    @DisplayName("Шахматная посадка тростника считается одним полем")
+    fun checkerboardConnects() {
+        val farm = setOf(
+            GridPos(0, 0, 0),
+            GridPos(1, 0, 1),
+            GridPos(2, 0, 0),
+            GridPos(3, 0, 1),
+        )
+        val filled = FarmFloodFill.fill(GridPos(0, 0, 0), 16) { it in farm }
+        assertEquals(4, filled.size)
+    }
 }

@@ -27,9 +27,9 @@ object FarmerTaskPlanner {
         if (view.inventoryFull && view.inventoryHasItems) return FarmerTask.DEPOSIT
         if (view.hasMatureCrop) return FarmerTask.HARVEST
         if (view.hasEmptyFarmland && view.hasPlantable) return FarmerTask.PLANT
+        if (view.inventoryHasItems) return FarmerTask.DEPOSIT
         if (view.hasImmatureCrop) return FarmerTask.WATER
         if (view.hasTillable) return FarmerTask.TILL
-        if (view.inventoryHasItems) return FarmerTask.DEPOSIT
         return FarmerTask.IDLE
     }
 

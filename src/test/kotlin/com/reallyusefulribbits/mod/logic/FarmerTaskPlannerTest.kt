@@ -53,6 +53,21 @@ class FarmerTaskPlannerTest {
     }
 
     @Test
+    @DisplayName("Сдача в сундук важнее полива, иначе фермер залипает на грядке")
+    fun depositBeatsWater() {
+        val view = FarmerWorldView(
+            inventoryFull = false,
+            inventoryHasItems = true,
+            hasMatureCrop = false,
+            hasTillable = false,
+            hasEmptyFarmland = false,
+            hasPlantable = false,
+            hasImmatureCrop = true,
+        )
+        assertEquals(FarmerTask.DEPOSIT, FarmerTaskPlanner.next(view))
+    }
+
+    @Test
     @DisplayName("После работы оставшиеся предметы складывают в контейнер")
     fun leftoverGoesToContainer() {
         val view = FarmerWorldView(

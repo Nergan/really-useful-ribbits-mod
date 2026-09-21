@@ -79,6 +79,7 @@ object RibbitInteractionHandler {
         }
         ribbit.lookControl.setLookAt(player, 180f, 180f)
         ribbit.lookAt(player, 180f, 180f)
+        level.sendParticles(ParticleTypes.ANGRY_VILLAGER, ribbit.x, ribbit.y + 0.9, ribbit.z, 8, 0.25, 0.2, 0.25, 0.01)
         level.playSound(null, ribbit.blockPosition(), SoundEvents.AMETHYST_BLOCK_HIT, SoundSource.NEUTRAL, 0.5f, 1.6f)
     }
 
@@ -100,8 +101,12 @@ object RibbitInteractionHandler {
         val blocks = ArrayList<net.minecraft.core.BlockPos>()
         data.containerPos?.let { blocks += it }
         data.waterPos?.let { blocks += it }
-        data.farmOrigin?.let { origin ->
-            blocks += WorldScan.farmBlocks(level, origin, ServerConfig.scanRadius())
+        if (data.farmMemory.isNotEmpty()) {
+            blocks += data.farmMemory
+        } else {
+            data.farmOrigin?.let { origin ->
+                blocks += WorldScan.allWorkBlocks(level, origin, ServerConfig.scanRadius())
+            }
         }
         HighlightMarkers.glowBlocks(level, blocks)
     }

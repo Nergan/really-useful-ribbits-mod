@@ -15,24 +15,23 @@ object HeadRide {
         if (ribbit.isPassenger) return false
         if (player.passengers.any { it is RibbitEntity }) return false
         val data = ribbit.work()
+        ribbit.setFishing(false)
+        ribbit.setWatering(false)
+        ribbit.setBuffing(false)
+        ribbit.navigation.stop()
+        ribbit.setDeltaMovement(0.0, 0.0, 0.0)
+        ribbit.moveTo(player.x, player.y + player.bbHeight, player.z, player.yRot, 0f)
+        val mounted = ribbit.startRiding(player, true)
+        if (!mounted || ribbit.vehicle != player) {
+            data.riding = false
+            return false
+        }
         data.riding = true
         data.savedInstrument = ribbit.ribbitData.instrument.id.path
         if (ribbit.ribbitData.instrument == RibbitInstrumentModule.NONE) {
             ribbit.setInstrument(RibbitInstrumentModule.getRandomInstrument())
         }
-        // Сидячая анимация — игра на инструменте. Пакеты музыки группы не шлём.
         ribbit.setPlayingInstrument(true)
-        ribbit.setFishing(false)
-        ribbit.setWatering(false)
-        ribbit.setBuffing(false)
-        ribbit.navigation.stop()
-        val mounted = ribbit.startRiding(player, true)
-        if (!mounted) {
-            data.riding = false
-            data.savedInstrument = "none"
-            ribbit.setPlayingInstrument(false)
-            return false
-        }
         if (player is ServerPlayer) {
             player.getData(ModAttachments.VISUAL.get()).headRideDismountArmed = false
         }

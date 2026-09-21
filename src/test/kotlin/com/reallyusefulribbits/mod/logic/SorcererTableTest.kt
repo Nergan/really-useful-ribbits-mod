@@ -69,7 +69,7 @@ class SorcererTableTest {
         assertTrue(SorcererTable.petCount(0) in 1..8)
         assertTrue(SorcererTable.petCount(7) in 1..8)
         assertTrue(SorcererTable.phantomSize(0) in 8..12)
-        assertTrue(SorcererTable.explosionPower(0) in 12f..16f)
+        assertTrue(SorcererTable.explosionPower(0) in 120f..160f)
         assertTrue(SorcererTable.chance(SorcererAction.MORPH) < 0.01)
         assertTrue(SorcererTable.chance(SorcererAction.SPECTATOR) < 0.005)
         assertTrue(SorcererTable.chance(SorcererAction.MEGA_EXPLOSION) < 0.005)

@@ -37,8 +37,15 @@ class RibbitWorkData {
     var merchantReady: Boolean = false
     var riding: Boolean = false
     var savedInstrument: String = "none"
+    var fleeTicks: Int = 0
+    var fleeX: Double = 0.0
+    var fleeZ: Double = 0.0
+    var navStuck: Int = 0
+    var goalsReady: Boolean = false
     val items: NonNullList<ItemStack> = NonNullList.withSize(27, ItemStack.EMPTY)
     val farmMemory: ArrayList<BlockPos> = ArrayList()
+    val copiedTradeIds: ArrayList<String> = ArrayList()
+    val copiedTradePrices: ArrayList<Int> = ArrayList()
 
     fun fishingTimes(): FishingPhaseTimes = FishingPhaseTimes(fishingWait, fishingApproach, fishingBite)
 
@@ -93,7 +100,20 @@ class RibbitWorkData {
         tag.putBoolean("MerchantReady", merchantReady)
         tag.putBoolean("Riding", riding)
         tag.putString("SavedInstrument", savedInstrument)
+        tag.putInt("FleeTicks", fleeTicks)
+        tag.putDouble("FleeX", fleeX)
+        tag.putDouble("FleeZ", fleeZ)
+        tag.putInt("NavStuck", navStuck)
+        tag.putBoolean("GoalsReady", goalsReady)
         tag.putLongArray("FarmMemory", farmMemory.map { it.asLong() }.toLongArray())
+        val copied = ListTag()
+        for (i in copiedTradeIds.indices) {
+            val row = CompoundTag()
+            row.putString("Id", copiedTradeIds[i])
+            row.putInt("Price", copiedTradePrices.getOrElse(i) { 4 })
+            copied.add(row)
+        }
+        tag.put("CopiedTrades", copied)
         val list = ListTag()
         for (stack in items) {
             val itemTag = CompoundTag()
@@ -132,6 +152,19 @@ class RibbitWorkData {
             data.merchantReady = tag.getBoolean("MerchantReady")
             data.riding = tag.getBoolean("Riding")
             data.savedInstrument = tag.getString("SavedInstrument").ifEmpty { "none" }
+            data.fleeTicks = tag.getInt("FleeTicks")
+            data.fleeX = tag.getDouble("FleeX")
+            data.fleeZ = tag.getDouble("FleeZ")
+            data.navStuck = tag.getInt("NavStuck")
+            data.goalsReady = tag.getBoolean("GoalsReady")
+            if (tag.contains("CopiedTrades")) {
+                val copied = tag.getList("CopiedTrades", Tag.TAG_COMPOUND.toInt())
+                for (i in 0 until copied.size) {
+                    val row = copied.getCompound(i)
+                    data.copiedTradeIds += row.getString("Id")
+                    data.copiedTradePrices += row.getInt("Price")
+                }
+            }
             if (tag.contains("FarmMemory")) {
                 for (packed in tag.getLongArray("FarmMemory")) {
                     data.farmMemory += BlockPos.of(packed)
