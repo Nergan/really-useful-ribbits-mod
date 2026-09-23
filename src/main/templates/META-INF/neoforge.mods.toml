@@ -11,6 +11,7 @@ config = "reallyusefulribbits.mixins.json"
 modId = "${mod_id}"
 version = "${mod_version}"
 displayName = "${mod_name}"
+logoFile = "logo.jpeg"
 displayURL = "https://github.com/Nergan/really-useful-ribbits-mod"
 authors = "${mod_authors}"
 description = '''
