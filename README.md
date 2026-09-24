@@ -75,4 +75,4 @@ Dedicated server: `world/serverconfig/reallyusefulribbits-server.toml`. This is 
 
 ## License
 
-The addon code is [MIT](LICENSE). Ribbits, GeckoLib, YUNG's API and Kotlin for Forge keep their own licenses. Patchouli is optional and keeps CC-BY-NC-SA-3.0. Vanilla Minecraft assets are not shipped.
+The addon code is [MPL-2.0](LICENSE). Ribbits, GeckoLib, YUNG's API and Kotlin for Forge keep their own licenses. Patchouli is optional and keeps CC-BY-NC-SA-3.0. Vanilla Minecraft assets are not shipped.

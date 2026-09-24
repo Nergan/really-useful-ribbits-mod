@@ -75,4 +75,4 @@ Workflow релиза собирает аддон и забирает чужие
 
 ## Лицензия
 
-Код аддона — [MIT](LICENSE). У Ribbits, GeckoLib, YUNG's API и Kotlin for Forge свои лицензии. Patchouli необязателен и остаётся под CC-BY-NC-SA-3.0. Ванильные ассеты Minecraft в дистрибутив не входят.
+Код аддона — [MPL-2.0](LICENSE). У Ribbits, GeckoLib, YUNG's API и Kotlin for Forge свои лицензии. Patchouli необязателен и остаётся под CC-BY-NC-SA-3.0. Ванильные ассеты Minecraft в дистрибутив не входят.
