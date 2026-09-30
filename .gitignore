@@ -52,3 +52,7 @@ eclipse/
 release-assets/
 .env
 _tmp/
+
+# McnCDN worker private key
+mcns-ci-github.pem
+.mcns-cdn/
