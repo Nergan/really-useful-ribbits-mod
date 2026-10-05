@@ -158,18 +158,30 @@ jobs:
             Do not install `*-sources.jar`. Companion jars are official Modrinth builds, rehosted here for a one-page install. Patchouli is redistributed for non-commercial use with attribution to VazkiiMods. GitHub shows a SHA-256 digest next to each uploaded file.
 
       - name: Check Modrinth token
+        id: modrinth_token
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
         run: |
           set -euo pipefail
           if [[ -z "${MODRINTH_TOKEN}" ]]; then
-            echo "Secret MODRINTH_TOKEN is missing or empty on this repository."
-            echo "GitHub → Settings → Secrets and variables → Actions → New repository secret."
-            echo "Name must be exactly MODRINTH_TOKEN. Without it mc-publish skips Modrinth and still exits 0."
-            exit 1
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "MODRINTH_TOKEN is empty. Modrinth publish will be skipped."
+            exit 0
           fi
+          echo "present=true" >> "$GITHUB_OUTPUT"
+
+      - name: Replace Modrinth versions
+        if: steps.modrinth_token.outputs.present == 'true'
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/replace-modrinth-versions.py \
+            really-useful-ribbits \
+            "${{ steps.versions.outputs.mod_version }}"
 
       - name: Publish Modrinth
+        if: steps.modrinth_token.outputs.present == 'true'
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: really-useful-ribbits
@@ -195,6 +207,14 @@ jobs:
             farmers-delight(optional){modrinth:R2OftAxM}
             wandering-ribbit(optional){modrinth:qYSYk2ef}
             patchouli(optional){modrinth:nU0bVIaL}
+
+      - name: Delete replaced Modrinth versions
+        if: steps.modrinth_token.outputs.present == 'true'
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/replace-modrinth-versions.py --finish release-assets/modrinth-delete-after-publish.txt
 
       - name: Set up Node.js
         if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
