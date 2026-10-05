@@ -1,7 +1,7 @@
 package com.reallyusefulribbits.mod.util
 
-import com.reallyusefulribbits.mod.attach.ModAttachments
 import com.reallyusefulribbits.mod.attach.RibbitWorkData
+import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import com.reallyusefulribbits.mod.logic.ProfessionKind
 import com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity
 import net.minecraft.core.BlockPos
@@ -11,7 +11,7 @@ import net.minecraft.sounds.SoundSource
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.phys.Vec3
 
-fun RibbitEntity.work(): RibbitWorkData = getData(ModAttachments.WORK.get())
+fun RibbitEntity.work(): RibbitWorkData = RuntimeHooks.work(this)
 
 fun RibbitEntity.professionKind(): ProfessionKind =
     ProfessionKind.fromId(ribbitData.profession.id.path)

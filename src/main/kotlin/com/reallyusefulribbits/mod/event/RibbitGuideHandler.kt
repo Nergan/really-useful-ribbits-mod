@@ -1,15 +1,13 @@
 package com.reallyusefulribbits.mod.event
 
 import com.reallyusefulribbits.mod.ReallyUsefulRibbitsMod
+import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import net.minecraft.core.component.DataComponentType
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.fml.ModList
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent
-import net.neoforged.neoforge.event.entity.player.PlayerEvent
 
 /**
  * Книжка Patchouli выдаётся только если мод установлен.
@@ -21,25 +19,22 @@ object RibbitGuideHandler {
     private const val PATCHOULI_ID = "patchouli"
     private const val TAG_RECEIVED = "reallyusefulribbits.received_guide"
 
-    fun isPatchouliLoaded(): Boolean = ModList.get().isLoaded(PATCHOULI_ID)
+    fun isPatchouliLoaded(): Boolean = RuntimeHooks.patchouliLoaded()
 
-    fun onCreativeTab(event: BuildCreativeModeTabContentsEvent) {
-        if (event.tabKey.location().namespace != "ribbits") return
-        createBookStack()?.let { event.accept(it) }
-    }
+    fun acceptsCreativeTab(namespace: String): Boolean = namespace == "ribbits"
 
-    @SubscribeEvent
-    fun onPlayerLogin(event: PlayerEvent.PlayerLoggedInEvent) {
-        val player = event.entity
+    fun creativeBook(): ItemStack? = createBookStack()
+
+    fun onLogin(player: Player) {
         if (player.level().isClientSide) return
         if (!isPatchouliLoaded()) return
-        if (player.persistentData.getBoolean(TAG_RECEIVED)) return
+        if (RuntimeHooks.guideReceived(player)) return
 
         val book = createBookStack() ?: return
         if (!player.addItem(book)) {
             player.drop(book, false)
         }
-        player.persistentData.putBoolean(TAG_RECEIVED, true)
+        RuntimeHooks.markGuideReceived(player)
     }
 
     fun createBookStack(): ItemStack? {

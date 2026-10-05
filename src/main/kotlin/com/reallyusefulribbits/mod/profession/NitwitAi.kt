@@ -2,7 +2,6 @@ package com.reallyusefulribbits.mod.profession
 
 import com.reallyusefulribbits.mod.ReallyUsefulRibbitsMod
 import com.reallyusefulribbits.mod.config.ModConfig
-import com.reallyusefulribbits.mod.config.ServerConfig
 import com.reallyusefulribbits.mod.inventory.RibbitBags
 import com.reallyusefulribbits.mod.logic.ProfessionKind
 import com.reallyusefulribbits.mod.util.work
@@ -41,7 +40,7 @@ object NitwitAi {
 
     private fun applyLuck(level: ServerLevel, ribbit: RibbitEntity) {
         if (level.gameTime % ModConfig.NITWIT_LUCK_INTERVAL != 0L) return
-        val radius = ServerConfig.scanRadius().toDouble()
+        val radius = com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius().toDouble()
         val box = ribbit.boundingBox.inflate(radius)
         for (entity in level.getEntitiesOfClass(LivingEntity::class.java, box)) {
             entity.addEffect(
@@ -80,7 +79,7 @@ object NitwitAi {
 
     private fun deliver(level: ServerLevel, ribbit: RibbitEntity): Boolean {
         val data = ribbit.work()
-        val radius = ServerConfig.scanRadius().toDouble()
+        val radius = com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius().toDouble()
         val player = level.getEntitiesOfClass(Player::class.java, ribbit.boundingBox.inflate(radius)) {
             it.isAlive && !it.isSpectator
         }.minByOrNull { it.distanceToSqr(ribbit) } ?: return false
@@ -117,7 +116,7 @@ object NitwitAi {
     }
 
     private fun nearestLoot(level: ServerLevel, ribbit: RibbitEntity): ItemEntity? {
-        val radius = ServerConfig.scanRadius().toDouble()
+        val radius = com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius().toDouble()
         return level.getEntitiesOfClass(ItemEntity::class.java, ribbit.boundingBox.inflate(radius)) { item ->
             item.isAlive &&
                 !item.item.isEmpty &&

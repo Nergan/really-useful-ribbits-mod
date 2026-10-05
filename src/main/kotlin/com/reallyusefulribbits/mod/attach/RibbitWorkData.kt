@@ -143,6 +143,7 @@ class RibbitWorkData {
     }
 
     companion object {
+        @JvmStatic
         fun load(tag: CompoundTag, provider: HolderLookup.Provider): RibbitWorkData {
             val data = RibbitWorkData()
             if (tag.contains("Container")) data.containerPos = NbtUtils.readBlockPos(tag, "Container").orElse(null)

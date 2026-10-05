@@ -1,7 +1,6 @@
 package com.reallyusefulribbits.mod.profession
 
 import com.reallyusefulribbits.mod.config.ModConfig
-import com.reallyusefulribbits.mod.config.ServerConfig
 import com.reallyusefulribbits.mod.inventory.GroundPickup
 import com.reallyusefulribbits.mod.inventory.RibbitBags
 import com.reallyusefulribbits.mod.logic.FarmerTask
@@ -57,7 +56,7 @@ object FarmerAi {
 
     private fun perform(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
-        val radius = ServerConfig.scanRadius()
+        val radius = com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius()
         GroundPickup.tick(level, ribbit, ProfessionKind.FARMER)
         if (level.gameTime - data.lastScanAt >= ModConfig.BIND_SCAN_INTERVAL) {
             data.lastScanAt = level.gameTime
@@ -325,7 +324,7 @@ object FarmerAi {
     private fun deposit(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
         if (data.containerPos == null || !ContainerSupport.isStorage(level, data.containerPos!!)) {
-            data.containerPos = WorldScan.nearestContainer(level, ribbit.blockPosition(), ServerConfig.scanRadius())
+            data.containerPos = WorldScan.nearestContainer(level, ribbit.blockPosition(), com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius())
         }
         val pos = data.containerPos ?: return
         if (!walkTo(level, ribbit, pos, Math.sqrt(ModConfig.CONTAINER_REACH_SQ), 1.35, false)) return

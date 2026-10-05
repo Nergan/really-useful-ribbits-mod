@@ -7,6 +7,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(RibbitEntity.class)
 public interface RibbitEntityAccessor {
-    @Accessor("homePosition")
+    @Accessor(value = "homePosition", remap = false)
     void rurSetHomePosition(BlockPos pos);
 }

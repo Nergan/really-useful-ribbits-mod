@@ -36,12 +36,22 @@ jobs:
           geckolib_version="$(grep -E '^geckolib_version=' gradle.properties | cut -d= -f2- | tr -d '\r')"
           yungsapi_version="$(grep -E '^yungsapi_version=' gradle.properties | cut -d= -f2- | tr -d '\r')"
           patchouli_version="$(grep -E '^patchouli_version=' gradle.properties | cut -d= -f2- | tr -d '\r')"
+          patchouli_fabric_version="$(grep -E '^patchouli_fabric_version=' gradle.properties | cut -d= -f2- | tr -d '\r')"
+          yungsapi_fabric_version="$(grep -E '^yungsapi_fabric_version=' gradle.properties | cut -d= -f2- | tr -d '\r')"
+          fabric_api_version="$(grep -E '^fabric_api_version=' gradle.properties | cut -d= -f2- | tr -d '\r')"
+          fabric_kotlin_version="$(grep -E '^fabric_kotlin_version=' gradle.properties | cut -d= -f2- | tr -d '\r')"
+          cloth_config_modrinth_version="$(grep -E '^cloth_config_modrinth_version=' gradle.properties | cut -d= -f2- | tr -d '\r')"
           echo "mod_version=${mod_version}" >> "$GITHUB_OUTPUT"
           echo "kff_version=${kff_version}" >> "$GITHUB_OUTPUT"
           echo "ribbits_version=${ribbits_version}" >> "$GITHUB_OUTPUT"
           echo "geckolib_version=${geckolib_version}" >> "$GITHUB_OUTPUT"
           echo "yungsapi_version=${yungsapi_version}" >> "$GITHUB_OUTPUT"
           echo "patchouli_version=${patchouli_version}" >> "$GITHUB_OUTPUT"
+          echo "patchouli_fabric_version=${patchouli_fabric_version}" >> "$GITHUB_OUTPUT"
+          echo "yungsapi_fabric_version=${yungsapi_fabric_version}" >> "$GITHUB_OUTPUT"
+          echo "fabric_api_version=${fabric_api_version}" >> "$GITHUB_OUTPUT"
+          echo "fabric_kotlin_version=${fabric_kotlin_version}" >> "$GITHUB_OUTPUT"
+          echo "cloth_config_modrinth_version=${cloth_config_modrinth_version}" >> "$GITHUB_OUTPUT"
           echo "mod_version=${mod_version}" >> "$GITHUB_ENV"
 
       - name: Check tag matches mod_version
@@ -74,7 +84,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: "8.10"
+          gradle-version: "8.11"
 
       - name: Build and test
         run: gradle build --stacktrace
@@ -95,7 +105,19 @@ jobs:
               *) cp -v "${jar}" release-assets/ ;;
             esac
           done
-          test -f "release-assets/reallyusefulribbits-${{ steps.versions.outputs.mod_version }}.jar"
+          test -f "release-assets/reallyusefulribbits-neoforge-1.21.1-${{ steps.versions.outputs.mod_version }}.jar"
+          fabric_jars=(fabric/build/libs/reallyusefulribbits-fabric-*.jar)
+          if [[ ${#fabric_jars[@]} -eq 0 ]]; then
+            echo "No Fabric jar in fabric/build/libs"
+            exit 1
+          fi
+          for jar in "${fabric_jars[@]}"; do
+            case "${jar}" in
+              *-sources.jar|*-dev.jar) continue ;;
+              *) cp -v "${jar}" release-assets/ ;;
+            esac
+          done
+          test -f "release-assets/reallyusefulribbits-fabric-1.21.1-${{ steps.versions.outputs.mod_version }}.jar"
           chmod +x .github/scripts/fetch-companion-jars.sh
           .github/scripts/fetch-companion-jars.sh \
             release-assets \
@@ -103,7 +125,23 @@ jobs:
             "${{ steps.versions.outputs.ribbits_version }}" \
             "${{ steps.versions.outputs.geckolib_version }}" \
             "${{ steps.versions.outputs.yungsapi_version }}" \
-            "${{ steps.versions.outputs.patchouli_version }}"
+            "${{ steps.versions.outputs.patchouli_version }}" \
+            "${{ steps.versions.outputs.fabric_api_version }}" \
+            "${{ steps.versions.outputs.fabric_kotlin_version }}" \
+            "${{ steps.versions.outputs.cloth_config_modrinth_version }}" \
+            "${{ steps.versions.outputs.yungsapi_fabric_version }}" \
+            "${{ steps.versions.outputs.patchouli_fabric_version }}"
+          find release-assets -name 'Ribbits-*-NeoForge-*.jar' | grep -q .
+          find release-assets -name 'Ribbits-*-Fabric-*.jar' | grep -q .
+          find release-assets -name 'geckolib-neoforge-*.jar' | grep -q .
+          find release-assets -name 'geckolib-fabric-*.jar' | grep -q .
+          find release-assets -name 'YungsApi-*-NeoForge-*.jar' | grep -q .
+          find release-assets -name 'YungsApi-*-Fabric-*.jar' | grep -q .
+          find release-assets -name 'Patchouli-*-NEOFORGE.jar' | grep -q .
+          find release-assets -name 'Patchouli-*-FABRIC.jar' | grep -q .
+          find release-assets -name 'fabric-api-*.jar' | grep -q .
+          find release-assets -name 'fabric-language-kotlin-*.jar' | grep -q .
+          find release-assets -name 'cloth-config-*.jar' | grep -q .
           ls -lh release-assets
 
       # overwrite_files заменяет только файлы с тем же именем.
@@ -139,23 +177,41 @@ jobs:
           files: |
             release-assets/reallyusefulribbits-*.jar
             release-assets/kotlinforforge-*.jar
-            release-assets/Ribbits-*-NeoForge-*.jar
+            release-assets/Ribbits-*.jar
             release-assets/geckolib-*.jar
             release-assets/YungsApi-*.jar
             release-assets/Patchouli-*.jar
+            release-assets/fabric-api-*.jar
+            release-assets/fabric-language-kotlin-*.jar
+            release-assets/cloth-config-*.jar
           body: |
-            Minecraft **1.21.1** / NeoForge. Put the jars you need into the `mods` folder.
+            Minecraft **1.21.1**. Install either the NeoForge set or the Fabric set, not both.
+
+            ### NeoForge
 
             | File | Required | Source |
             | --- | --- | --- |
-            | `reallyusefulribbits-${{ steps.versions.outputs.mod_version }}.jar` | Yes | this addon |
+            | `reallyusefulribbits-neoforge-1.21.1-${{ steps.versions.outputs.mod_version }}.jar` | Yes | this addon |
             | `kotlinforforge-${{ steps.versions.outputs.kff_version }}-all.jar` | Yes | [Kotlin for Forge](https://modrinth.com/mod/kotlin-for-forge) (LGPL-2.1) |
             | `Ribbits-*-NeoForge-${{ steps.versions.outputs.ribbits_version }}.jar` | Yes | [Ribbits](https://modrinth.com/mod/ribbits) (LGPL-3.0) |
-            | `geckolib-*-${{ steps.versions.outputs.geckolib_version }}.jar` | Yes (for Ribbits) | [GeckoLib](https://modrinth.com/mod/geckolib) (MIT) |
+            | `geckolib-neoforge-*-${{ steps.versions.outputs.geckolib_version }}.jar` | Yes (for Ribbits) | [GeckoLib](https://modrinth.com/mod/geckolib) (MIT) |
             | `YungsApi-${{ steps.versions.outputs.yungsapi_version }}.jar` | Yes (for Ribbits) | [YUNG's API](https://modrinth.com/mod/yungs-api) (LGPL-3.0) |
             | `Patchouli-*-NEOFORGE.jar` | No, only for the guidebook | [Patchouli](https://modrinth.com/mod/patchouli) (CC-BY-NC-SA-3.0) |
 
-            Do not install `*-sources.jar`. Companion jars are official Modrinth builds, rehosted here for a one-page install. Patchouli is redistributed for non-commercial use with attribution to VazkiiMods. GitHub shows a SHA-256 digest next to each uploaded file.
+            ### Fabric
+
+            | File | Required | Source |
+            | --- | --- | --- |
+            | `reallyusefulribbits-fabric-1.21.1-${{ steps.versions.outputs.mod_version }}.jar` | Yes | this addon |
+            | `fabric-api-*.jar` | Yes | [Fabric API](https://modrinth.com/mod/fabric-api) (Apache-2.0) |
+            | `fabric-language-kotlin-*.jar` | Yes | [Fabric Language Kotlin](https://modrinth.com/mod/fabric-language-kotlin) (Apache-2.0) |
+            | `Ribbits-*-Fabric-${{ steps.versions.outputs.ribbits_version }}.jar` | Yes | [Ribbits](https://modrinth.com/mod/ribbits) (LGPL-3.0) |
+            | `geckolib-fabric-*-${{ steps.versions.outputs.geckolib_version }}.jar` | Yes (for Ribbits) | [GeckoLib](https://modrinth.com/mod/geckolib) (MIT) |
+            | `YungsApi-*-Fabric-*.jar` | Yes (for Ribbits) | [YUNG's API](https://modrinth.com/mod/yungs-api) (LGPL-3.0) |
+            | `cloth-config-*.jar` | Yes (for Ribbits) | [Cloth Config](https://modrinth.com/mod/cloth-config) (LGPL-3.0) |
+            | `Patchouli-*-FABRIC.jar` | No, only for the guidebook | [Patchouli](https://modrinth.com/mod/patchouli) (CC-BY-NC-SA-3.0) |
+
+            Do not install `*-sources.jar`. Companion jars are official Modrinth builds, rehosted here for a one-page install. Patchouli is redistributed for non-commercial use with attribution to VazkiiMods. A line that says "requires fabric 0.100.3" means the Fabric API jar, not Fabric Loader. GitHub shows a SHA-256 digest next to each uploaded file.
 
       - name: Check Modrinth token
         id: modrinth_token
@@ -178,7 +234,8 @@ jobs:
           set -euo pipefail
           python3 .github/scripts/replace-modrinth-versions.py \
             really-useful-ribbits \
-            "${{ steps.versions.outputs.mod_version }}"
+            "${{ steps.versions.outputs.mod_version }}" \
+            "${{ steps.versions.outputs.mod_version }}-fabric"
 
       - name: Publish Modrinth
         if: steps.modrinth_token.outputs.present == 'true'
@@ -198,12 +255,42 @@ jobs:
             1.21.1
           java: |
             21
-          files: release-assets/reallyusefulribbits-${{ steps.versions.outputs.mod_version }}.jar
+          files: release-assets/reallyusefulribbits-neoforge-1.21.1-${{ steps.versions.outputs.mod_version }}.jar
           dependencies: |
             kotlin-for-forge(required){modrinth:ordsPcFz}
             ribbits(required){modrinth:8YcE8y4T}
             geckolib(required){modrinth:8BmcQJ2H}
             yungs-api(required){modrinth:Ua7DFN59}
+            farmers-delight(optional){modrinth:R2OftAxM}
+            wandering-ribbit(optional){modrinth:qYSYk2ef}
+            patchouli(optional){modrinth:nU0bVIaL}
+
+      - name: Publish Modrinth Fabric
+        if: steps.modrinth_token.outputs.present == 'true'
+        uses: Kir-Antipov/mc-publish@v3.3
+        with:
+          modrinth-id: really-useful-ribbits
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          modrinth-featured: false
+          name: ${{ steps.versions.outputs.mod_version }} Fabric
+          version: ${{ steps.versions.outputs.mod_version }}-fabric
+          version-type: release
+          changelog: |
+            Minecraft 1.21.1 / Fabric. Really Useful Ribbits ${{ steps.versions.outputs.mod_version }}.
+          loaders: |
+            fabric
+          game-versions: |
+            1.21.1
+          java: |
+            21
+          files: release-assets/reallyusefulribbits-fabric-1.21.1-${{ steps.versions.outputs.mod_version }}.jar
+          dependencies: |
+            fabric-api(required){modrinth:P7dR8mSH}
+            fabric-language-kotlin(required){modrinth:Ha28R6CL}
+            ribbits(required){modrinth:8YcE8y4T}
+            geckolib(required){modrinth:8BmcQJ2H}
+            yungs-api(required){modrinth:Ua7DFN59}
+            cloth-config(required){modrinth:9s6osm5g}
             farmers-delight(optional){modrinth:R2OftAxM}
             wandering-ribbit(optional){modrinth:qYSYk2ef}
             patchouli(optional){modrinth:nU0bVIaL}
@@ -215,6 +302,17 @@ jobs:
         run: |
           set -euo pipefail
           python3 .github/scripts/replace-modrinth-versions.py --finish release-assets/modrinth-delete-after-publish.txt
+
+      - name: Update Modrinth description
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${MODRINTH_TOKEN}" ]]; then
+            echo "MODRINTH_TOKEN is empty. The Modrinth page will not be updated."
+            exit 0
+          fi
+          python3 .github/scripts/update-modrinth-body.py really-useful-ribbits modrinth.md
 
       - name: Set up Node.js
         if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
@@ -242,12 +340,12 @@ jobs:
             fi
             printf '%s\n' "${matches[0]}"
           }
-          mod_jar="$(one 'release-assets/reallyusefulribbits-*.jar')"
+          mod_jar="$(one 'release-assets/reallyusefulribbits-neoforge-1.21.1-*.jar')"
           kff_jar="$(one 'release-assets/kotlinforforge-*.jar')"
           ribbits_jar="$(one 'release-assets/Ribbits-*-NeoForge-*.jar')"
-          geckolib_jar="$(one 'release-assets/geckolib-*.jar')"
-          yungs_jar="$(one 'release-assets/YungsApi-*.jar')"
-          patchouli_jar="$(one 'release-assets/Patchouli-*.jar')"
+          geckolib_jar="$(one 'release-assets/geckolib-neoforge-*.jar')"
+          yungs_jar="$(one 'release-assets/YungsApi-*-NeoForge-*.jar')"
+          patchouli_jar="$(one 'release-assets/Patchouli-*-NEOFORGE.jar')"
           node scripts/mcns-release.mjs really-useful-ribbits-mod auto \
             "mod=${mod_jar}" \
             "kotlinforforge=${kff_jar}" \

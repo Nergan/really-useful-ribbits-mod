@@ -4,22 +4,19 @@ import com.reallyusefulribbits.mod.profession.RibbitBrain
 import com.reallyusefulribbits.mod.util.DelayedTasks
 import com.reallyusefulribbits.mod.world.ContainerSupport
 import com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity
+import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.tick.EntityTickEvent
-import net.neoforged.neoforge.event.tick.ServerTickEvent
+import net.minecraft.world.entity.Entity
 
 object RibbitTickHandler {
-    @SubscribeEvent
-    fun onEntityTick(event: EntityTickEvent.Post) {
-        val ribbit = event.entity as? RibbitEntity ?: return
+    fun onEntityTick(entity: Entity) {
+        val ribbit = entity as? RibbitEntity ?: return
         val level = ribbit.level() as? ServerLevel ?: return
         RibbitBrain.tick(level, ribbit)
     }
 
-    @SubscribeEvent
-    fun onServerTick(event: ServerTickEvent.Post) {
-        DelayedTasks.tick(event.server)
-        ContainerSupport.tick(event.server)
+    fun onServerTick(server: MinecraftServer) {
+        DelayedTasks.tick(server)
+        ContainerSupport.tick(server)
     }
 }

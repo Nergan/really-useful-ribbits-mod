@@ -6,8 +6,7 @@ import net.minecraft.core.particles.ParticleTypes
 import net.minecraft.resources.ResourceKey
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.Level
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.tick.ServerTickEvent
+import net.minecraft.server.MinecraftServer
 
 object HighlightMarkers {
     private data class Job(
@@ -25,16 +24,15 @@ object HighlightMarkers {
         spark(level, blocks)
     }
 
-    @SubscribeEvent
-    fun onServerTick(event: ServerTickEvent.Post) {
-        val now = event.server.tickCount
+    fun onServerTick(server: MinecraftServer) {
+        val now = server.tickCount
         if (jobs.isEmpty()) return
         val leftover = ArrayList<Job>()
         for (job in jobs) {
             if (now >= job.expire) continue
             leftover += job
             if (now % 8 != 0) continue
-            val world = event.server.getLevel(job.dimension) ?: continue
+            val world = server.getLevel(job.dimension) ?: continue
             spark(world, job.blocks)
         }
         jobs.clear()

@@ -2,7 +2,7 @@
 
 **[English](README.md)** · **[Русский](README.ru.md)**
 
-Аддон для **Minecraft 1.21.1** (NeoForge) к моду [Ribbits](https://modrinth.com/mod/ribbits). Маракасом можно задать риббиту точку дома, а рыбаки, фермеры, торговцы, чародеи и nitwit начинают делать что-то полезное. Написан на Kotlin через [Kotlin for Forge](https://modrinth.com/mod/kotlin-for-forge).
+Аддон для **Minecraft 1.21.1** к моду [Ribbits](https://modrinth.com/mod/ribbits), на NeoForge и на Fabric. Маракасом можно задать риббиту точку дома, а рыбаки, фермеры, торговцы, чародеи и nitwit начинают делать что-то полезное. Написан на Kotlin. Ставится набор одного загрузчика, не оба сразу.
 
 Интерфейс и внутриигровая книга есть на русском и английском (язык берётся из настроек клиента).
 
@@ -10,16 +10,31 @@
 
 Готовые jar лежат в [GitHub Releases](https://github.com/Nergan/really-useful-ribbits-mod/releases/latest). Пуш в `main` обновляет файлы текущего релиза.
 
-Скачайте эти файлы и положите в папку `mods`:
+Скачайте один набор и положите эти файлы в папку `mods`.
+
+### NeoForge
 
 | Файл | Обязателен | Что это |
 | --- | --- | --- |
-| `reallyusefulribbits-1.0.0.jar` | Да | этот аддон |
+| `reallyusefulribbits-neoforge-1.21.1-1.0.0.jar` | Да | этот аддон |
 | `kotlinforforge-5.8.0-all.jar` | Да | [Kotlin for Forge](https://modrinth.com/mod/kotlin-for-forge) |
 | `Ribbits-1.21.1-NeoForge-4.1.6.jar` | Да | [Ribbits](https://modrinth.com/mod/ribbits) |
 | `geckolib-neoforge-1.21.1-4.7.6.jar` | Да | [GeckoLib](https://modrinth.com/mod/geckolib), нужен Ribbits |
 | `YungsApi-1.21.1-NeoForge-5.1.5.jar` | Да | [YUNG's API](https://modrinth.com/mod/yungs-api), нужен Ribbits |
 | `Patchouli-1.21.1-93-NEOFORGE.jar` | Нет | [Patchouli](https://modrinth.com/mod/patchouli), только если нужна книга |
+
+### Fabric
+
+| Файл | Обязателен | Что это |
+| --- | --- | --- |
+| `reallyusefulribbits-fabric-1.21.1-1.0.0.jar` | Да | этот аддон |
+| `fabric-api-0.116.17+1.21.1.jar` | Да | [Fabric API](https://modrinth.com/mod/fabric-api) |
+| `fabric-language-kotlin-1.13.2+kotlin.2.1.20.jar` | Да | [Fabric Language Kotlin](https://modrinth.com/mod/fabric-language-kotlin) |
+| `Ribbits-1.21.1-Fabric-4.1.6.jar` | Да | [Ribbits](https://modrinth.com/mod/ribbits) |
+| `geckolib-fabric-1.21.1-4.7.6.jar` | Да | [GeckoLib](https://modrinth.com/mod/geckolib), нужен Ribbits |
+| `YungsApi-1.21.1-Fabric-5.1.5.jar` | Да | [YUNG's API](https://modrinth.com/mod/yungs-api), нужен Ribbits |
+| `cloth-config-15.0.140-fabric.jar` | Да | [Cloth Config](https://modrinth.com/mod/cloth-config), нужен Ribbits |
+| `Patchouli-1.21.1-93-FABRIC.jar` | Нет | [Patchouli](https://modrinth.com/mod/patchouli), только если нужна книга. Fiber уже внутри этого jar, отдельно его ставить не нужно |
 
 Workflow релиза собирает аддон и забирает чужие jar с Modrinth. SHA-256 у каждого файла GitHub считает сам и показывает рядом с ним на странице релиза. Файл `*-sources.jar` в `mods` класть не нужно.
 
@@ -41,27 +56,48 @@ Workflow релиза собирает аддон и забирает чужие
 
 ## Требования
 
+Minecraft 1.21.1 и Java 21 на любом из двух загрузчиков.
+
+### NeoForge
+
 | Компонент | Версия |
 | --- | --- |
-| Minecraft | 1.21.1 |
 | NeoForge | 21.1.209 (подойдёт линейка 21.1.x) |
 | Kotlin for Forge | 5.8.0, сборка **NeoForge** |
 | Ribbits | 1.21.1-NeoForge-4.1.6 |
 | GeckoLib | 4.7.6 (NeoForge 1.21.1) |
 | YUNG's API | 1.21.1-NeoForge-5.1.5 |
-| Java | 21 |
-| Patchouli | любая для 1.21.1, только если нужна книга |
+| Patchouli | `1.21.1-93-neoforge`, только если нужна книга |
+
+### Fabric
+
+| Компонент | Версия |
+| --- | --- |
+| Fabric Loader | 0.16.14 или новее |
+| Fabric API | 0.116.17+1.21.1 |
+| Fabric Language Kotlin | 1.13.2+kotlin.2.1.20 |
+| Ribbits | 1.21.1-Fabric-4.1.6 |
+| GeckoLib | 4.7.6 (Fabric 1.21.1) |
+| YUNG's API | 1.21.1-Fabric-5.1.5 |
+| Cloth Config | 15.0.140, нужен Ribbits |
+| Patchouli | `1.21.1-93-fabric`, только если нужна книга |
 
 ## Установка
 
-1. Установите NeoForge 1.21.1.
-2. Скачайте jar из [последнего Release](https://github.com/Nergan/really-useful-ribbits-mod/releases/latest).
-3. Положите в `mods` этот аддон, Kotlin for Forge, Ribbits, GeckoLib и YUNG's API.
-4. По желанию добавьте оттуда же `Patchouli-1.21.1-93-NEOFORGE.jar`.
+1. Установите NeoForge 21.1.x или Fabric Loader для 1.21.1.
+2. Скачайте подходящий набор из [последнего Release](https://github.com/Nergan/really-useful-ribbits-mod/releases/latest).
+3. Положите этот набор в `mods`. NeoForge-jar в Fabric-сборку не класть, и наоборот.
+4. По желанию добавьте Patchouli того же загрузчика.
 
 Аддон нужен и на клиенте, и на сервере. Зависимости можно взять и с [Modrinth](https://modrinth.com/mod/ribbits), не из GitHub Release.
 
 ## Настройки
+
+| Параметр | По умолчанию | Смысл |
+| --- | --- | --- |
+| `scan_radius` | `64` | Как далеко риббит ищет воду, ферму, контейнер, удачу, эндерменов и рост растений чародея |
+
+### NeoForge
 
 В игре: Mods → Really Useful Ribbits → Config.
 
@@ -69,10 +105,10 @@ Workflow релиза собирает аддон и забирает чужие
 
 На выделенном сервере: `world/serverconfig/reallyusefulribbits-server.toml`. Конфиг типа `SERVER`: значения задаёт сервер и рассылает игрокам. В онлайне имеет значение только то, что стоит на сервере.
 
-| Параметр | По умолчанию | Смысл |
-| --- | --- | --- |
-| `scan_radius` | `64` | Как далеко риббит ищет воду, ферму, контейнер, удачу, эндерменов и рост растений чародея |
+### Fabric
+
+Экрана настроек нет. Сервер читает `config/reallyusefulribbits-server.properties` при запуске. Ключи: `scan_radius` (по умолчанию 64) и `chaos_level` (по умолчанию 25). На выделенном сервере файл лежит в каталоге сервера. После правки нужен перезапуск. Это один файл на весь инстанс, не отдельный конфиг мира.
 
 ## Лицензия
 
-Код аддона — [MPL-2.0](LICENSE). У Ribbits, GeckoLib, YUNG's API и Kotlin for Forge свои лицензии. Patchouli необязателен и остаётся под CC-BY-NC-SA-3.0. Ванильные ассеты Minecraft в дистрибутив не входят.
+Код аддона — [MPL-2.0](LICENSE). У Ribbits, GeckoLib, YUNG's API, Kotlin for Forge, Fabric API, Fabric Language Kotlin и Cloth Config свои лицензии. Patchouli необязателен и остаётся под CC-BY-NC-SA-3.0. Ванильные ассеты Minecraft в дистрибутив не входят.

@@ -1,7 +1,7 @@
 package com.reallyusefulribbits.mod.morph
 
-import com.reallyusefulribbits.mod.attach.ModAttachments
 import com.reallyusefulribbits.mod.client.ClientVisuals
+import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.EntityDimensions
@@ -31,7 +31,7 @@ object PlayerMorph {
         val id = if (player.level().isClientSide) {
             ClientVisuals.morphId(player.uuid)
         } else {
-            player.getData(ModAttachments.VISUAL.get()).morphId
+            RuntimeHooks.visual(player).morphId
         }
         return parse(id)
     }

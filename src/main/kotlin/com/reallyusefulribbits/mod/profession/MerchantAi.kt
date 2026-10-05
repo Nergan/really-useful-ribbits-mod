@@ -1,7 +1,6 @@
 package com.reallyusefulribbits.mod.profession
 
 import com.reallyusefulribbits.mod.config.ModConfig
-import com.reallyusefulribbits.mod.config.ServerConfig
 import com.reallyusefulribbits.mod.inventory.RibbitBags
 import com.reallyusefulribbits.mod.logic.MerchantEconomy
 import com.reallyusefulribbits.mod.logic.MerchantPhase
@@ -66,7 +65,7 @@ object MerchantAi {
     }
 
     private fun seekTrader(level: ServerLevel, ribbit: RibbitEntity) {
-        val radius = ServerConfig.scanRadius().toDouble()
+        val radius = com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius().toDouble()
         val box = ribbit.boundingBox.inflate(radius)
         val traders = level.getEntitiesOfClass(net.minecraft.world.entity.Entity::class.java, box) {
             it !== ribbit && (it is WanderingTrader || it is Merchant)
@@ -203,7 +202,7 @@ object MerchantAi {
         net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.item).toString()
 
     private fun seekPlayer(level: ServerLevel, ribbit: RibbitEntity) {
-        val radius = ServerConfig.scanRadius().toDouble()
+        val radius = com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius().toDouble()
         val players = level.getEntitiesOfClass(Player::class.java, AABB.ofSize(ribbit.position(), radius * 2, 16.0, radius * 2)) {
             it.isAlive && !it.isSpectator
         }

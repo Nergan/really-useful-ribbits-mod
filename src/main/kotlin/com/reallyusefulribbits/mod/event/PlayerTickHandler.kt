@@ -1,25 +1,20 @@
 package com.reallyusefulribbits.mod.event
 
-import com.reallyusefulribbits.mod.attach.ModAttachments
+import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import com.reallyusefulribbits.mod.morph.PlayerMorph
 import com.reallyusefulribbits.mod.morph.SorcererCurse
 import com.reallyusefulribbits.mod.network.PlayerVisualPayload
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.damagesource.DamageSource
 import net.minecraft.world.damagesource.DamageTypes
+import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.GameType
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.entity.living.LivingDeathEvent
-import net.neoforged.neoforge.event.entity.player.PlayerEvent
-import net.neoforged.neoforge.event.tick.PlayerTickEvent
-import net.neoforged.neoforge.network.PacketDistributor
 
 object PlayerTickHandler {
-    @SubscribeEvent
-    fun onPlayerTick(event: PlayerTickEvent.Post) {
-        val player = event.entity
+    fun onPlayerTick(player: Player) {
         if (player.level().isClientSide) return
         val serverPlayer = player as? ServerPlayer ?: return
-        val visual = player.getData(ModAttachments.VISUAL.get())
+        val visual = RuntimeHooks.visual(player)
         if (visual.flightTicks > 0) {
             visual.flightTicks--
             if (visual.flightTicks <= 0 && !visual.morphFlight) {
@@ -47,7 +42,7 @@ object PlayerTickHandler {
     }
 
     fun grantTemporaryFlight(player: ServerPlayer, ticks: Int) {
-        val visual = player.getData(ModAttachments.VISUAL.get())
+        val visual = RuntimeHooks.visual(player)
         visual.flightTicks = ticks
         val abilities = player.abilities
         abilities.mayfly = true
@@ -55,7 +50,7 @@ object PlayerTickHandler {
     }
 
     fun revokeTemporaryFlight(player: ServerPlayer) {
-        val visual = player.getData(ModAttachments.VISUAL.get())
+        val visual = RuntimeHooks.visual(player)
         visual.flightTicks = 0
         if (player.isCreative || player.isSpectator || visual.morphFlight) return
         val abilities = player.abilities
@@ -64,11 +59,9 @@ object PlayerTickHandler {
         player.onUpdateAbilities()
     }
 
-    @SubscribeEvent
-    fun onLogin(event: PlayerEvent.PlayerLoggedInEvent) {
-        val player = event.entity as? ServerPlayer ?: return
+    fun onLogin(player: ServerPlayer) {
         SorcererCurse.sync(player)
-        val visual = player.getData(ModAttachments.VISUAL.get())
+        val visual = RuntimeHooks.visual(player)
         if (visual.flightTicks > 0 || visual.morphFlight) {
             player.abilities.mayfly = true
             player.onUpdateAbilities()
@@ -78,29 +71,22 @@ object PlayerTickHandler {
         }
     }
 
-    @SubscribeEvent
-    fun onStartTrack(event: PlayerEvent.StartTracking) {
-        val player = event.entity as? ServerPlayer ?: return
-        val target = event.target as? ServerPlayer ?: return
-        val visual = target.getData(ModAttachments.VISUAL.get())
-        PacketDistributor.sendToPlayer(
-            player,
+    fun onStartTrack(watcher: ServerPlayer, target: ServerPlayer) {
+        val visual = RuntimeHooks.visual(target)
+        RuntimeHooks.sendToPlayer(
+            watcher,
             PlayerVisualPayload(target.uuid, visual.upsideDown, visual.morphId),
         )
     }
 
-    @SubscribeEvent
-    fun onLoggedOut(event: PlayerEvent.PlayerLoggedOutEvent) {
-        val player = event.entity as? ServerPlayer ?: return
-        if (player.getData(ModAttachments.VISUAL.get()).flightTicks > 0) {
+    fun onLoggedOut(player: ServerPlayer) {
+        if (RuntimeHooks.visual(player).flightTicks > 0) {
             revokeTemporaryFlight(player)
         }
     }
 
-    @SubscribeEvent
-    fun onDeath(event: LivingDeathEvent) {
-        val player = event.entity as? ServerPlayer ?: return
-        if (event.source.`is`(DamageTypes.GENERIC_KILL)) return
+    fun onDeath(player: ServerPlayer, source: DamageSource) {
+        if (source.`is`(DamageTypes.GENERIC_KILL)) return
         SorcererCurse.clear(player)
     }
 }

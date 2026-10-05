@@ -1,13 +1,20 @@
 package com.reallyusefulribbits.mod.client
 
 import com.mojang.math.Axis
+import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
+import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
-import net.neoforged.neoforge.client.event.RenderPlayerEvent
 
 object MorphRenderer {
-    fun render(event: RenderPlayerEvent.Pre, player: Player) {
+    fun render(
+        player: Player,
+        pose: PoseStack,
+        partialTick: Float,
+        buffer: MultiBufferSource,
+        packedLight: Int,
+    ) {
         val type = ClientVisuals.morphType(player.uuid) ?: return
         val dummy = type.create(player.level()) as? LivingEntity ?: return
         dummy.tickCount = player.tickCount
@@ -32,7 +39,6 @@ object MorphRenderer {
         dummy.xOld = player.xOld
         dummy.yOld = player.yOld
         dummy.zOld = player.zOld
-        val pose = event.poseStack
         pose.pushPose()
         if (ClientVisuals.isUpsideDown(player.uuid)) {
             pose.translate(0.0, player.bbHeight.toDouble(), 0.0)
@@ -40,7 +46,7 @@ object MorphRenderer {
         }
         val dispatcher = Minecraft.getInstance().entityRenderDispatcher
         val renderer = dispatcher.getRenderer(dummy)
-        renderer.render(dummy, player.yRot, event.partialTick, pose, event.multiBufferSource, event.packedLight)
+        renderer.render(dummy, player.yRot, partialTick, pose, buffer, packedLight)
         pose.popPose()
         dummy.discard()
     }

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "fabric:load_conditions": [
+    {
+      "condition": "fabric:all_mods_loaded",
+      "values": ["patchouli"]
+    }
+  ],
+  "category": "misc",
+  "ingredients": [
+    { "item": "minecraft:book" },
+    { "item": "ribbits:giant_lilypad" }
+  ],
+  "result": {
+    "id": "patchouli:guide_book",
+    "count": 1,
+    "components": {
+      "patchouli:book": "reallyusefulribbits:ribbit_guide"
+    }
+  }
+}

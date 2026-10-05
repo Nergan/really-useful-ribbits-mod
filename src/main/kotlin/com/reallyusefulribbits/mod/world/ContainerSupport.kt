@@ -1,8 +1,9 @@
 package com.reallyusefulribbits.mod.world
 
 import com.reallyusefulribbits.mod.config.ModConfig
+import com.reallyusefulribbits.mod.loader.ItemSlots
+import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import net.minecraft.core.BlockPos
-import net.minecraft.core.Direction
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceKey
 import net.minecraft.server.MinecraftServer
@@ -20,12 +21,6 @@ import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.ContainerOpenersCounter
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
-import net.neoforged.neoforge.capabilities.Capabilities
-import net.neoforged.neoforge.common.util.FakePlayerFactory
-import net.neoforged.neoforge.items.IItemHandler
-import net.neoforged.neoforge.items.ItemHandlerHelper
-import net.neoforged.neoforge.items.wrapper.InvWrapper
-
 object ContainerSupport {
     private data class OpenLid(
         val dimension: ResourceKey<Level>,
@@ -43,17 +38,7 @@ object ContainerSupport {
         return handler(level, pos) != null
     }
 
-    fun handler(level: Level, pos: BlockPos): IItemHandler? {
-        val found = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, null as Direction?)
-        if (found != null) return found
-        for (side in Direction.entries) {
-            val sided = level.getCapability(Capabilities.ItemHandler.BLOCK, pos, side)
-            if (sided != null) return sided
-        }
-        val be = level.getBlockEntity(pos)
-        if (be is Container) return InvWrapper(be)
-        return null
-    }
+    fun handler(level: Level, pos: BlockPos): ItemSlots? = RuntimeHooks.itemSlots(level, pos)
 
     fun insertAll(level: Level, pos: BlockPos, stacks: List<ItemStack>): List<ItemStack> {
         val itemHandler = handler(level, pos) ?: return stacks
@@ -69,7 +54,7 @@ object ContainerSupport {
         }
         for (item in toCompact) leftover += compactPlain(itemHandler, item)
         for (stack in normalized) {
-            val rest = ItemHandlerHelper.insertItemStacked(itemHandler, stack, false)
+            val rest = itemHandler.insertItemStacked(stack)
             if (!rest.isEmpty) leftover += rest
         }
         return leftover
@@ -94,20 +79,20 @@ object ContainerSupport {
     }
 
     /** Собирает уже лежащие простые стопки того же предмета в обычные стаки по 64. */
-    private fun compactPlain(handler: IItemHandler, item: Item): List<ItemStack> {
+    private fun compactPlain(handler: ItemSlots, item: Item): List<ItemStack> {
         val vanillaMax = item.defaultMaxStackSize
         if (vanillaMax <= 1) return emptyList()
         var total = 0
         for (slot in 0 until handler.slots) {
             val peek = handler.getStackInSlot(slot)
             if (!isPlain(peek) || !peek.`is`(item)) continue
-            val taken = handler.extractItem(slot, peek.count, false)
+            val taken = handler.extractItem(slot, peek.count)
             total += taken.count
         }
         val left = ArrayList<ItemStack>()
         while (total > 0) {
             val stack = ItemStack(item, minOf(total, vanillaMax))
-            val rest = ItemHandlerHelper.insertItemStacked(handler, stack, false)
+            val rest = handler.insertItemStacked(stack)
             val placed = stack.count - rest.count
             if (placed <= 0) {
                 left += ItemStack(item, total)
@@ -125,7 +110,7 @@ object ContainerSupport {
         for (slot in 0 until itemHandler.slots) {
             val peek = itemHandler.getStackInSlot(slot)
             if (peek.isEmpty || !test(peek)) continue
-            val extracted = itemHandler.extractItem(slot, remaining, false)
+            val extracted = itemHandler.extractItem(slot, remaining)
             if (extracted.isEmpty) continue
             if (taken.isEmpty) {
                 taken = extracted
@@ -146,7 +131,7 @@ object ContainerSupport {
             existing.until = level.server.tickCount + ModConfig.CONTAINER_OPEN_TICKS
             return
         }
-        val player = actor ?: FakePlayerFactory.getMinecraft(level)
+        val player = actor ?: RuntimeHooks.containerOpener(level)
         be.startOpen(player)
         openLids += OpenLid(level.dimension(), pos, level.server.tickCount + ModConfig.CONTAINER_OPEN_TICKS, player)
     }

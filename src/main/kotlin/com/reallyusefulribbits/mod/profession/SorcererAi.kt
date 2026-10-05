@@ -1,8 +1,7 @@
 package com.reallyusefulribbits.mod.profession
 
-import com.reallyusefulribbits.mod.attach.ModAttachments
 import com.reallyusefulribbits.mod.config.ModConfig
-import com.reallyusefulribbits.mod.config.ServerConfig
+import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import com.reallyusefulribbits.mod.event.ModAdvancements
 import com.reallyusefulribbits.mod.event.PlayerTickHandler
 import com.reallyusefulribbits.mod.logic.SorcererAction
@@ -66,7 +65,7 @@ object SorcererAi {
         var chosen: SorcererAction? = null
         repeat(6) {
             if (allowed.isEmpty() || applied) return@repeat
-            val action = SorcererTable.pick(ribbit.random.nextInt(), ServerConfig.chaosLevel(), allowed)
+            val action = SorcererTable.pick(ribbit.random.nextInt(), com.reallyusefulribbits.mod.loader.RuntimeHooks.chaosLevel(), allowed)
             applied = apply(level, ribbit, player, action)
             if (applied) chosen = action
             allowed.remove(action)
@@ -180,7 +179,7 @@ object SorcererAi {
         val stacks = player.inventory.items + player.inventory.armor + listOf(player.mainHandItem, player.offhandItem)
         val registry = level.registryAccess().registryOrThrow(Registries.ENCHANTMENT)
         return stacks.filter { stack ->
-            !stack.isEmpty && registry.holders().toList().any { holder -> stack.supportsEnchantment(holder) }
+            !stack.isEmpty && registry.holders().toList().any { holder -> holder.value().canEnchant(stack) }
         }
     }
 
@@ -189,7 +188,7 @@ object SorcererAi {
         if (candidates.isEmpty()) return false
         val stack = candidates[player.random.nextInt(candidates.size)]
         val registry = level.registryAccess().registryOrThrow(Registries.ENCHANTMENT)
-        val options = registry.holders().toList().filter { stack.supportsEnchantment(it) }
+        val options = registry.holders().toList().filter { it.value().canEnchant(stack) }
         if (options.isEmpty()) return false
         val enchantment = options[player.random.nextInt(options.size)]
         val max = enchantment.value().getMaxLevel().coerceAtLeast(1)
@@ -321,7 +320,7 @@ object SorcererAi {
 
     private fun flip(player: ServerPlayer) {
         SorcererCurse.rememberBase(player)
-        val visual = player.getData(ModAttachments.VISUAL.get())
+        val visual = RuntimeHooks.visual(player)
         visual.upsideDown = !visual.upsideDown
         SorcererCurse.sync(player)
     }
@@ -342,7 +341,7 @@ object SorcererAi {
     }
 
     private fun ignite(level: ServerLevel, ribbit: RibbitEntity): Boolean {
-        val radius = (ServerConfig.scanRadius() / 4).coerceAtLeast(4)
+        val radius = (com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius() / 4).coerceAtLeast(4)
         val origin = ribbit.blockPosition()
         var lit = 0
         ribbit.setRemainingFireTicks(0)
@@ -455,7 +454,7 @@ object SorcererAi {
     }
 
     private fun scareEndermen(level: ServerLevel, ribbit: RibbitEntity) {
-        val radius = ServerConfig.scanRadius().toDouble()
+        val radius = com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius().toDouble()
         val box = ribbit.boundingBox.inflate(radius)
         for (enderman in level.getEntitiesOfClass(EnderMan::class.java, box)) {
             enderman.target = null
@@ -498,7 +497,7 @@ object SorcererAi {
     }
 
     private fun spectator(player: ServerPlayer): Boolean {
-        val visual = player.getData(ModAttachments.VISUAL.get())
+        val visual = RuntimeHooks.visual(player)
         if (player.gameMode.gameModeForPlayer != GameType.SPECTATOR) {
             visual.previousGameMode = player.gameMode.gameModeForPlayer.getName()
         }
@@ -510,7 +509,7 @@ object SorcererAi {
     }
 
     private fun megaExplosion(level: ServerLevel, ribbit: RibbitEntity, player: ServerPlayer): Boolean {
-        val radius = ServerConfig.scanRadius().coerceAtLeast(8)
+        val radius = com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius().coerceAtLeast(8)
         var dx: Int
         var dz: Int
         do {

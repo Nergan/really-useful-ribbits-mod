@@ -27,7 +27,7 @@ object ClientModEvents {
         val player = event.entity
         if (ClientVisuals.morphType(player.uuid) == null) return
         event.isCanceled = true
-        MorphRenderer.render(event, player)
+        MorphRenderer.render(player, event.poseStack, event.partialTick, event.multiBufferSource, event.packedLight)
     }
 
     @SubscribeEvent

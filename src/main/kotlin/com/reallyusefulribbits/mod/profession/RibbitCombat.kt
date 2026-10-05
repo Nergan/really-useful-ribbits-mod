@@ -7,22 +7,21 @@ import com.reallyusefulribbits.mod.util.professionKind
 import com.reallyusefulribbits.mod.util.work
 import com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity
 import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.damagesource.DamageSource
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffects
+import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.ai.attributes.AttributeModifier
 import net.minecraft.world.entity.ai.attributes.Attributes
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent
 
 object RibbitCombat {
     private val FLEE_SPEED = ResourceLocation.fromNamespaceAndPath(ReallyUsefulRibbitsMod.MOD_ID, "flee_speed")
 
-    @SubscribeEvent
-    fun onHurt(event: LivingIncomingDamageEvent) {
-        val ribbit = event.entity as? RibbitEntity ?: return
-        if (event.amount <= 0f) return
-        val attacker = event.source.entity as? LivingEntity
+    fun onHurt(entity: Entity, amount: Float, source: DamageSource) {
+        val ribbit = entity as? RibbitEntity ?: return
+        if (amount <= 0f) return
+        val attacker = source.entity as? LivingEntity
         val data = ribbit.work()
         data.fleeTicks = ModConfig.FLEE_TICKS
         if (attacker != null) {

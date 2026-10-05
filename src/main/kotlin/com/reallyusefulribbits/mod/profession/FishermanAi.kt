@@ -1,7 +1,6 @@
 package com.reallyusefulribbits.mod.profession
 
 import com.reallyusefulribbits.mod.config.ModConfig
-import com.reallyusefulribbits.mod.config.ServerConfig
 import com.reallyusefulribbits.mod.inventory.GroundPickup
 import com.reallyusefulribbits.mod.inventory.RibbitBags
 import com.reallyusefulribbits.mod.logic.FishingTiming
@@ -41,7 +40,7 @@ object FishermanAi {
 
     fun tick(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
-        val radius = ServerConfig.scanRadius()
+        val radius = com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius()
         GroundPickup.tick(level, ribbit, ProfessionKind.FISHERMAN)
         if (level.gameTime - data.lastScanAt >= ModConfig.BIND_SCAN_INTERVAL) {
             data.lastScanAt = level.gameTime

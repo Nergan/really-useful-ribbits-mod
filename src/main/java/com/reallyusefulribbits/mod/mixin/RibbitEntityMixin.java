@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(RibbitEntity.class)
 public abstract class RibbitEntityMixin {
-    @Inject(method = "reassessGoals", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "reassessGoals", at = @At("HEAD"), cancellable = true, remap = false)
     private void reallyusefulribbits$skipVanillaJobs(CallbackInfo ci) {
         ci.cancel();
     }

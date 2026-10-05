@@ -1,7 +1,7 @@
 package com.reallyusefulribbits.mod.event
 
 import com.reallyusefulribbits.mod.config.ModConfig
-import com.reallyusefulribbits.mod.config.ServerConfig
+import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import com.reallyusefulribbits.mod.highlight.HighlightMarkers
 import com.reallyusefulribbits.mod.home.HomePoint
 import com.reallyusefulribbits.mod.logic.ProfessionKind
@@ -21,42 +21,40 @@ import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffects
+import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.Items
-import net.neoforged.bus.api.EventPriority
-import net.neoforged.bus.api.SubscribeEvent
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent
+import net.minecraft.world.level.Level
 
 object RibbitInteractionHandler {
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    fun onInteract(event: PlayerInteractEvent.EntityInteract) {
-        val ribbit = event.target as? RibbitEntity ?: return
-        if (event.hand != InteractionHand.MAIN_HAND) return
-        val player = event.entity
+    /** Не null — взаимодействие нужно отменить и вернуть этот результат. */
+    fun onEntityInteract(player: Player, target: Entity, hand: InteractionHand, level: Level): InteractionResult? {
+        val ribbit = target as? RibbitEntity ?: return null
+        if (hand != InteractionHand.MAIN_HAND) return null
         if (HomePoint.isMaraca(player.mainHandItem)) {
-            event.isCanceled = true
-            event.cancellationResult = InteractionResult.sidedSuccess(event.level.isClientSide)
-            if (!event.level.isClientSide) {
+            if (!level.isClientSide) {
                 HomePoint.setHere(player, ribbit)
             }
-            return
+            return InteractionResult.sidedSuccess(level.isClientSide)
         }
-        if (event.level.isClientSide) return
-        val level = event.level as? ServerLevel ?: return
-        val serverPlayer = player as? ServerPlayer ?: return
-        when (ribbit.professionKind()) {
+        if (level.isClientSide) return null
+        val serverLevel = level as? ServerLevel ?: return null
+        val serverPlayer = player as? ServerPlayer ?: return null
+        return when (ribbit.professionKind()) {
             ProfessionKind.FISHERMAN, ProfessionKind.FARMER -> {
-                event.isCanceled = true
-                event.cancellationResult = InteractionResult.SUCCESS
-                highlightWork(level, ribbit)
+                highlightWork(serverLevel, ribbit)
+                InteractionResult.SUCCESS
             }
             ProfessionKind.SORCERER -> {
-                event.isCanceled = true
-                event.cancellationResult = InteractionResult.SUCCESS
-                handleSorcerer(level, ribbit, serverPlayer)
+                handleSorcerer(serverLevel, ribbit, serverPlayer)
+                InteractionResult.SUCCESS
             }
-            ProfessionKind.MERCHANT -> MerchantAi.onPlayerOpenedTrade(ribbit)
-            else -> Unit
+            ProfessionKind.MERCHANT -> {
+                MerchantAi.onPlayerOpenedTrade(ribbit)
+                null
+            }
+            else -> null
         }
     }
 
@@ -102,7 +100,7 @@ object RibbitInteractionHandler {
             blocks += data.farmMemory
         } else {
             data.farmOrigin?.let { origin ->
-                blocks += WorldScan.allWorkBlocks(level, origin, ServerConfig.scanRadius())
+                blocks += WorldScan.allWorkBlocks(level, origin, RuntimeHooks.scanRadius())
             }
         }
         HighlightMarkers.glowBlocks(level, blocks)

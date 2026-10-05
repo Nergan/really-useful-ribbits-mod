@@ -1,22 +1,21 @@
 package com.reallyusefulribbits.mod.morph
 
-import com.reallyusefulribbits.mod.attach.ModAttachments
 import com.reallyusefulribbits.mod.attach.PlayerVisualData
 import com.reallyusefulribbits.mod.event.PlayerTickHandler
+import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import com.reallyusefulribbits.mod.network.PlayerVisualPayload
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.GameType
-import net.neoforged.neoforge.network.PacketDistributor
 
 object SorcererCurse {
-    fun visual(player: Player): PlayerVisualData = player.getData(ModAttachments.VISUAL.get())
+    fun visual(player: Player): PlayerVisualData = RuntimeHooks.visual(player)
 
     fun sync(player: ServerPlayer) {
         val data = visual(player)
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(
+        RuntimeHooks.sendTrackingAndSelf(
             player,
             PlayerVisualPayload(player.uuid, data.upsideDown, data.morphId),
         )
