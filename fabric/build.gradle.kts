@@ -43,7 +43,6 @@ tasks.withType<KotlinCompile>().configureEach {
 sourceSets.named("main") {
     java.srcDir(rootProject.file("src/main/java"))
     resources.srcDir(rootProject.file("src/main/resources"))
-    resources.exclude("data/reallyusefulribbits/recipe/ribbit_guide.json")
 }
 
 repositories {
@@ -90,6 +89,12 @@ dependencies {
 tasks.processResources {
     val version = project.version.toString()
     inputs.property("version", version)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    // Рецепт NeoForge лежит по тому же пути. В jar Fabric остаётся файл из fabric/src.
+    exclude { details ->
+        val path = details.file.invariantSeparatorsPath
+        path.endsWith("data/reallyusefulribbits/recipe/ribbit_guide.json") && "/fabric/" !in path
+    }
     filesMatching("fabric.mod.json") {
         filter { line -> line.replace("\${version}", version) }
     }

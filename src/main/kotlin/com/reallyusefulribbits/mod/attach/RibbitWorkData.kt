@@ -72,6 +72,25 @@ class RibbitWorkData {
         else -> 0
     }
 
+    /**
+     * Кодек ItemStack в 1.21.1 принимает count только в диапазоне 1–99.
+     * У торговца слот на 256, поэтому полный размер пишется рядом, а в кодек уходит копия не больше 99.
+     */
+    private fun writeStack(stack: ItemStack, provider: HolderLookup.Provider): CompoundTag {
+        val tag = CompoundTag()
+        if (stack.isEmpty) return tag
+        val count = stack.count
+        if (count > ITEM_CODEC_COUNT_LIMIT) {
+            val copy = stack.copy()
+            copy.count = ITEM_CODEC_COUNT_LIMIT
+            copy.save(provider, tag)
+            tag.putInt(STORED_COUNT, count)
+        } else {
+            stack.save(provider, tag)
+        }
+        return tag
+    }
+
     fun applyLimit(stack: ItemStack, kind: ProfessionKind): ItemStack {
         if (stack.isEmpty) return stack
         val wanted = slotLimit(kind)
@@ -124,25 +143,35 @@ class RibbitWorkData {
             row.putInt("Price", copiedTradePrices.getOrElse(i) { 4 })
             val goods = copiedGoods.getOrNull(i)
             if (goods != null && !goods.isEmpty) {
-                row.put("Stack", goods.save(provider))
+                row.put("Stack", writeStack(goods, provider))
             }
             copied.add(row)
         }
         tag.put("CopiedTrades", copied)
         val list = ListTag()
         for (stack in items) {
-            val itemTag = CompoundTag()
-            if (!stack.isEmpty) {
-                list.add(stack.save(provider, itemTag))
-            } else {
-                list.add(itemTag)
-            }
+            list.add(writeStack(stack, provider))
         }
         tag.put("Items", list)
         return tag
     }
 
     companion object {
+        private const val ITEM_CODEC_COUNT_LIMIT = 99
+        private const val STORED_COUNT = "reallyusefulribbits_count"
+
+        private fun readStack(tag: CompoundTag, provider: HolderLookup.Provider): ItemStack {
+            if (tag.isEmpty) return ItemStack.EMPTY
+            val stored = if (tag.contains(STORED_COUNT)) tag.getInt(STORED_COUNT) else -1
+            tag.remove(STORED_COUNT)
+            val stack = ItemStack.parse(provider, tag).orElse(ItemStack.EMPTY)
+            if (stack.isEmpty || stored <= stack.count) return stack
+            val max = stack.getOrDefault(DataComponents.MAX_STACK_SIZE, stack.maxStackSize)
+            if (stored > max) stack.set(DataComponents.MAX_STACK_SIZE, stored)
+            stack.count = stored
+            return stack
+        }
+
         @JvmStatic
         fun load(tag: CompoundTag, provider: HolderLookup.Provider): RibbitWorkData {
             val data = RibbitWorkData()
@@ -181,7 +210,7 @@ class RibbitWorkData {
                     data.copiedTradeIds += row.getString("Id")
                     data.copiedTradePrices += row.getInt("Price")
                     val stack = if (row.contains("Stack")) {
-                        ItemStack.parse(provider, row.getCompound("Stack")).orElse(ItemStack.EMPTY)
+                        readStack(row.getCompound("Stack"), provider)
                     } else {
                         val id = row.getString("Id")
                         if (id.isBlank()) {
@@ -205,11 +234,7 @@ class RibbitWorkData {
             val list = tag.getList("Items", Tag.TAG_COMPOUND.toInt())
             for (i in 0 until minOf(list.size, data.items.size)) {
                 val itemTag = list.getCompound(i)
-                data.items[i] = if (itemTag.isEmpty) {
-                    ItemStack.EMPTY
-                } else {
-                    ItemStack.parse(provider, itemTag).orElse(ItemStack.EMPTY)
-                }
+                data.items[i] = readStack(itemTag, provider)
             }
             return data
         }
