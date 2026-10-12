@@ -50,6 +50,7 @@ desktop.ini
 *.log
 eclipse/
 release-assets/
+release-split/
 .env
 _tmp/
 

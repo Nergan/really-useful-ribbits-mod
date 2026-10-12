@@ -8,7 +8,7 @@
 
 ## Загрузки
 
-Готовые jar лежат в [GitHub Releases](https://github.com/Nergan/really-useful-ribbits-mod/releases/latest). Пуш в `main` обновляет файлы текущего релиза.
+Готовые jar лежат в [GitHub Releases](https://github.com/Nergan/really-useful-ribbits-mod/releases/latest). Пуш в `main` обновляет страницу GitHub Release для каждой пары версии Minecraft и загрузчика. На странице есть `all-jars.zip`.
 
 Скачайте один набор и положите эти файлы в папку `mods`.
 

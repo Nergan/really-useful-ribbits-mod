@@ -8,7 +8,7 @@ The UI and in-game guidebook are available in English and Russian (the language 
 
 ## Downloads
 
-Jars live on [GitHub Releases](https://github.com/Nergan/really-useful-ribbits-mod/releases/latest). A push to `main` updates the files on the current version’s release.
+Jars live on [GitHub Releases](https://github.com/Nergan/really-useful-ribbits-mod/releases/latest). A push to `main` updates one GitHub Release page per Minecraft version and loader. Each page includes `all-jars.zip`.
 
 Download one set and put those files in the `mods` folder.
 
