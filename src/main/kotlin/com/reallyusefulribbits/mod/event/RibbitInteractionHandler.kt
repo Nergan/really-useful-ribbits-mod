@@ -100,7 +100,7 @@ object RibbitInteractionHandler {
             blocks += data.farmMemory
         } else {
             data.farmOrigin?.let { origin ->
-                blocks += WorldScan.allWorkBlocks(level, origin, RuntimeHooks.scanRadius())
+                blocks += WorldScan.farmBlocks(level, origin, RuntimeHooks.scanRadius())
             }
         }
         HighlightMarkers.glowBlocks(level, blocks)

@@ -33,6 +33,7 @@ object ContainerSupport {
     private val openLids = ArrayList<OpenLid>()
 
     fun isStorage(level: Level, pos: BlockPos): Boolean {
+        if (!level.isLoaded(pos)) return false
         val state = level.getBlockState(pos)
         if (state.block is EnderChestBlock) return false
         if (level.getBlockEntity(pos) is Container) return true

@@ -58,13 +58,13 @@ object FarmerAi {
         val data = ribbit.work()
         val radius = com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius()
         GroundPickup.tick(level, ribbit, ProfessionKind.FARMER)
-        if (level.gameTime - data.lastScanAt >= ModConfig.BIND_SCAN_INTERVAL) {
+        if (WorldScan.scanDue(level.gameTime, data.lastScanAt, ModConfig.BIND_SCAN_INTERVAL, ribbit.id)) {
             data.lastScanAt = level.gameTime
-            if (data.containerPos == null || !ContainerSupport.isStorage(level, data.containerPos!!)) {
-                data.containerPos = WorldScan.nearestContainer(level, ribbit.blockPosition(), radius)
+            if (!WorldScan.bindingOk(level, data.containerPos) { ContainerSupport.isStorage(level, it) }) {
+                data.containerPos = WorldScan.nearestContainer(level, ribbit.blockPosition(), radius, ribbit.id)
             }
-            if (data.farmOrigin == null || !CropSupport.isFarmBlock(level, data.farmOrigin!!)) {
-                val next = WorldScan.nearestFarmOrigin(level, ribbit.blockPosition(), radius)
+            if (!WorldScan.bindingOk(level, data.farmOrigin) { CropSupport.isFarmBlock(level, it) }) {
+                val next = WorldScan.nearestFarmOrigin(level, ribbit.blockPosition(), radius, ribbit.id)
                 if (next != data.farmOrigin) {
                     data.farmMemory.clear()
                     data.lastFarmScanAt = 0
@@ -78,10 +78,18 @@ object FarmerAi {
             busy.remove(ribbit.id)
             return
         }
-        if (data.farmMemory.isEmpty() || level.gameTime - data.lastFarmScanAt >= ModConfig.FARM_RESCAN_INTERVAL) {
+        val farmInterval = if (data.farmMemory.isEmpty()) 20 else ModConfig.FARM_RESCAN_INTERVAL
+        if (WorldScan.scanDue(level.gameTime, data.lastFarmScanAt, farmInterval, ribbit.id)) {
             data.lastFarmScanAt = level.gameTime
+            val fresh = WorldScan.allWorkBlocks(level, origin, maxOf(radius, ModConfig.FARM_CLAIM_RADIUS), ribbit.id)
+            val merged = LinkedHashSet<BlockPos>()
+            merged.addAll(fresh)
+            for (pos in data.farmMemory) {
+                if (merged.size >= ModConfig.FARM_MEMORY_CAP) break
+                if (level.isLoaded(pos) && CropSupport.isFarmBlock(level, pos)) merged.add(pos)
+            }
             data.farmMemory.clear()
-            data.farmMemory += WorldScan.allWorkBlocks(level, origin, maxOf(radius, ModConfig.FARM_CLAIM_RADIUS))
+            data.farmMemory.addAll(merged)
         }
         val farm = data.farmMemory.toList()
         val jobs = scanJobs(level, ribbit, farm)
@@ -154,6 +162,7 @@ object FarmerAi {
             for (dy in 0..8) cropScan += pos.above(dy)
         }
         for (pos in cropScan) {
+            if (!level.isLoaded(pos)) continue
             val state = level.getBlockState(pos)
             val dist = ribbit.distanceToSqr(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
             if (dist < harvestDist && CropSupport.isMatureCrop(level, pos)) {
@@ -185,6 +194,7 @@ object FarmerAi {
             }
         }
         for (pos in tillCandidates) {
+            if (!level.isLoaded(pos)) continue
             if (!CropSupport.isTillable(level.getBlockState(pos))) continue
             val dist = ribbit.distanceToSqr(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
             if (dist < tillDist) {
@@ -216,6 +226,7 @@ object FarmerAi {
     }
 
     private fun isInteriorHole(level: ServerLevel, pos: BlockPos, farm: Set<BlockPos>): Boolean {
+        if (!level.isLoaded(pos)) return false
         if (!CropSupport.isTillable(level.getBlockState(pos))) return false
         var neighbors = 0
         for (dir in Direction.Plane.HORIZONTAL) {
@@ -323,10 +334,12 @@ object FarmerAi {
 
     private fun deposit(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
-        if (data.containerPos == null || !ContainerSupport.isStorage(level, data.containerPos!!)) {
-            data.containerPos = WorldScan.nearestContainer(level, ribbit.blockPosition(), com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius())
-        }
         val pos = data.containerPos ?: return
+        if (!level.isLoaded(pos)) return
+        if (!ContainerSupport.isStorage(level, pos)) {
+            data.containerPos = null
+            return
+        }
         if (!walkTo(level, ribbit, pos, Math.sqrt(ModConfig.CONTAINER_REACH_SQ), 1.35, false)) return
         LookAt.block(ribbit, pos, 0.5)
         ContainerSupport.openBriefly(level, pos)
@@ -511,6 +524,7 @@ object FarmerAi {
     }
 
     private fun canStand(level: ServerLevel, feet: BlockPos): Boolean {
+        if (!level.isLoaded(feet) || !level.isLoaded(feet.below())) return false
         if (!level.getFluidState(feet).isEmpty) return false
         if (!level.getBlockState(feet).getCollisionShape(level, feet).isEmpty) return false
         val ground = feet.below()

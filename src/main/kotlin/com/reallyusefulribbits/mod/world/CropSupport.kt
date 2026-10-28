@@ -31,6 +31,7 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty
 
 object CropSupport {
     fun isFarmBlock(level: Level, pos: BlockPos): Boolean {
+        if (!level.isLoaded(pos)) return false
         val state = level.getBlockState(pos)
         val block = state.block
         if (state.`is`(ModTags.FARMLAND)) return true

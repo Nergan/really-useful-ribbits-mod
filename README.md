@@ -16,7 +16,7 @@ Download one set and put those files in the `mods` folder.
 
 | File | Required | What it is |
 | --- | --- | --- |
-| `reallyusefulribbits-neoforge-1.21.1-1.0.3.jar` | Yes | this addon |
+| `reallyusefulribbits-neoforge-1.21.1-1.0.4.jar` | Yes | this addon |
 | `kotlinforforge-5.8.0-all.jar` | Yes | [Kotlin for Forge](https://modrinth.com/mod/kotlin-for-forge) |
 | `Ribbits-1.21.1-NeoForge-4.1.6.jar` | Yes | [Ribbits](https://modrinth.com/mod/ribbits) |
 | `geckolib-neoforge-1.21.1-4.7.6.jar` | Yes | [GeckoLib](https://modrinth.com/mod/geckolib), required by Ribbits |
@@ -27,7 +27,7 @@ Download one set and put those files in the `mods` folder.
 
 | File | Required | What it is |
 | --- | --- | --- |
-| `reallyusefulribbits-fabric-1.21.1-1.0.3.jar` | Yes | this addon |
+| `reallyusefulribbits-fabric-1.21.1-1.0.4.jar` | Yes | this addon |
 | `fabric-api-0.116.17+1.21.1.jar` | Yes | [Fabric API](https://modrinth.com/mod/fabric-api) |
 | `fabric-language-kotlin-1.13.2+kotlin.2.1.20.jar` | Yes | [Fabric Language Kotlin](https://modrinth.com/mod/fabric-language-kotlin) |
 | `Ribbits-1.21.1-Fabric-4.1.6.jar` | Yes | [Ribbits](https://modrinth.com/mod/ribbits) |

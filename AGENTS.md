@@ -8,6 +8,8 @@
 
 Слот сумки торговца на 256 считает `RibbitWorkData.slotCap`, сам `ItemStack` остаётся ванильным. Больше, чем стопка удерживает на деле, слот не берёт: Sengoku режет `setCount` до 99, и в сборке с ним слот торговца — 99, а стартовые 256 изумрудов ложатся в три слота. Компонент `max_stack_size` кодек сохраняет только до 99: стопка с 256 роняла сервер при первом сохранении риббита. Count больше 99 пишется рядом в `reallyusefulribbits_count`, а из сумки стопка уходит обычными стаками через `ContainerSupport.pieces`. Сумку проверяет стенд: призвать торговца на спавне, `data get entity @e[type=ribbits:ribbit,limit=1,sort=nearest] ReallyUsefulRibbitsWork.Items`, затем `save-all flush`. Пустые `{}` в слотах значат, что предметы при сохранении теряются.
 
+Поиск блоков риббитом не вызывает `getBlockState` и `getFluidState`, пока `Level.isLoaded` ложен: ванильный `getBlockState` синхронно грузит чанк на серверном потоке. `BlockPos.findClosestMatch` по `FARM_CLAIM_RADIUS` 128 из `FarmerAi.perform` так держал тик десятки секунд, пока деревня ещё генерировалась (ModernFix watchdog: `isFarmBlock` → `allWorkBlocks` → `findClosest`). Скан идёт только по уже загруженным чанкам и по несколько колонок за вызов. `/locate ribbits:ribbit_village` — поиск структуры мода Ribbits, к этому аддону не относится.
+
 
 ## Скиллы
 

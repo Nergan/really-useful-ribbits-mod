@@ -42,23 +42,21 @@ object FishermanAi {
         val data = ribbit.work()
         val radius = com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius()
         GroundPickup.tick(level, ribbit, ProfessionKind.FISHERMAN)
-        if (level.gameTime - data.lastScanAt >= ModConfig.BIND_SCAN_INTERVAL) {
+        if (WorldScan.scanDue(level.gameTime, data.lastScanAt, ModConfig.BIND_SCAN_INTERVAL, ribbit.id)) {
             data.lastScanAt = level.gameTime
-            if (data.waterPos == null || !isWater(level, data.waterPos!!)) {
-                data.waterPos = WorldScan.nearestWater(level, ribbit.blockPosition(), radius)
+            if (!WorldScan.bindingOk(level, data.waterPos) { isWater(level, it) }) {
+                data.waterPos = WorldScan.nearestWater(level, ribbit.blockPosition(), radius, ribbit.id)
             }
-            if (data.containerPos == null || !ContainerSupport.isStorage(level, data.containerPos!!)) {
-                data.containerPos = WorldScan.nearestContainer(level, ribbit.blockPosition(), radius)
+            if (!WorldScan.bindingOk(level, data.containerPos) { ContainerSupport.isStorage(level, it) }) {
+                data.containerPos = WorldScan.nearestContainer(level, ribbit.blockPosition(), radius, ribbit.id)
             }
         }
 
         if (RibbitBags.isFull(data, ProfessionKind.FISHERMAN)) {
             ribbit.setFishing(false)
             data.fishingActive = false
-            if (data.containerPos == null || !ContainerSupport.isStorage(level, data.containerPos!!)) {
-                data.containerPos = WorldScan.nearestContainer(level, ribbit.blockPosition(), radius)
-            }
-            if (data.containerPos != null) goDeposit(level, ribbit)
+            val chest = data.containerPos
+            if (chest != null && level.isLoaded(chest)) goDeposit(level, ribbit)
             return
         }
 
@@ -222,6 +220,7 @@ object FishermanAi {
         for (dir in Direction.Plane.HORIZONTAL) {
             val side = container.relative(dir)
             for (feet in listOf(side, side.above())) {
+                if (!level.isLoaded(feet)) continue
                 if (!level.getBlockState(feet).isAir) continue
                 if (!level.getFluidState(feet).isEmpty) continue
                 val ground = feet.below()
@@ -237,8 +236,10 @@ object FishermanAi {
         return best
     }
 
-    private fun isWater(level: ServerLevel, pos: BlockPos): Boolean =
-        !level.getFluidState(pos).isEmpty
+    private fun isWater(level: ServerLevel, pos: BlockPos): Boolean {
+        if (!level.isLoaded(pos)) return false
+        return !level.getFluidState(pos).isEmpty
+    }
 
     private fun shorePos(level: ServerLevel, water: BlockPos): BlockPos? {
         var best: BlockPos? = null
@@ -261,6 +262,7 @@ object FishermanAi {
     }
 
     private fun canStandOn(level: ServerLevel, ground: BlockPos): Boolean {
+        if (!level.isLoaded(ground) || !level.isLoaded(ground.above())) return false
         if (!level.getFluidState(ground).isEmpty) return false
         val below = level.getBlockState(ground)
         if (!below.isFaceSturdy(level, ground, net.minecraft.core.Direction.UP)) return false

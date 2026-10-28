@@ -16,7 +16,7 @@
 
 | Файл | Обязателен | Что это |
 | --- | --- | --- |
-| `reallyusefulribbits-neoforge-1.21.1-1.0.3.jar` | Да | этот аддон |
+| `reallyusefulribbits-neoforge-1.21.1-1.0.4.jar` | Да | этот аддон |
 | `kotlinforforge-5.8.0-all.jar` | Да | [Kotlin for Forge](https://modrinth.com/mod/kotlin-for-forge) |
 | `Ribbits-1.21.1-NeoForge-4.1.6.jar` | Да | [Ribbits](https://modrinth.com/mod/ribbits) |
 | `geckolib-neoforge-1.21.1-4.7.6.jar` | Да | [GeckoLib](https://modrinth.com/mod/geckolib), нужен Ribbits |
@@ -27,7 +27,7 @@
 
 | Файл | Обязателен | Что это |
 | --- | --- | --- |
-| `reallyusefulribbits-fabric-1.21.1-1.0.3.jar` | Да | этот аддон |
+| `reallyusefulribbits-fabric-1.21.1-1.0.4.jar` | Да | этот аддон |
 | `fabric-api-0.116.17+1.21.1.jar` | Да | [Fabric API](https://modrinth.com/mod/fabric-api) |
 | `fabric-language-kotlin-1.13.2+kotlin.2.1.20.jar` | Да | [Fabric Language Kotlin](https://modrinth.com/mod/fabric-language-kotlin) |
 | `Ribbits-1.21.1-Fabric-4.1.6.jar` | Да | [Ribbits](https://modrinth.com/mod/ribbits) |
