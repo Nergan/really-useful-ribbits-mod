@@ -14,6 +14,7 @@ import net.minecraft.nbt.ListTag
 import net.minecraft.nbt.NbtUtils
 import net.minecraft.nbt.Tag
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.Items
 
 class RibbitWorkData {
     var containerPos: BlockPos? = null
@@ -89,9 +90,10 @@ class RibbitWorkData {
     /**
      * Сколько предметов этого вида помещается в один слот сумки.
      * Размер стака самого предмета не трогается: компонент max_stack_size кодек сохраняет только до 99.
+     * Больше, чем удерживает сама стопка, слот не берёт: Sengoku режет setCount до 99.
      */
     fun slotCap(stack: ItemStack, kind: ProfessionKind): Int =
-        InventoryRules.maxForSlot(slotLimit(kind), stack.maxStackSize)
+        minOf(InventoryRules.maxForSlot(slotLimit(kind), stack.maxStackSize), stackCountLimit)
 
     fun save(provider: HolderLookup.Provider): CompoundTag {
         val tag = CompoundTag()
@@ -147,6 +149,8 @@ class RibbitWorkData {
     companion object {
         private const val ITEM_CODEC_COUNT_LIMIT = 99
         private const val STORED_COUNT = "reallyusefulribbits_count"
+
+        private val stackCountLimit: Int by lazy { ItemStack(Items.STONE).also { it.count = 4096 }.count }
 
         private fun readStack(tag: CompoundTag, provider: HolderLookup.Provider): ItemStack {
             if (tag.isEmpty) return ItemStack.EMPTY

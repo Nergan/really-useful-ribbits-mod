@@ -42,46 +42,33 @@ object RibbitBags {
                 if (!data.items[i].isEmpty) data.items[i] = ContainerSupport.normalized(data.items[i])
             }
         }
-        val limit = data.slotLimit(kind)
         val budget = if (kind == ProfessionKind.FISHERMAN) {
-            (limit - carriedCount(data, used)).coerceAtLeast(0)
+            (data.slotLimit(kind) - carriedCount(data, used)).coerceAtLeast(0)
         } else {
             incoming.count
         }
         if (budget <= 0) return incoming
-        val accepted = minOf(incoming.count, budget)
-        val heldBack = incoming.count - accepted
-        var piece = incoming.copy()
-        piece.count = accepted
-        if (kind == ProfessionKind.FISHERMAN) piece = ContainerSupport.normalized(piece)
-        var remaining = piece.copy()
+        val sample = if (kind == ProfessionKind.FISHERMAN) ContainerSupport.normalized(incoming) else incoming
+        val cap = data.slotCap(sample, kind)
+        val heldBack = incoming.count - minOf(incoming.count, budget)
+        var left = incoming.count - heldBack
         for (i in 0 until used) {
+            if (left <= 0) break
             val slot = data.items[i]
-            if (slot.isEmpty || !ItemStack.isSameItemSameComponents(slot, remaining)) continue
-            val room = data.slotCap(remaining, kind) - slot.count
-            if (room <= 0) continue
-            val moved = minOf(room, remaining.count)
+            if (slot.isEmpty || !ItemStack.isSameItemSameComponents(slot, sample)) continue
+            val moved = minOf(cap - slot.count, left)
+            if (moved <= 0) continue
             slot.grow(moved)
-            remaining.shrink(moved)
-            if (remaining.isEmpty) return unplaced(incoming, heldBack)
+            left -= moved
         }
         for (i in 0 until used) {
+            if (left <= 0) break
             if (!data.items[i].isEmpty) continue
-            val placed = remaining.copy()
-            val cap = data.slotCap(placed, kind)
-            if (placed.count > cap) {
-                remaining = placed.copy()
-                remaining.count = placed.count - cap
-                placed.count = cap
-                data.items[i] = placed
-            } else {
-                data.items[i] = placed
-                return unplaced(incoming, heldBack)
-            }
+            val moved = minOf(cap, left)
+            data.items[i] = sample.copyWithCount(moved)
+            left -= moved
         }
-        if (heldBack > 0 && !remaining.isEmpty) remaining.grow(heldBack)
-        if (remaining.isEmpty) return unplaced(incoming, heldBack)
-        return remaining
+        return unplaced(incoming, left + heldBack)
     }
 
     private fun unplaced(incoming: ItemStack, count: Int): ItemStack {
