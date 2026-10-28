@@ -78,17 +78,11 @@ class RibbitWorkData {
      * У торговца слот на 256, поэтому полный размер пишется рядом, а в кодек уходит копия не больше 99.
      */
     private fun writeStack(stack: ItemStack, provider: HolderLookup.Provider): CompoundTag {
-        val tag = CompoundTag()
-        if (stack.isEmpty) return tag
+        if (stack.isEmpty) return CompoundTag()
         val count = stack.count
-        if (count > ITEM_CODEC_COUNT_LIMIT) {
-            val copy = stack.copy()
-            copy.count = ITEM_CODEC_COUNT_LIMIT
-            copy.save(provider, tag)
-            tag.putInt(STORED_COUNT, count)
-        } else {
-            stack.save(provider, tag)
-        }
+        if (count <= ITEM_CODEC_COUNT_LIMIT) return stack.save(provider) as CompoundTag
+        val tag = stack.copyWithCount(ITEM_CODEC_COUNT_LIMIT).save(provider) as CompoundTag
+        tag.putInt(STORED_COUNT, count)
         return tag
     }
 
