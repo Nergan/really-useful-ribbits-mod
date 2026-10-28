@@ -51,12 +51,12 @@ object MerchantAi {
         if (!data.merchantReady) {
             val emeralds = ItemStack(Items.EMERALD, MerchantEconomy.INITIAL_EMERALDS)
             val amethysts = ItemStack(Items.AMETHYST_SHARD, MerchantEconomy.INITIAL_AMETHYSTS)
-            RibbitBags.insert(data, ProfessionKind.MERCHANT, data.applyLimit(emeralds, ProfessionKind.MERCHANT))
-            RibbitBags.insert(data, ProfessionKind.MERCHANT, data.applyLimit(amethysts, ProfessionKind.MERCHANT))
+            RibbitBags.insert(data, ProfessionKind.MERCHANT, emeralds)
+            RibbitBags.insert(data, ProfessionKind.MERCHANT, amethysts)
             repeat(MerchantEconomy.RANDOM_STARTER_STACKS) {
                 val item = STARTERS[ribbit.random.nextInt(STARTERS.size)]
                 val stack = ItemStack(item, 1 + ribbit.random.nextInt(16))
-                RibbitBags.insert(data, ProfessionKind.MERCHANT, data.applyLimit(stack, ProfessionKind.MERCHANT))
+                RibbitBags.insert(data, ProfessionKind.MERCHANT, stack)
             }
             data.merchantReady = true
         }
@@ -102,11 +102,7 @@ object MerchantAi {
             }
         }
         if (data.copiedGoods.isNotEmpty()) {
-            RibbitBags.insert(
-                data,
-                ProfessionKind.MERCHANT,
-                data.applyLimit(data.copiedGoods.last().copy(), ProfessionKind.MERCHANT),
-            )
+            RibbitBags.insert(data, ProfessionKind.MERCHANT, data.copiedGoods.last().copy())
         }
     }
 

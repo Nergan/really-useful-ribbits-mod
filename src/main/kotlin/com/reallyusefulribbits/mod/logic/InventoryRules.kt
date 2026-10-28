@@ -36,6 +36,13 @@ object InventoryRules {
     fun maxForSlot(slotLimit: Int, itemMaxStack: Int): Int =
         if (itemMaxStack <= 1) 1 else slotLimit
 
+    /** Размеры обычных стопок, на которые раскладывается слот сумки. */
+    fun pieces(count: Int, itemMaxStack: Int): List<Int> {
+        if (count <= 0) return emptyList()
+        val size = itemMaxStack.coerceAtLeast(1)
+        return List((count + size - 1) / size) { index -> minOf(size, count - index * size) }
+    }
+
     fun carried(slots: List<LogicSlot?>): Int = slots.sumOf { it?.count ?: 0 }
 
     fun isFull(slots: List<LogicSlot?>, slotLimit: Int, carryLimit: Int? = null): Boolean {

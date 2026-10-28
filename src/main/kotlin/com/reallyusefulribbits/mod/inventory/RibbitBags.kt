@@ -12,12 +12,10 @@ object RibbitBags {
         if (kind == ProfessionKind.FISHERMAN) {
             return carriedCount(data, used) >= data.slotLimit(kind)
         }
-        val limit = data.slotLimit(kind)
         for (i in 0 until used) {
             val stack = data.items[i]
             if (stack.isEmpty) return false
-            val cap = minOf(limit, stack.maxStackSize)
-            if (stack.count < cap) return false
+            if (stack.count < data.slotCap(stack, kind)) return false
         }
         return used > 0
     }
@@ -56,13 +54,11 @@ object RibbitBags {
         var piece = incoming.copy()
         piece.count = accepted
         if (kind == ProfessionKind.FISHERMAN) piece = ContainerSupport.normalized(piece)
-        data.applyLimit(piece, kind)
         var remaining = piece.copy()
         for (i in 0 until used) {
             val slot = data.items[i]
             if (slot.isEmpty || !ItemStack.isSameItemSameComponents(slot, remaining)) continue
-            val cap = minOf(limit, remaining.maxStackSize)
-            val room = cap - slot.count
+            val room = data.slotCap(remaining, kind) - slot.count
             if (room <= 0) continue
             val moved = minOf(room, remaining.count)
             slot.grow(moved)
@@ -72,8 +68,7 @@ object RibbitBags {
         for (i in 0 until used) {
             if (!data.items[i].isEmpty) continue
             val placed = remaining.copy()
-            data.applyLimit(placed, kind)
-            val cap = minOf(limit, placed.maxStackSize)
+            val cap = data.slotCap(placed, kind)
             if (placed.count > cap) {
                 remaining = placed.copy()
                 remaining.count = placed.count - cap
@@ -100,7 +95,7 @@ object RibbitBags {
         val used = data.usedSlots(kind)
         val out = ArrayList<ItemStack>()
         for (i in 0 until used) {
-            if (!data.items[i].isEmpty) out += ContainerSupport.normalized(data.items[i])
+            if (!data.items[i].isEmpty) out += ContainerSupport.pieces(data.items[i])
             data.items[i] = ItemStack.EMPTY
         }
         return out
@@ -133,8 +128,9 @@ object RibbitBags {
         for (i in 0 until used) {
             val stack = data.items[i]
             if (stack.isEmpty) continue
-            data.items[i] = ItemStack.EMPTY
-            return stack
+            val taken = stack.split(stack.maxStackSize)
+            if (stack.isEmpty) data.items[i] = ItemStack.EMPTY
+            return taken
         }
         return null
     }

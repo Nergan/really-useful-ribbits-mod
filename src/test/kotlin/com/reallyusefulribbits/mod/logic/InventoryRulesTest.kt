@@ -81,6 +81,15 @@ class InventoryRulesTest {
     }
 
     @Test
+    @DisplayName("Слот торговца на 256 выходит из сумки обычными стопками")
+    fun merchantSlotLeavesAsVanillaStacks() {
+        assertEquals(listOf(64, 64, 64, 64), InventoryRules.pieces(256, 64))
+        assertEquals(listOf(16, 4), InventoryRules.pieces(20, 16))
+        assertEquals(listOf(1, 1, 1), InventoryRules.pieces(3, 1))
+        assertEquals(emptyList<Int>(), InventoryRules.pieces(0, 64))
+    }
+
+    @Test
     @DisplayName("Nitwit носит 27 слотов по 64")
     fun nitwitBagSize() {
         assertEquals(27, InventoryRules.slotCount(ProfessionKind.NITWIT))

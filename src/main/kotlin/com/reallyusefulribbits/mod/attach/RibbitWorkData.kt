@@ -2,6 +2,7 @@ package com.reallyusefulribbits.mod.attach
 
 import com.reallyusefulribbits.mod.logic.FarmerTask
 import com.reallyusefulribbits.mod.logic.FishingPhaseTimes
+import com.reallyusefulribbits.mod.logic.InventoryRules
 import com.reallyusefulribbits.mod.logic.MerchantPhase
 import com.reallyusefulribbits.mod.logic.ProfessionKind
 import net.minecraft.core.BlockPos
@@ -91,19 +92,12 @@ class RibbitWorkData {
         return tag
     }
 
-    fun applyLimit(stack: ItemStack, kind: ProfessionKind): ItemStack {
-        if (stack.isEmpty) return stack
-        val wanted = slotLimit(kind)
-        val vanilla = stack.item.defaultMaxStackSize
-        if (wanted > vanilla) {
-            stack.set(DataComponents.MAX_STACK_SIZE, wanted)
-            if (stack.count > wanted) stack.count = wanted
-            return stack
-        }
-        val cap = minOf(wanted, vanilla)
-        if (stack.count > cap) stack.count = cap
-        return stack
-    }
+    /**
+     * Сколько предметов этого вида помещается в один слот сумки.
+     * Размер стака самого предмета не трогается: компонент max_stack_size кодек сохраняет только до 99.
+     */
+    fun slotCap(stack: ItemStack, kind: ProfessionKind): Int =
+        InventoryRules.maxForSlot(slotLimit(kind), stack.maxStackSize)
 
     fun save(provider: HolderLookup.Provider): CompoundTag {
         val tag = CompoundTag()
@@ -165,10 +159,12 @@ class RibbitWorkData {
             val stored = if (tag.contains(STORED_COUNT)) tag.getInt(STORED_COUNT) else -1
             tag.remove(STORED_COUNT)
             val stack = ItemStack.parse(provider, tag).orElse(ItemStack.EMPTY)
-            if (stack.isEmpty || stored <= stack.count) return stack
-            val max = stack.getOrDefault(DataComponents.MAX_STACK_SIZE, stack.maxStackSize)
-            if (stored > max) stack.set(DataComponents.MAX_STACK_SIZE, stored)
-            stack.count = stored
+            if (stack.isEmpty) return stack
+            // Поднятый размер стака из старых сохранений ушёл бы с предметом в мир.
+            val vanilla = stack.item.defaultMaxStackSize
+            val raised = stack.get(DataComponents.MAX_STACK_SIZE)
+            if (raised != null && raised > vanilla) stack.set(DataComponents.MAX_STACK_SIZE, vanilla)
+            if (stored > stack.count) stack.count = stored
             return stack
         }
 

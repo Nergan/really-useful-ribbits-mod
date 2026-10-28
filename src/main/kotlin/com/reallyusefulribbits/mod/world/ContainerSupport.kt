@@ -3,6 +3,7 @@ package com.reallyusefulribbits.mod.world
 import com.reallyusefulribbits.mod.config.ModConfig
 import com.reallyusefulribbits.mod.loader.ItemSlots
 import com.reallyusefulribbits.mod.loader.RuntimeHooks
+import com.reallyusefulribbits.mod.logic.InventoryRules
 import net.minecraft.core.BlockPos
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceKey
@@ -42,7 +43,7 @@ object ContainerSupport {
 
     fun insertAll(level: Level, pos: BlockPos, stacks: List<ItemStack>): List<ItemStack> {
         val itemHandler = handler(level, pos) ?: return stacks
-        val normalized = stacks.map { normalized(it) }.filter { !it.isEmpty }
+        val normalized = stacks.flatMap { pieces(it) }
         val leftover = ArrayList<ItemStack>()
         val toCompact = HashSet<Item>()
         for (stack in normalized) {
@@ -64,8 +65,14 @@ object ContainerSupport {
     fun normalized(stack: ItemStack): ItemStack {
         if (stack.isEmpty) return ItemStack.EMPTY
         if (!isPlain(stack)) return stack.copy()
-        val count = stack.count.coerceAtMost(stack.item.defaultMaxStackSize.coerceAtLeast(1))
-        return ItemStack(stack.item, count)
+        return ItemStack(stack.item, stack.count)
+    }
+
+    /** Слот сумки бывает больше стака: в мир он уходит обычными стопками. */
+    fun pieces(stack: ItemStack): List<ItemStack> {
+        val plain = normalized(stack)
+        if (plain.isEmpty) return emptyList()
+        return InventoryRules.pieces(plain.count, plain.maxStackSize).map { plain.copyWithCount(it) }
     }
 
     private fun isPlain(stack: ItemStack): Boolean {
