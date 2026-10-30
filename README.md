@@ -16,7 +16,7 @@ Download one set and put those files in the `mods` folder.
 
 | File | Required | What it is |
 | --- | --- | --- |
-| `reallyusefulribbits-neoforge-1.21.1-1.0.4.jar` | Yes | this addon |
+| `reallyusefulribbits-neoforge-1.21.1-1.0.5.jar` | Yes | this addon |
 | `kotlinforforge-5.8.0-all.jar` | Yes | [Kotlin for Forge](https://modrinth.com/mod/kotlin-for-forge) |
 | `Ribbits-1.21.1-NeoForge-4.1.6.jar` | Yes | [Ribbits](https://modrinth.com/mod/ribbits) |
 | `geckolib-neoforge-1.21.1-4.7.6.jar` | Yes | [GeckoLib](https://modrinth.com/mod/geckolib), required by Ribbits |
@@ -27,7 +27,7 @@ Download one set and put those files in the `mods` folder.
 
 | File | Required | What it is |
 | --- | --- | --- |
-| `reallyusefulribbits-fabric-1.21.1-1.0.4.jar` | Yes | this addon |
+| `reallyusefulribbits-fabric-1.21.1-1.0.5.jar` | Yes | this addon |
 | `fabric-api-0.116.17+1.21.1.jar` | Yes | [Fabric API](https://modrinth.com/mod/fabric-api) |
 | `fabric-language-kotlin-1.13.2+kotlin.2.1.20.jar` | Yes | [Fabric Language Kotlin](https://modrinth.com/mod/fabric-language-kotlin) |
 | `Ribbits-1.21.1-Fabric-4.1.6.jar` | Yes | [Ribbits](https://modrinth.com/mod/ribbits) |
@@ -45,7 +45,7 @@ Optional extras (not attached to the release, install them yourself if you want 
 
 ## Features
 
-- **A new home.** Right-click a ribbit with a **maraca** from the original Ribbits mod to set its home point where it is standing. Merchant ribbits sell maracas. This grants *so I guess this is my new home now…* You cannot seat a ribbit on your head.
+- **A new home.** Right-click a ribbit with a **maraca** from the original Ribbits mod to set its home point where it is standing. The old farm, fishing water, and chest are forgotten, so a farmer or a fisher stops walking back to the village. Merchant ribbits sell maracas. This grants *so I guess this is my new home now…* You cannot seat a ribbit on your head.
 - **Shared territory.** Every working ribbit scans a configurable radius (64 blocks by default). Several ribbits can work the same area. They do not steal each other’s reserved crop or water tile.
 - **Fisher.** Binds one nearby water block and one container. Sits on the bank with the fishing animation, runs vanilla-style fishing (splashes toward the bobber, then a catch), and carries up to 4 items. At 4 it stands up, walks to the container, deposits normal stacks, then returns to the water. Right-click outlines the ribbit, the water tile and the container. Missing a bind plays the hurt croak and angry particles.
 - **Farmer.** Binds one connected farm (farmland, Farmer's Delight farmland, soul sand, sugar-cane bases) and one container. Harvests, plants, tills, waters farmland, and sometimes coaxes glow berries onto vines. Melons, pumpkins, cane and nether wart are included. It walks up to its chest before inserting or taking items. Inventory is 4×64. Right-click sprinkles particles on the farm and the container.

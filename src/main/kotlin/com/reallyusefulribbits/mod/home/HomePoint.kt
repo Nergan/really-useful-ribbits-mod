@@ -2,6 +2,7 @@ package com.reallyusefulribbits.mod.home
 
 import com.reallyusefulribbits.mod.event.ModAdvancements
 import com.reallyusefulribbits.mod.mixin.RibbitEntityAccessor
+import com.reallyusefulribbits.mod.util.work
 import com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity
 import net.minecraft.core.particles.ParticleTypes
 import net.minecraft.core.registries.BuiltInRegistries
@@ -23,6 +24,8 @@ object HomePoint {
 
     fun setHere(player: Player, ribbit: RibbitEntity) {
         (ribbit as RibbitEntityAccessor).rurSetHomePosition(ribbit.blockPosition())
+        ribbit.work().forgetWorkplace()
+        ribbit.navigation.stop()
         ribbit.lookAt(player, 180f, 180f)
         val level = ribbit.level()
         if (level is ServerLevel) {

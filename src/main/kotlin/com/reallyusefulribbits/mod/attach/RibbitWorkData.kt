@@ -55,6 +55,20 @@ class RibbitWorkData {
 
     fun farmerTask(): FarmerTask = runCatching { FarmerTask.valueOf(task) }.getOrDefault(FarmerTask.IDLE)
 
+    /** Маракас задаёт новый дом: старая ферма, вода и сундук больше не тянут риббита в деревню. */
+    fun forgetWorkplace() {
+        containerPos = null
+        waterPos = null
+        farmOrigin = null
+        farmMemory.clear()
+        lastScanAt = 0
+        lastFarmScanAt = 0
+        task = FarmerTask.IDLE.name
+        taskTicks = 0
+        navStuck = 0
+        fishingActive = false
+    }
+
     fun merchantPhaseEnum(): MerchantPhase =
         runCatching { MerchantPhase.valueOf(merchantPhase) }.getOrDefault(MerchantPhase.INIT)
 

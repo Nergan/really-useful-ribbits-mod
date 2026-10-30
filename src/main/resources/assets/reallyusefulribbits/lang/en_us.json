@@ -47,10 +47,10 @@
 
   "reallyusefulribbits.guide.entry.head": "Maracas",
   "reallyusefulribbits.guide.page.head.1": "Right-click any ribbit with a $(item)maraca$() from the original $(item)Ribbits$() mod to set its home point where it is standing. Merchant ribbits sell maracas. You can no longer seat a ribbit on your head.",
-  "reallyusefulribbits.guide.page.head.2": "Walk a worker closer to water, a farm or a chest, then click it with the maraca. Head-riding from this addon is gone.",
+  "reallyusefulribbits.guide.page.head.2": "Walk a worker closer to where you want it to work, then click it with the maraca. The old farm, water, and chest are forgotten. Head-riding from this addon is gone.",
 
   "reallyusefulribbits.guide.entry.home": "A New Home",
-  "reallyusefulribbits.guide.page.home.1": "The home point is the same one from the original Ribbits mod. After a maraca click, the ribbit treats the block it stood on as home. That is how you relocate a worker without breaking the rest of its habits.",
+  "reallyusefulribbits.guide.page.home.1": "The home point is the same one from the original Ribbits mod. After a maraca click, the ribbit treats the block it stood on as home and forgets the old farm, fishing water, and chest. It looks for new ones near this spot. That is how a farmer or a fisher stops walking back to the village.",
   "reallyusefulribbits.guide.page.home.2": "Doing this also grants the advancement $(thing)so I guess this is my new home now…$(). The title follows the language of the client, like the rest of this book.",
 
   "reallyusefulribbits.guide.entry.radius": "How Far They Look",
