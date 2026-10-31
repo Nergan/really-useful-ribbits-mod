@@ -236,10 +236,7 @@ object FishermanAi {
         return best
     }
 
-    private fun isWater(level: ServerLevel, pos: BlockPos): Boolean {
-        if (!level.isLoaded(pos)) return false
-        return !level.getFluidState(pos).isEmpty
-    }
+    private fun isWater(level: ServerLevel, pos: BlockPos): Boolean = WorldScan.isOpenWater(level, pos)
 
     private fun shorePos(level: ServerLevel, water: BlockPos): BlockPos? {
         var best: BlockPos? = null

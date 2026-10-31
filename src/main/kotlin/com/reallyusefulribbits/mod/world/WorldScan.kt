@@ -1,10 +1,12 @@
 package com.reallyusefulribbits.mod.world
 
 import com.reallyusefulribbits.mod.config.ModConfig
+import com.reallyusefulribbits.mod.logic.CropRules
 import com.reallyusefulribbits.mod.logic.FarmFloodFill
 import com.reallyusefulribbits.mod.logic.GridPos
 import com.reallyusefulribbits.mod.logic.ScanRadius
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 import net.minecraft.tags.FluidTags
 import net.minecraft.world.level.ChunkPos
 import net.minecraft.world.level.Level
@@ -43,9 +45,18 @@ object WorldScan {
 
     fun nearestWater(level: Level, origin: BlockPos, radius: Int, cursorId: Int): BlockPos? =
         findInLoaded(level, origin, radius, cursorId, KIND_WATER, rewind = true) { pos ->
-            level.getFluidState(pos).`is`(FluidTags.WATER) &&
-                level.getBlockState(pos.above()).`is`(Blocks.AIR)
+            isOpenWater(level, pos)
         }
+
+    /** Вода с открытой поверхностью. Верхний полублок в том же блоке воду закрывает. */
+    fun isOpenWater(level: Level, pos: BlockPos): Boolean {
+        if (!level.isLoaded(pos) || !level.isLoaded(pos.above())) return false
+        val state = level.getBlockState(pos)
+        if (!state.fluidState.`is`(FluidTags.WATER)) return false
+        val shape = state.getCollisionShape(level, pos)
+        if (!shape.isEmpty && CropRules.blocksUpperHalf(shape.max(Direction.Axis.Y))) return false
+        return level.getBlockState(pos.above()).`is`(Blocks.AIR)
+    }
 
     fun nearestContainer(level: Level, origin: BlockPos, radius: Int, cursorId: Int): BlockPos? =
         findInLoaded(level, origin, radius, cursorId, KIND_CONTAINER, rewind = true) { pos ->
@@ -116,10 +127,12 @@ object WorldScan {
         var soul: BlockPos? = null
         var cane: BlockPos? = null
         var vine: BlockPos? = null
+        var crop: BlockPos? = null
         var farmDist = Long.MAX_VALUE
         var soulDist = Long.MAX_VALUE
         var caneDist = Long.MAX_VALUE
         var vineDist = Long.MAX_VALUE
+        var cropDist = Long.MAX_VALUE
         val cursor = BlockPos.MutableBlockPos()
         for (chunk in window) {
             scanChunk(level, origin, radius, chunk, cursor) { pos ->
@@ -141,9 +154,13 @@ object WorldScan {
                     vineDist = dist
                     vine = pos.immutable()
                 }
+                if (dist < cropDist && CropSupport.isSpecialAnchor(level, pos)) {
+                    cropDist = dist
+                    crop = pos.immutable()
+                }
             }
         }
-        return listOfNotNull(farmland, soul, cane, vine)
+        return listOfNotNull(farmland, soul, cane, vine, crop)
     }
 
     private fun takeWindow(level: Level, origin: BlockPos, radius: Int, cursorId: Int, kind: Int): List<ChunkPos>? {

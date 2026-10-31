@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.tags.BlockTags
+import net.minecraft.tags.FluidTags
 import net.minecraft.tags.ItemTags
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.item.BlockItem
@@ -23,10 +24,13 @@ import net.minecraft.world.level.block.BushBlock
 import net.minecraft.world.level.block.CaveVines
 import net.minecraft.world.level.block.CropBlock
 import net.minecraft.world.level.block.FarmBlock
+import net.minecraft.world.level.block.LiquidBlock
 import net.minecraft.world.level.block.NetherWartBlock
 import net.minecraft.world.level.block.StemBlock
 import net.minecraft.world.level.block.SugarCaneBlock
+import net.minecraft.world.level.block.SweetBerryBushBlock
 import net.minecraft.world.level.block.state.BlockState
+import net.minecraft.world.level.block.state.properties.BlockStateProperties
 import net.minecraft.world.level.block.state.properties.IntegerProperty
 
 object CropSupport {
@@ -34,14 +38,22 @@ object CropSupport {
         if (!level.isLoaded(pos)) return false
         val state = level.getBlockState(pos)
         val block = state.block
-        if (state.`is`(ModTags.FARMLAND)) return true
-        if (block is FarmBlock) return true
-        val id = BuiltInRegistries.BLOCK.getKey(block)
-        if (id.path.contains("farmland")) return true
+        if (isClassicFarmSoil(state)) return true
         if (state.block is SugarCaneBlock && level.getBlockState(pos.below()).block !is SugarCaneBlock) return true
         if (state.`is`(Blocks.SOUL_SAND)) return true
         if (block is CaveVines || state.`is`(Blocks.CAVE_VINES) || state.`is`(Blocks.CAVE_VINES_PLANT)) return true
-        return false
+        if (isSpecialAnchor(level, pos)) return true
+        val above = pos.above()
+        return level.isLoaded(above) && isSpecialAnchor(level, above)
+    }
+
+    /** Грядка, которую уже запомнили: после сбора рис на грязи и куст на земле остаются фермой. */
+    fun keepsFarmSpot(level: Level, pos: BlockPos): Boolean {
+        if (isFarmBlock(level, pos)) return true
+        if (!level.isLoaded(pos) || !level.isLoaded(pos.above())) return false
+        val state = level.getBlockState(pos)
+        if (!isLooseSoil(state) && !isClassicFarmSoil(state)) return false
+        return canReplaceWithCrop(level.getBlockState(pos.above()))
     }
 
     fun isTillable(state: BlockState): Boolean {
@@ -70,9 +82,13 @@ object CropSupport {
         val item = stack.item
         if (item is BlockItem) {
             val block = item.block
+            val state = block.defaultBlockState()
+            if (isPricklyBush(state)) return null
             if (block is CropBlock || block is StemBlock || block is NetherWartBlock || block is SugarCaneBlock) return block
-            if (block.defaultBlockState().`is`(BlockTags.CROPS)) return block
+            if (state.`is`(BlockTags.CROPS)) return block
             if (stack.`is`(ItemTags.VILLAGER_PLANTABLE_SEEDS)) return block
+            if (block is BushBlock && ageProperty(state) != null) return block
+            if (isModAgeCrop(state)) return block
         }
         return null
     }
@@ -84,24 +100,32 @@ object CropSupport {
 
     /** Песок душ принимает только незерский нарост, даже если он в теге фермы. */
     fun canPlantOn(level: Level, soil: BlockPos, plant: Block): Boolean {
+        if (isPricklyBush(plant.defaultBlockState())) return false
+        if (!level.isLoaded(soil) || !level.isLoaded(soil.above())) return false
+        val plantPos = soil.above()
+        val above = level.getBlockState(plantPos)
+        if (!canReplaceWithCrop(above)) return false
         val soilState = level.getBlockState(soil)
-        val above = level.getBlockState(soil.above())
-        if (!above.isAir) return false
         val soulSand = soilState.`is`(Blocks.SOUL_SAND)
         return when (plant) {
-            is NetherWartBlock -> soulSand
-            is SugarCaneBlock -> !soulSand && (
+            is NetherWartBlock -> soulSand && above.isAir
+            is SugarCaneBlock -> above.isAir && !soulSand && (
                 soilState.`is`(Blocks.SAND) || soilState.`is`(Blocks.RED_SAND) ||
                     soilState.`is`(BlockTags.DIRT) || soilState.block is FarmBlock
                 )
-            else -> !soulSand && (soilState.block is FarmBlock || soilState.`is`(ModTags.FARMLAND))
+            else -> {
+                if (!soulSand && isClassicFarmSoil(soilState) && above.isAir) return true
+                val placed = placedState(level, plantPos, plant)
+                if (!above.isAir && !placed.hasProperty(BlockStateProperties.WATERLOGGED)) return false
+                placed.canSurvive(level, plantPos)
+            }
         }
     }
 
     fun plant(level: ServerLevel, soil: BlockPos, stack: ItemStack): Boolean {
         val block = plantableBlock(stack) ?: return false
         if (!canPlantOn(level, soil, block)) return false
-        level.setBlock(soil.above(), block.defaultBlockState(), Block.UPDATE_ALL)
+        level.setBlock(soil.above(), placedState(level, soil.above(), block), Block.UPDATE_ALL)
         stack.shrink(1)
         level.playSound(null, soil, SoundEvents.CROP_PLANTED, SoundSource.BLOCKS, 1f, 1f)
         return true
@@ -109,11 +133,14 @@ object CropSupport {
 
     fun canBonemeal(level: Level, pos: BlockPos): Boolean {
         val state = level.getBlockState(pos)
+        if (isPricklyBush(state)) return false
         val block = state.block as? BonemealableBlock ?: return false
         if (!block.isValidBonemealTarget(level, pos, state)) return false
         if (block is CropBlock || block is StemBlock) return true
         if (state.`is`(BlockTags.CROPS)) return true
-        return isCaveVine(state) && !CaveVines.hasGlowBerries(state)
+        if (isCaveVine(state) && !CaveVines.hasGlowBerries(state)) return true
+        if (block is BushBlock) return true
+        return isModAgeCrop(state)
     }
 
     fun applyBonemeal(level: ServerLevel, pos: BlockPos, stack: ItemStack): Boolean {
@@ -151,6 +178,7 @@ object CropSupport {
 
     fun isMatureCrop(level: Level, pos: BlockPos): Boolean {
         val state = level.getBlockState(pos)
+        if (isPricklyBush(state)) return false
         val block = state.block
         if (block is StemBlock || block is AttachedStemBlock) return false
         if (block is CropBlock) return block.isMaxAge(state)
@@ -159,15 +187,18 @@ object CropSupport {
         if (block is SugarCaneBlock && level.getBlockState(pos.below()).block is SugarCaneBlock) return true
         if (CaveVines.hasGlowBerries(state)) return true
         val age = ageProperty(state)
-        if (age != null) {
+        if (age != null && isAgeCrop(state)) {
             val max = age.possibleValues.maxOrNull() ?: return false
-            return state.getValue(age) >= max && (state.`is`(BlockTags.CROPS) || block is BushBlock)
+            if (state.getValue(age) < max) return false
+            val grower = block as? BonemealableBlock ?: return true
+            return !grower.isValidBonemealTarget(level, pos, state)
         }
         return false
     }
 
     fun isImmatureCrop(level: Level, pos: BlockPos): Boolean {
         val state = level.getBlockState(pos)
+        if (isPricklyBush(state)) return false
         val block = state.block
         if (block is NetherWartBlock) return false
         if (block is StemBlock || block is AttachedStemBlock) return false
@@ -177,21 +208,26 @@ object CropSupport {
             return block.isValidBonemealTarget(level, pos, state)
         }
         val age = ageProperty(state)
-        if (age != null && (state.`is`(BlockTags.CROPS) || block is BushBlock)) {
+        if (age != null && isAgeCrop(state)) {
             val max = age.possibleValues.maxOrNull() ?: return false
-            return state.getValue(age) < max
+            if (state.getValue(age) < max) return true
+            val grower = block as? BonemealableBlock ?: return false
+            return grower.isValidBonemealTarget(level, pos, state)
         }
         return false
     }
 
     fun isEmptyFarmland(level: Level, pos: BlockPos): Boolean {
-        if (!isFarmBlock(level, pos)) return false
-        if (level.getBlockState(pos).block is SugarCaneBlock) return false
-        if (isCaveVine(level.getBlockState(pos))) return false
-        if (level.getBlockState(pos).`is`(Blocks.SOUL_SAND)) {
-            return level.getBlockState(pos.above()).isAir
-        }
-        return level.getBlockState(pos.above()).isAir
+        if (!level.isLoaded(pos) || !level.isLoaded(pos.above())) return false
+        val state = level.getBlockState(pos)
+        if (isAnchorCrop(level, pos)) return false
+        if (state.block is SugarCaneBlock || isCaveVine(state)) return false
+        val above = level.getBlockState(pos.above())
+        if (!canReplaceWithCrop(above)) return false
+        if (state.`is`(Blocks.SOUL_SAND)) return above.isAir
+        if (isClassicFarmSoil(state)) return above.isAir
+        if (!isLooseSoil(state)) return false
+        return hasSpecialCropNearby(level, pos)
     }
 
     fun needsWater(level: Level, pos: BlockPos): Boolean {
@@ -375,6 +411,81 @@ object CropSupport {
         }
         return drops
     }
+
+    /** Культура, от которой ферма растёт: рис в воде, куст, обычная грядка. Колючий куст сюда не входит. */
+    fun isAnchorCrop(level: Level, pos: BlockPos): Boolean {
+        if (!level.isLoaded(pos)) return false
+        return isMatureCrop(level, pos) || isImmatureCrop(level, pos)
+    }
+
+    fun isPricklyBush(state: BlockState): Boolean {
+        val block = state.block
+        if (block is SweetBerryBushBlock) return true
+        if (state.`is`(ModTags.PRICKLY_BUSHES)) return true
+        return CropRules.isPricklyPath(BuiltInRegistries.BLOCK.getKey(block).path)
+    }
+
+    private fun isAgeCrop(state: BlockState): Boolean {
+        if (isPricklyBush(state)) return false
+        val block = state.block
+        if (state.`is`(BlockTags.CROPS) || block is BushBlock) return true
+        return isModAgeCrop(state)
+    }
+
+    /** Чужой блок с возрастом и костной мукой: виноградная лоза, которая не наследует куст. */
+    private fun isModAgeCrop(state: BlockState): Boolean {
+        val block = state.block
+        if (block is CropBlock || block is BushBlock || block is StemBlock || block is NetherWartBlock) return false
+        if (ageProperty(state) == null) return false
+        if (BuiltInRegistries.BLOCK.getKey(block).namespace == "minecraft") return false
+        return block is BonemealableBlock
+    }
+
+    /** Рис в воде или на грязи и куст не на пашне. Пшеница на пашне сюда не входит: её и так находит грядка. */
+    fun isSpecialAnchor(level: Level, pos: BlockPos): Boolean {
+        if (!level.isLoaded(pos) || !isAnchorCrop(level, pos)) return false
+        val state = level.getBlockState(pos)
+        val block = state.block
+        if (block is BushBlock && block !is CropBlock) return true
+        if (state.hasProperty(BlockStateProperties.WATERLOGGED) && state.getValue(BlockStateProperties.WATERLOGGED)) return true
+        return !isClassicFarmSoil(level.getBlockState(pos.below()))
+    }
+
+    private fun hasSpecialCropNearby(level: Level, pos: BlockPos): Boolean {
+        if (isSpecialAnchor(level, pos.above())) return true
+        for (dir in Direction.Plane.HORIZONTAL) {
+            val side = pos.relative(dir)
+            if (isSpecialAnchor(level, side) || isSpecialAnchor(level, side.above())) return true
+        }
+        return false
+    }
+
+    private fun placedState(level: Level, pos: BlockPos, block: Block): BlockState {
+        var state = block.defaultBlockState()
+        val age = ageProperty(state)
+        if (age != null) {
+            val youngest = age.possibleValues.minOrNull()
+            if (youngest != null) state = state.setValue(age, youngest)
+        }
+        if (state.hasProperty(BlockStateProperties.WATERLOGGED)) {
+            state = state.setValue(BlockStateProperties.WATERLOGGED, level.getFluidState(pos).`is`(FluidTags.WATER))
+        }
+        return state
+    }
+
+    private fun canReplaceWithCrop(state: BlockState): Boolean {
+        if (state.isAir) return true
+        val fluid = state.fluidState
+        return state.block is LiquidBlock && fluid.`is`(FluidTags.WATER) && fluid.isSource
+    }
+
+    private fun isClassicFarmSoil(state: BlockState): Boolean {
+        if (state.block is FarmBlock || state.`is`(ModTags.FARMLAND)) return true
+        return BuiltInRegistries.BLOCK.getKey(state.block).path.contains("farmland")
+    }
+
+    private fun isLooseSoil(state: BlockState): Boolean =
+        state.`is`(BlockTags.DIRT) || state.`is`(Blocks.MUD)
 
     private fun ageProperty(state: BlockState): IntegerProperty? {
         return state.properties.firstOrNull { it.name == "age" && it is IntegerProperty } as? IntegerProperty

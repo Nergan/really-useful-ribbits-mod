@@ -10,6 +10,8 @@
 
 Поиск блоков риббитом не вызывает `getBlockState` и `getFluidState`, пока `Level.isLoaded` ложен: ванильный `getBlockState` синхронно грузит чанк на серверном потоке. `BlockPos.findClosestMatch` по `FARM_CLAIM_RADIUS` 128 из `FarmerAi.perform` так держал тик десятки секунд, пока деревня ещё генерировалась (ModernFix watchdog: `isFarmBlock` → `allWorkBlocks` → `findClosest`). Скан идёт только по уже загруженным чанкам и по несколько колонок за вызов. `/locate ribbits:ribbit_village` — поиск структуры мода Ribbits, к этому аддону не относится.
 
+Рис в воде и куст на земле не стоят на пашне: фермой считается сам такой блок и земля под ним, иначе `nearestFarmOrigin` их не видит. Колючий куст — `SweetBerryBushBlock`, тег `reallyusefulribbits:prickly_bushes` и путь с `sweet_berry`, `prickly`, `thorny` или `bramble`. Рыбная клетка с коллизией выше 0.5 (верхний полублок в воде) — не `isOpenWater`: над ней воздух, но садиться туда нельзя.
+
 
 ## Скиллы
 

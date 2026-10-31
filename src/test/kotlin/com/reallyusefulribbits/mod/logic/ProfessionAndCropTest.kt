@@ -28,6 +28,12 @@ class ProfessionAndCropTest {
         assertTrue(CropRules.caneHarvestYs(4, 4).isEmpty())
         assertTrue(CropRules.canReachBerries(1.5, 2.0))
         assertFalse(CropRules.canReachBerries(1.5, 10.0))
+        assertTrue(CropRules.isPricklyPath("sweet_berry_bush"))
+        assertTrue(CropRules.isPricklyPath("mod:thorny_bramble"))
+        assertFalse(CropRules.isPricklyPath("farmersdelight:budding_tomatoes"))
+        assertFalse(CropRules.isPricklyPath("vinery:grapevine"))
+        assertFalse(CropRules.blocksUpperHalf(0.5))
+        assertTrue(CropRules.blocksUpperHalf(1.0))
     }
 
     @Test

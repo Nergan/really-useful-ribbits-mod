@@ -15,4 +15,8 @@ object ModTags {
         Registries.BLOCK,
         ResourceLocation.fromNamespaceAndPath(ReallyUsefulRibbitsMod.MOD_ID, "tillable"),
     )
+    val PRICKLY_BUSHES: TagKey<Block> = TagKey.create(
+        Registries.BLOCK,
+        ResourceLocation.fromNamespaceAndPath(ReallyUsefulRibbitsMod.MOD_ID, "prickly_bushes"),
+    )
 }

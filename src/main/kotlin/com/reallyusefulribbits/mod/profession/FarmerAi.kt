@@ -86,7 +86,7 @@ object FarmerAi {
             merged.addAll(fresh)
             for (pos in data.farmMemory) {
                 if (merged.size >= ModConfig.FARM_MEMORY_CAP) break
-                if (level.isLoaded(pos) && CropSupport.isFarmBlock(level, pos)) merged.add(pos)
+                if (level.isLoaded(pos) && CropSupport.keepsFarmSpot(level, pos)) merged.add(pos)
             }
             data.farmMemory.clear()
             data.farmMemory.addAll(merged)

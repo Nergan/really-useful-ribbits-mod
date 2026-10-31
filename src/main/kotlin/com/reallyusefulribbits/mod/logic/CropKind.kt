@@ -24,4 +24,13 @@ object CropRules {
     }
 
     fun waterDoublesGrowth(): Boolean = false
+
+    /** Верхняя половина блока занята: верхний полублок, в том числе в воде. */
+    fun blocksUpperHalf(maxCollisionY: Double): Boolean = maxCollisionY > 0.5
+
+    fun isPricklyPath(path: String): Boolean {
+        val name = path.substringAfter(':')
+        return name.contains("sweet_berry") || name.contains("prickly") ||
+            name.contains("thorny") || name.contains("bramble")
+    }
 }
