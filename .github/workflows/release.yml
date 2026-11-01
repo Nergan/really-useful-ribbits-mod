@@ -288,6 +288,7 @@ jobs:
             farmers-delight(optional){modrinth:R2OftAxM}
             wandering-ribbit(optional){modrinth:qYSYk2ef}
             patchouli(optional){modrinth:nU0bVIaL}
+            modmenu(optional){modrinth:mOgUt4GM}
 
       - name: Delete replaced Modrinth versions
         if: steps.modrinth_token.outputs.present == 'true'

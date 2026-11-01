@@ -16,7 +16,7 @@
 
 | Файл | Обязателен | Что это |
 | --- | --- | --- |
-| `reallyusefulribbits-neoforge-1.21.1-1.1.1.jar` | Да | этот аддон |
+| `reallyusefulribbits-neoforge-1.21.1-1.1.2.jar` | Да | этот аддон |
 | `kotlinforforge-5.8.0-all.jar` | Да | [Kotlin for Forge](https://modrinth.com/mod/kotlin-for-forge) |
 | `Ribbits-1.21.1-NeoForge-4.1.6.jar` | Да | [Ribbits](https://modrinth.com/mod/ribbits) |
 | `geckolib-neoforge-1.21.1-4.7.6.jar` | Да | [GeckoLib](https://modrinth.com/mod/geckolib), нужен Ribbits |
@@ -27,7 +27,7 @@
 
 | Файл | Обязателен | Что это |
 | --- | --- | --- |
-| `reallyusefulribbits-fabric-1.21.1-1.1.1.jar` | Да | этот аддон |
+| `reallyusefulribbits-fabric-1.21.1-1.1.2.jar` | Да | этот аддон |
 | `fabric-api-0.116.17+1.21.1.jar` | Да | [Fabric API](https://modrinth.com/mod/fabric-api) |
 | `fabric-language-kotlin-1.13.2+kotlin.2.1.20.jar` | Да | [Fabric Language Kotlin](https://modrinth.com/mod/fabric-language-kotlin) |
 | `Ribbits-1.21.1-Fabric-4.1.6.jar` | Да | [Ribbits](https://modrinth.com/mod/ribbits) |
@@ -42,6 +42,7 @@ Workflow релиза собирает аддон и забирает чужие
 
 - [Farmer's Delight](https://modrinth.com/mod/farmers-delight) — дополнительная пашня и культуры
 - [Wandering Ribbit](https://modrinth.com/mod/wandering-ribbit) — торговец риббит будет охотиться и за этими лягушками
+- [Mod Menu](https://modrinth.com/mod/modmenu) на Fabric — открывает экран настроек
 
 ## Возможности
 
@@ -155,7 +156,7 @@ Minecraft 1.21.1 и Java 21 на любом из двух загрузчиков
 
 ### Fabric
 
-Экрана настроек нет. Сервер читает `config/reallyusefulribbits-server.properties` при запуске. Ключи: `scan_radius` (по умолчанию 64), `chaos_level` (по умолчанию 0) и по одному `spell.<ключ>` на заклинание, например `spell.ender_dragon=93`. Файл старой версии, где ключей заклинаний нет, переписывается со всеми ключами; его `chaos_level=25` был старым значением по умолчанию и становится 0. Файл, где все баллы ещё ровно те, что 1.1.0 записал по умолчанию, переписывается с новыми баллами. На выделенном сервере файл лежит в каталоге сервера. После правки нужен перезапуск. Это один файл на весь инстанс, не отдельный конфиг мира.
+С [Mod Menu](https://modrinth.com/mod/modmenu): Моды → Really Useful Ribbits → настройки. Экран правит `config/reallyusefulribbits-server.properties`, и в одиночной игре новые значения действуют сразу после сохранения. Выделенный сервер читает этот файл при запуске. Ключи: `scan_radius` (по умолчанию 64), `chaos_level` (по умолчанию 0) и по одному `spell.<ключ>` на заклинание, например `spell.ender_dragon=93`. Файл старой версии, где ключей заклинаний нет, переписывается со всеми ключами; его `chaos_level=25` был старым значением по умолчанию и становится 0. Файл, где все баллы ещё ровно те, что 1.1.0 записал по умолчанию, переписывается с новыми баллами. На выделенном сервере файл лежит в каталоге сервера. После правки нужен перезапуск. Это один файл на весь инстанс, не отдельный конфиг мира.
 
 ## Лицензия
 

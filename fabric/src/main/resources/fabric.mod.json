@@ -10,7 +10,8 @@
   "environment": "*",
   "entrypoints": {
     "main": ["com.reallyusefulribbits.mod.loader.fabric.ReallyUsefulRibbitsFabric"],
-    "client": ["com.reallyusefulribbits.mod.loader.fabric.ReallyUsefulRibbitsFabricClient"]
+    "client": ["com.reallyusefulribbits.mod.loader.fabric.ReallyUsefulRibbitsFabricClient"],
+    "modmenu": ["com.reallyusefulribbits.mod.loader.fabric.RibbitsModMenu"]
   },
   "accessWidener": "reallyusefulribbits.accesswidener",
   "mixins": [
@@ -25,9 +26,11 @@
     "fabric-language-kotlin": ">=1.13.2+kotlin.2.1.20",
     "ribbits": ">=1.21.1-Fabric-4.1.6",
     "geckolib": ">=4.7.5.1",
-    "yungsapi": ">=1.21.1-Fabric-5.1.5"
+    "yungsapi": ">=1.21.1-Fabric-5.1.5",
+    "cloth-config": ">=15.0.140"
   },
   "suggests": {
-    "patchouli": "*"
+    "patchouli": "*",
+    "modmenu": "*"
   }
 }

@@ -70,6 +70,10 @@ repositories {
         name = "Shedaniel"
         url = uri("https://maven.shedaniel.me/")
     }
+    maven {
+        name = "Terraformers"
+        url = uri("https://maven.terraformersmc.com/releases/")
+    }
 }
 
 dependencies {
@@ -85,7 +89,8 @@ dependencies {
     // Loom не подхватывает JiJ из jar Patchouli. В релизе Fiber отдельно не кладём:
     // он уже лежит внутри Patchouli-*-FABRIC.jar.
     modRuntimeOnly("me.zeroeightsix:fiber:0.23.0-2")
-    modRuntimeOnly("me.shedaniel.cloth:cloth-config-fabric:${prop("cloth_config_version")}")
+    modImplementation("me.shedaniel.cloth:cloth-config-fabric:${prop("cloth_config_version")}")
+    modCompileOnly("com.terraformersmc:modmenu:${prop("modmenu_version")}")
     modRuntimeOnly("org.reflections:reflections:0.10.2")
 }
 

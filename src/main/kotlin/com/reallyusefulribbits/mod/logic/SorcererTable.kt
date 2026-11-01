@@ -108,6 +108,13 @@ object SorcererTable {
         return (table.firstOrNull { it.value == action }?.weight ?: 0.0) / total
     }
 
+    /** Доля баллов в процентах без лишних нулей: 15, 12.12, 0.009, 0.0001. */
+    fun percentText(points: Int, total: Int = DEFAULT_TOTAL): String {
+        val percent = points * 100.0 / total
+        val text = String.format(java.util.Locale.ROOT, if (percent >= 1.0) "%.2f" else "%.4f", percent)
+        return text.trimEnd('0').trimEnd('.')
+    }
+
     fun launchHeight(roll: Int): Int = 4 + Math.floorMod(roll, 13)
 
     fun maxHealth(roll: Int): Int = 1 + Math.floorMod(roll, 128)

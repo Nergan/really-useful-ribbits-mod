@@ -2,6 +2,12 @@
   "item.reallyusefulribbits.tab_icon": "Реально полезные квакуши",
   "itemGroup.reallyusefulribbits": "Реально полезные квакуши",
 
+  "reallyusefulribbits.configuration.title": "Really Useful Ribbits",
+  "reallyusefulribbits.configuration.fabric_note": "Это настройки сервера. В одиночной игре они действуют сразу после сохранения, а выделенный сервер читает config/reallyusefulribbits-server.properties при запуске.",
+  "reallyusefulribbits.configuration.work.scan_radius.tooltip": "Как далеко риббит ищет воду, ферму, контейнеры, удачу, эндерменов и растения для чародея.",
+  "reallyusefulribbits.configuration.sorcerer.chaos_level.tooltip": "0 оставляет баллы как есть, 100 уравнивает все включённые заклинания.",
+  "reallyusefulribbits.configuration.sorcerer.spells.tooltip": "Шанс заклинания — его баллы, делённые на сумму всех баллов; 0 выключает заклинание. Баллы по умолчанию в сумме дают %s.",
+  "reallyusefulribbits.configuration.sorcerer.spells.default": "По умолчанию: %s баллов (%s%%)",
   "reallyusefulribbits.configuration.work": "Работа",
   "reallyusefulribbits.configuration.work.scan_radius": "Радиус проверки",
   "reallyusefulribbits.configuration.sorcerer": "Чародей",

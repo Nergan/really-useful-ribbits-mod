@@ -16,7 +16,7 @@ Download one set and put those files in the `mods` folder.
 
 | File | Required | What it is |
 | --- | --- | --- |
-| `reallyusefulribbits-neoforge-1.21.1-1.1.1.jar` | Yes | this addon |
+| `reallyusefulribbits-neoforge-1.21.1-1.1.2.jar` | Yes | this addon |
 | `kotlinforforge-5.8.0-all.jar` | Yes | [Kotlin for Forge](https://modrinth.com/mod/kotlin-for-forge) |
 | `Ribbits-1.21.1-NeoForge-4.1.6.jar` | Yes | [Ribbits](https://modrinth.com/mod/ribbits) |
 | `geckolib-neoforge-1.21.1-4.7.6.jar` | Yes | [GeckoLib](https://modrinth.com/mod/geckolib), required by Ribbits |
@@ -27,7 +27,7 @@ Download one set and put those files in the `mods` folder.
 
 | File | Required | What it is |
 | --- | --- | --- |
-| `reallyusefulribbits-fabric-1.21.1-1.1.1.jar` | Yes | this addon |
+| `reallyusefulribbits-fabric-1.21.1-1.1.2.jar` | Yes | this addon |
 | `fabric-api-0.116.17+1.21.1.jar` | Yes | [Fabric API](https://modrinth.com/mod/fabric-api) |
 | `fabric-language-kotlin-1.13.2+kotlin.2.1.20.jar` | Yes | [Fabric Language Kotlin](https://modrinth.com/mod/fabric-language-kotlin) |
 | `Ribbits-1.21.1-Fabric-4.1.6.jar` | Yes | [Ribbits](https://modrinth.com/mod/ribbits) |
@@ -42,6 +42,7 @@ Optional extras (not attached to the release, install them yourself if you want 
 
 - [Farmer's Delight](https://modrinth.com/mod/farmers-delight) — extra farmland and crops
 - [Wandering Ribbit](https://modrinth.com/mod/wandering-ribbit) — merchants will also trade-hunt those frogs
+- [Mod Menu](https://modrinth.com/mod/modmenu) on Fabric — opens the settings screen
 
 ## Features
 
@@ -155,7 +156,7 @@ This is a `SERVER` config: the server owns the values and syncs them to clients.
 
 ### Fabric
 
-There is no config screen. The server reads `config/reallyusefulribbits-server.properties` when the game starts. Keys are `scan_radius` (default 64), `chaos_level` (default 0) and one `spell.<key>` per spell, for example `spell.ender_dragon=93`. A file from an older version, which has no spell keys, is rewritten with every key; its `chaos_level=25` was the old default and becomes 0. A file whose points are all still the 1.1.0 defaults is rewritten with the new defaults. On a dedicated server the file is in the server directory. Changing it needs a restart. It is one file for the whole instance, not a per-world config.
+With [Mod Menu](https://modrinth.com/mod/modmenu): Mods → Really Useful Ribbits → settings. The screen edits `config/reallyusefulribbits-server.properties`; in single player the new values apply as soon as you save. A dedicated server reads that file when it starts. Keys are `scan_radius` (default 64), `chaos_level` (default 0) and one `spell.<key>` per spell, for example `spell.ender_dragon=93`. A file from an older version, which has no spell keys, is rewritten with every key; its `chaos_level=25` was the old default and becomes 0. A file whose points are all still the 1.1.0 defaults is rewritten with the new defaults. On a dedicated server the file is in the server directory. Changing it needs a restart. It is one file for the whole instance, not a per-world config.
 
 ## License
 

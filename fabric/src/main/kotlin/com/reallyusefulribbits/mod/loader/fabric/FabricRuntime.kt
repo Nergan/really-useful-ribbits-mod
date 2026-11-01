@@ -4,6 +4,7 @@ import com.reallyusefulribbits.mod.attach.VisualCarrier
 import com.reallyusefulribbits.mod.attach.WorkCarrier
 import com.reallyusefulribbits.mod.loader.ItemSlots
 import com.reallyusefulribbits.mod.loader.RuntimeHooks
+import com.reallyusefulribbits.mod.logic.ServerSettings
 import com.reallyusefulribbits.mod.logic.ServerSettingsText
 import com.reallyusefulribbits.mod.network.PlayerVisualPayload
 import net.fabricmc.fabric.api.entity.FakePlayer
@@ -39,17 +40,33 @@ object FabricRuntime {
         }
     }
 
+    @Volatile
+    var settings: ServerSettings = ServerSettingsText.resolve(emptyMap())
+        private set
+
+    private val configFile: File
+        get() = File(FabricLoader.getInstance().configDir.toFile(), "reallyusefulribbits-server.properties")
+
     private fun loadConfig() {
-        val file = File(FabricLoader.getInstance().configDir.toFile(), "reallyusefulribbits-server.properties")
+        val file = configFile
         val values = if (file.isFile) ServerSettingsText.parse(file.readLines()) else emptyMap()
-        val settings = ServerSettingsText.resolve(values)
-        if (ServerSettingsText.needsRewrite(values)) {
-            file.parentFile.mkdirs()
-            file.writeText(ServerSettingsText.render(settings))
-        }
+        settings = ServerSettingsText.resolve(values)
+        if (ServerSettingsText.needsRewrite(values)) write(settings)
         RuntimeHooks.scanRadius = { settings.scanRadius }
         RuntimeHooks.chaosLevel = { settings.chaos }
         RuntimeHooks.spellPoints = { action -> settings.points[action] ?: action.defaultPoints }
+    }
+
+    /** Экран настроек пишет тот же файл; сервер в этом же процессе берёт новые значения сразу. */
+    fun saveSettings(updated: ServerSettings) {
+        settings = updated
+        write(updated)
+    }
+
+    private fun write(value: ServerSettings) {
+        val file = configFile
+        file.parentFile.mkdirs()
+        file.writeText(ServerSettingsText.render(value))
     }
 
     private fun slots(level: Level, pos: BlockPos): ItemSlots? {

@@ -2,6 +2,12 @@
   "item.reallyusefulribbits.tab_icon": "Really Useful Ribbits",
   "itemGroup.reallyusefulribbits": "Really Useful Ribbits",
 
+  "reallyusefulribbits.configuration.title": "Really Useful Ribbits",
+  "reallyusefulribbits.configuration.fabric_note": "These are server settings. In single player they apply as soon as you save; a dedicated server reads config/reallyusefulribbits-server.properties when it starts.",
+  "reallyusefulribbits.configuration.work.scan_radius.tooltip": "How far a ribbit looks for water, farms, containers, luck, endermen and sorcerer plant growth.",
+  "reallyusefulribbits.configuration.sorcerer.chaos_level.tooltip": "0 keeps the spell points as they are; 100 makes every enabled spell equally likely.",
+  "reallyusefulribbits.configuration.sorcerer.spells.tooltip": "A spell's chance is its points divided by the sum of all points; 0 turns a spell off. The defaults add up to %s.",
+  "reallyusefulribbits.configuration.sorcerer.spells.default": "Default: %s points (%s%%)",
   "reallyusefulribbits.configuration.work": "Work",
   "reallyusefulribbits.configuration.work.scan_radius": "Scan radius",
   "reallyusefulribbits.configuration.sorcerer": "Sorcerer",

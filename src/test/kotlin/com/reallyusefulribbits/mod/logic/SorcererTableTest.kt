@@ -22,6 +22,15 @@ class SorcererTableTest {
     }
 
     @Test
+    @DisplayName("Шанс по умолчанию в экране настроек пишется как в README")
+    fun percentText() {
+        assertEquals("15", SorcererTable.percentText(SorcererAction.ENCHANT.defaultPoints))
+        assertEquals("12.12", SorcererTable.percentText(SorcererAction.EFFECT_OR_CLEANSE.defaultPoints))
+        assertEquals("0.009", SorcererTable.percentText(SorcererAction.SUMMON_DRAGON.defaultPoints))
+        assertEquals("0.0001", SorcererTable.percentText(SorcererAction.DELETE_WORLD.defaultPoints))
+    }
+
+    @Test
     @DisplayName("Разрушительные заклинания вместе реже процента, хорошие — самые частые")
     fun rarityOrder() {
         val fewest = SorcererAction.entries.minOf { it.defaultPoints }
