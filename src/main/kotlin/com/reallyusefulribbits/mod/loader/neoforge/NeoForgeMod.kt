@@ -33,7 +33,7 @@ class NeoForgeMod(modEventBus: IEventBus, modContainer: ModContainer) {
         runCatching {
             val migrated = ServerSettingsText.migrateLegacyToml(Files.readString(file)) ?: return
             Files.writeString(file, migrated)
-            ReallyUsefulRibbitsMod.LOGGER.info("Old sorcerer chaos_level 25 was the old default; it is 0 now")
+            ReallyUsefulRibbitsMod.LOGGER.info("Moved untouched old sorcerer defaults in {} to the current ones", file.fileName)
         }.onFailure { ReallyUsefulRibbitsMod.LOGGER.warn("Could not update {}", file, it) }
     }
 }

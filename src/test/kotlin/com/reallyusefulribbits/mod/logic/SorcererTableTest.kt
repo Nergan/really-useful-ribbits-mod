@@ -11,39 +11,46 @@ import org.junit.jupiter.api.Test
 class SorcererTableTest {
 
     @Test
-    @DisplayName("Баллы по умолчанию сходятся в 10000, дракон около 1/108")
+    @DisplayName("Баллы по умолчанию сходятся в миллион: дракон 0,009%, лава 0,01%, варден и порча по 0,0001%")
     fun defaultPoints() {
-        assertEquals(10000, SorcererTable.DEFAULT_TOTAL)
-        assertEquals(1.0 / 108.0, SorcererTable.chance(SorcererAction.SUMMON_DRAGON), 0.0005)
-        assertEquals(0.015, SorcererTable.chance(SorcererAction.DIAMOND_RAIN), 1e-9)
+        assertEquals(1_000_000, SorcererTable.DEFAULT_TOTAL)
+        assertEquals(0.00009, SorcererTable.chance(SorcererAction.SUMMON_DRAGON), 1e-12)
+        assertEquals(0.0001, SorcererTable.chance(SorcererAction.LAVA_LAKE), 1e-12)
+        assertEquals(0.000001, SorcererTable.chance(SorcererAction.DELETE_WORLD), 1e-12)
+        assertEquals(0.000001, SorcererTable.chance(SorcererAction.CORRUPT_WORLDGEN), 1e-12)
         assertEquals(SorcererAction.entries.size, SorcererAction.entries.map { it.id }.toSet().size)
     }
 
     @Test
-    @DisplayName("Порча генерации — самое редкое, хорошие заклинания чаще бедствий")
+    @DisplayName("Разрушительные заклинания вместе реже процента, хорошие — самые частые")
     fun rarityOrder() {
-        val rarest = SorcererAction.entries.minBy { it.defaultPoints }
-        assertEquals(SorcererAction.CORRUPT_WORLDGEN, rarest)
-        assertTrue(SorcererAction.LAVA_LAKE.defaultPoints < SorcererAction.FIREBALL_RAIN.defaultPoints)
-        assertTrue(SorcererAction.DELETE_WORLD.defaultPoints < SorcererAction.BEDROCK_ROOM.defaultPoints)
-        assertTrue(SorcererAction.CREATIVE_FLIGHT.defaultPoints < SorcererAction.VVVVVV.defaultPoints)
+        val fewest = SorcererAction.entries.minOf { it.defaultPoints }
+        val rarest = SorcererAction.entries.filter { it.defaultPoints == fewest }.toSet()
+        assertEquals(setOf(SorcererAction.DELETE_WORLD, SorcererAction.CORRUPT_WORLDGEN), rarest)
+        val ruinous = listOf(
+            SorcererAction.MEGA_EXPLOSION, SorcererAction.FIREBALL_RAIN, SorcererAction.LAVA_LAKE,
+            SorcererAction.SUMMON_DRAGON, SorcererAction.DELETE_WORLD, SorcererAction.CORRUPT_WORLDGEN,
+            SorcererAction.RANDOM_STRUCTURE, SorcererAction.IGNITE_AREA,
+        )
+        assertTrue(ruinous.sumOf { SorcererTable.chance(it) } < 0.01)
+        assertTrue(SorcererAction.MEGA_EXPLOSION.defaultPoints < SorcererAction.LAVA_LAKE.defaultPoints)
+        assertEquals(SorcererAction.ENCHANT, SorcererAction.entries.maxBy { it.defaultPoints })
+        assertTrue(SorcererAction.SUMMON_PETS.defaultPoints > SorcererAction.SUMMON_MOBS.defaultPoints)
+        assertTrue(SorcererAction.DIAMOND_RAIN.defaultPoints > SorcererAction.LIGHTNING.defaultPoints)
         assertTrue(SorcererAction.SUPER_SECRET_SETTINGS.defaultPoints > SorcererAction.INVERTED_CONTROLS.defaultPoints)
-        assertTrue(SorcererAction.ENCHANT.defaultPoints > SorcererAction.LAUNCH.defaultPoints)
     }
 
     @Test
-    @DisplayName("Бросок попадает в объявленные баллы")
+    @DisplayName("Бросок попадает в объявленные баллы, даже в один балл из миллиона")
     fun pickHonorsPoints() {
         assertEquals(SorcererAction.EFFECT_OR_CLEANSE, SorcererTable.pick(0.0))
-        assertEquals(SorcererAction.CORRUPT_WORLDGEN, SorcererTable.pick(0.99999))
-        val counts = HashMap<SorcererAction, Int>()
-        repeat(10000) { index ->
-            val action = SorcererTable.pick((index + 0.5) / 10000.0) ?: return@repeat
-            counts[action] = (counts[action] ?: 0) + 1
+        val table = SorcererTable.weights()
+        val total = table.sumOf { it.weight }
+        var start = 0.0
+        for (entry in table) {
+            assertEquals(entry.value, SorcererTable.pick((start + entry.weight / 2) / total))
+            start += entry.weight
         }
-        assertEquals(150, counts[SorcererAction.DIAMOND_RAIN])
-        assertEquals(93, counts[SorcererAction.SUMMON_DRAGON])
-        assertEquals(3, counts[SorcererAction.CORRUPT_WORLDGEN])
     }
 
     @Test

@@ -39,12 +39,11 @@ object FabricRuntime {
         }
     }
 
-    /** Файл без баллов заклинаний или без части ключей переписывается полным. */
     private fun loadConfig() {
         val file = File(FabricLoader.getInstance().configDir.toFile(), "reallyusefulribbits-server.properties")
         val values = if (file.isFile) ServerSettingsText.parse(file.readLines()) else emptyMap()
         val settings = ServerSettingsText.resolve(values)
-        if (!ServerSettingsText.complete(values)) {
+        if (ServerSettingsText.needsRewrite(values)) {
             file.parentFile.mkdirs()
             file.writeText(ServerSettingsText.render(settings))
         }
