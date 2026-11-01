@@ -1,6 +1,9 @@
 package com.reallyusefulribbits.mod.attach
 
 import net.minecraft.nbt.CompoundTag
+import net.minecraft.nbt.ListTag
+import net.minecraft.nbt.StringTag
+import net.minecraft.nbt.Tag
 
 class PlayerVisualData(
     var upsideDown: Boolean = false,
@@ -17,7 +20,18 @@ class PlayerVisualData(
     var savedAttack: Double = 1.0,
     var savedKnockback: Double = 0.0,
     var savedStep: Double = 0.6,
+    var savedGravity: Double = 0.08,
     var receivedGuide: Boolean = false,
+    /** Эффекты чародея как `id|уровень`. После смерти они возвращаются, молоко их снимает. */
+    val curseEffects: MutableList<String> = ArrayList(),
+    var vvvvvv: Boolean = false,
+    var fireballs: Boolean = false,
+    var lightningHands: Boolean = false,
+    var foreverFlight: Boolean = false,
+    var nickname: String = "",
+    var nickColor: Int = -1,
+    var shader: String = "",
+    var invertedControls: Boolean = false,
 ) {
     fun write(): CompoundTag {
         val out = CompoundTag()
@@ -34,9 +48,23 @@ class PlayerVisualData(
         out.putDouble("SavedAttack", savedAttack)
         out.putDouble("SavedKnockback", savedKnockback)
         out.putDouble("SavedStep", savedStep)
+        out.putDouble("SavedGravity", savedGravity)
         out.putBoolean("ReceivedGuide", receivedGuide)
+        val effects = ListTag()
+        curseEffects.forEach { effects.add(StringTag.valueOf(it)) }
+        out.put("CurseEffects", effects)
+        out.putBoolean("Vvvvvv", vvvvvv)
+        out.putBoolean("Fireballs", fireballs)
+        out.putBoolean("LightningHands", lightningHands)
+        out.putBoolean("ForeverFlight", foreverFlight)
+        out.putString("Nickname", nickname)
+        out.putInt("NickColor", nickColor)
+        out.putString("Shader", shader)
+        out.putBoolean("InvertedControls", invertedControls)
         return out
     }
+
+    fun copy(): PlayerVisualData = load(write())
 
     companion object {
         @JvmStatic
@@ -54,7 +82,17 @@ class PlayerVisualData(
             savedAttack = if (tag.contains("SavedAttack")) tag.getDouble("SavedAttack") else 1.0,
             savedKnockback = tag.getDouble("SavedKnockback"),
             savedStep = if (tag.contains("SavedStep")) tag.getDouble("SavedStep") else 0.6,
+            savedGravity = if (tag.contains("SavedGravity")) tag.getDouble("SavedGravity") else 0.08,
             receivedGuide = tag.getBoolean("ReceivedGuide"),
+            curseEffects = tag.getList("CurseEffects", Tag.TAG_STRING.toInt()).mapTo(ArrayList()) { it.asString },
+            vvvvvv = tag.getBoolean("Vvvvvv"),
+            fireballs = tag.getBoolean("Fireballs"),
+            lightningHands = tag.getBoolean("LightningHands"),
+            foreverFlight = tag.getBoolean("ForeverFlight"),
+            nickname = tag.getString("Nickname"),
+            nickColor = if (tag.contains("NickColor")) tag.getInt("NickColor") else -1,
+            shader = tag.getString("Shader"),
+            invertedControls = tag.getBoolean("InvertedControls"),
         )
     }
 }

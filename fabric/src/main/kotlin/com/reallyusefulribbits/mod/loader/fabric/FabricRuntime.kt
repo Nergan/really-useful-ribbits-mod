@@ -2,9 +2,9 @@ package com.reallyusefulribbits.mod.loader.fabric
 
 import com.reallyusefulribbits.mod.attach.VisualCarrier
 import com.reallyusefulribbits.mod.attach.WorkCarrier
-import com.reallyusefulribbits.mod.client.ClientVisuals
 import com.reallyusefulribbits.mod.loader.ItemSlots
 import com.reallyusefulribbits.mod.loader.RuntimeHooks
+import com.reallyusefulribbits.mod.logic.ServerSettingsText
 import com.reallyusefulribbits.mod.network.PlayerVisualPayload
 import net.fabricmc.fabric.api.entity.FakePlayer
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup
@@ -23,6 +23,7 @@ object FabricRuntime {
         RuntimeHooks.visual = { player -> (player as VisualCarrier).`reallyusefulribbits$visual`() }
         RuntimeHooks.sendTrackingAndSelf = { player, payload -> sendTrackingAndSelf(player, payload) }
         RuntimeHooks.sendToPlayer = { player, payload -> ServerPlayNetworking.send(player, payload) }
+        RuntimeHooks.sendPayload = { player, payload -> ServerPlayNetworking.send(player, payload) }
         RuntimeHooks.itemSlots = { level, pos -> slots(level, pos) }
         RuntimeHooks.containerOpener = { level -> FakePlayer.get(level) }
         RuntimeHooks.patchouliLoaded = { FabricLoader.getInstance().isModLoaded("patchouli") }
@@ -38,27 +39,18 @@ object FabricRuntime {
         }
     }
 
+    /** Файл без баллов заклинаний или без части ключей переписывается полным. */
     private fun loadConfig() {
         val file = File(FabricLoader.getInstance().configDir.toFile(), "reallyusefulribbits-server.properties")
-        var radius = com.reallyusefulribbits.mod.logic.ScanRadius.DEFAULT
-        var chaos = 25
-        if (file.isFile) {
-            file.readLines().forEach { line ->
-                val parts = line.split("=", limit = 2)
-                if (parts.size != 2) return@forEach
-                when (parts[0].trim()) {
-                    "scan_radius" -> radius = parts[1].trim().toIntOrNull() ?: radius
-                    "chaos_level" -> chaos = parts[1].trim().toIntOrNull() ?: chaos
-                }
-            }
-        } else {
+        val values = if (file.isFile) ServerSettingsText.parse(file.readLines()) else emptyMap()
+        val settings = ServerSettingsText.resolve(values)
+        if (!ServerSettingsText.complete(values)) {
             file.parentFile.mkdirs()
-            file.writeText("scan_radius=$radius\nchaos_level=$chaos\n")
+            file.writeText(ServerSettingsText.render(settings))
         }
-        val savedRadius = radius
-        val savedChaos = chaos
-        RuntimeHooks.scanRadius = { com.reallyusefulribbits.mod.logic.ScanRadius.clamp(savedRadius) }
-        RuntimeHooks.chaosLevel = { savedChaos.coerceIn(0, 100) }
+        RuntimeHooks.scanRadius = { settings.scanRadius }
+        RuntimeHooks.chaosLevel = { settings.chaos }
+        RuntimeHooks.spellPoints = { action -> settings.points[action] ?: action.defaultPoints }
     }
 
     private fun slots(level: Level, pos: BlockPos): ItemSlots? {
@@ -95,9 +87,5 @@ object FabricRuntime {
             remaining.shrink(moved.count)
         }
         return remaining
-    }
-
-    fun onClientPayload(payload: PlayerVisualPayload) {
-        ClientVisuals.set(payload.playerId, payload.upsideDown, payload.morphId)
     }
 }

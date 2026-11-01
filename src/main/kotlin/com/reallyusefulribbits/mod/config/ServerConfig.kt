@@ -1,6 +1,8 @@
 package com.reallyusefulribbits.mod.config
 
 import com.reallyusefulribbits.mod.logic.ScanRadius
+import com.reallyusefulribbits.mod.logic.SorcererAction
+import com.reallyusefulribbits.mod.logic.SorcererTable
 import net.neoforged.neoforge.common.ModConfigSpec
 
 /**
@@ -25,17 +27,21 @@ class ServerConfig(builder: ModConfigSpec.Builder) {
         fun scanRadius(): Int = ScanRadius.clamp(CONFIG.scanRadius.get())
 
         fun chaosLevel(): Int = CONFIG.chaosLevel.get().coerceIn(0, 100)
+
+        fun spellPoints(action: SorcererAction): Int =
+            CONFIG.spellPoints[action]?.get()?.coerceIn(0, SorcererTable.MAX_POINTS) ?: action.defaultPoints
     }
 
     val scanRadius: ModConfigSpec.IntValue
     val chaosLevel: ModConfigSpec.IntValue
+    val spellPoints: Map<SorcererAction, ModConfigSpec.IntValue>
 
     init {
         builder.push("work")
         scanRadius = builder
             .comment(
                 "How far a ribbit looks for water, farms, containers, luck and sorcerer plant growth.",
-                "Server-only: dedicated servers use world/serverconfig/reallyusefulribbits-server.toml.",
+                "The file is config/reallyusefulribbits-server.toml; a copy in <world>/serverconfig/ overrides it for one world.",
             )
             .translation("$KEY_PREFIX.work.scan_radius")
             .defineInRange("scan_radius", ScanRadius.DEFAULT, ScanRadius.MIN, ScanRadius.MAX)
@@ -44,11 +50,24 @@ class ServerConfig(builder: ModConfigSpec.Builder) {
         builder.push("sorcerer")
         chaosLevel = builder
             .comment(
-                "How even sorcerer effect odds become. 0 keeps the default weighted table;",
-                "100 makes every effect almost equally likely.",
+                "How even sorcerer spell odds become. 0 keeps the spell points as they are;",
+                "100 makes every enabled spell equally likely.",
             )
             .translation("$KEY_PREFIX.sorcerer.chaos_level")
-            .defineInRange("chaos_level", 25, 0, 100)
+            .defineInRange("chaos_level", SorcererTable.DEFAULT_CHAOS, 0, 100)
+        builder
+            .comment(
+                "Spell points. A spell's chance is its points divided by the sum of all points.",
+                "0 turns a spell off. The defaults add up to ${SorcererTable.DEFAULT_TOTAL}.",
+            )
+            .translation("$KEY_PREFIX.sorcerer.spells")
+            .push("spells")
+        spellPoints = SorcererAction.entries.associateWith { action ->
+            builder
+                .translation("$KEY_PREFIX.sorcerer.spells.${action.id}")
+                .defineInRange(action.id, action.defaultPoints, 0, SorcererTable.MAX_POINTS)
+        }
+        builder.pop()
         builder.pop()
     }
 }

@@ -2,9 +2,11 @@ package com.reallyusefulribbits.mod.loader
 
 import com.reallyusefulribbits.mod.attach.PlayerVisualData
 import com.reallyusefulribbits.mod.attach.RibbitWorkData
+import com.reallyusefulribbits.mod.logic.SorcererAction
 import com.reallyusefulribbits.mod.network.PlayerVisualPayload
 import com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity
 import net.minecraft.core.BlockPos
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
@@ -20,13 +22,18 @@ object RuntimeHooks {
     lateinit var visual: (Player) -> PlayerVisualData
     lateinit var sendTrackingAndSelf: (ServerPlayer, PlayerVisualPayload) -> Unit
     lateinit var sendToPlayer: (ServerPlayer, PlayerVisualPayload) -> Unit
+    lateinit var sendPayload: (ServerPlayer, CustomPacketPayload) -> Unit
     lateinit var scanRadius: () -> Int
     lateinit var chaosLevel: () -> Int
+    lateinit var spellPoints: (SorcererAction) -> Int
     lateinit var itemSlots: (Level, BlockPos) -> ItemSlots?
     lateinit var containerOpener: (ServerLevel) -> Player
     lateinit var patchouliLoaded: () -> Boolean
     lateinit var guideReceived: (Player) -> Boolean
     lateinit var markGuideReceived: (Player) -> Unit
+
+    /** Клиент: отправка на сервер. На выделенном сервере не заполняется. */
+    var sendToServer: (CustomPacketPayload) -> Unit = {}
 }
 
 class ItemSlots(

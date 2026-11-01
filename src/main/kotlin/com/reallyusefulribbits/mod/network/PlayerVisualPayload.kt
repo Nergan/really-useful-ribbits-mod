@@ -2,7 +2,6 @@ package com.reallyusefulribbits.mod.network
 
 import com.reallyusefulribbits.mod.ReallyUsefulRibbitsMod
 import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.minecraft.resources.ResourceLocation
@@ -12,6 +11,10 @@ data class PlayerVisualPayload(
     val playerId: UUID,
     val upsideDown: Boolean,
     val morphId: String = "",
+    val flags: Int = 0,
+    val nickname: String = "",
+    val nickColor: Int = -1,
+    val shader: String = "",
 ) : CustomPacketPayload {
 
     override fun type(): CustomPacketPayload.Type<out CustomPacketPayload> = TYPE
@@ -20,19 +23,27 @@ data class PlayerVisualPayload(
         val ID: ResourceLocation = ResourceLocation.fromNamespaceAndPath(ReallyUsefulRibbitsMod.MOD_ID, "player_visual")
         val TYPE: CustomPacketPayload.Type<PlayerVisualPayload> = CustomPacketPayload.Type(ID)
 
-        private val UUID_CODEC: StreamCodec<RegistryFriendlyByteBuf, UUID> = StreamCodec.of(
-            { buf, value -> buf.writeUUID(value) },
-            { buf -> buf.readUUID() },
-        )
-
-        val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, PlayerVisualPayload> = StreamCodec.composite(
-            UUID_CODEC,
-            PlayerVisualPayload::playerId,
-            ByteBufCodecs.BOOL,
-            PlayerVisualPayload::upsideDown,
-            ByteBufCodecs.STRING_UTF8,
-            PlayerVisualPayload::morphId,
-            ::PlayerVisualPayload,
+        val STREAM_CODEC: StreamCodec<RegistryFriendlyByteBuf, PlayerVisualPayload> = StreamCodec.of(
+            { buf, value ->
+                buf.writeUUID(value.playerId)
+                buf.writeBoolean(value.upsideDown)
+                buf.writeUtf(value.morphId)
+                buf.writeVarInt(value.flags)
+                buf.writeUtf(value.nickname)
+                buf.writeInt(value.nickColor)
+                buf.writeUtf(value.shader)
+            },
+            { buf ->
+                PlayerVisualPayload(
+                    playerId = buf.readUUID(),
+                    upsideDown = buf.readBoolean(),
+                    morphId = buf.readUtf(),
+                    flags = buf.readVarInt(),
+                    nickname = buf.readUtf(),
+                    nickColor = buf.readInt(),
+                    shader = buf.readUtf(),
+                )
+            },
         )
     }
 }

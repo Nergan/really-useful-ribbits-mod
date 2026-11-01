@@ -1,0 +1,68 @@
+{
+  "targets": [
+    "swap",
+    "blurred"
+  ],
+  "passes": [
+    {
+      "name": "box_blur",
+      "intarget": "minecraft:main",
+      "outtarget": "swap",
+      "use_linear_filter": true,
+      "uniforms": [
+        {
+          "name": "BlurDir",
+          "values": [
+            1.0,
+            0.0
+          ]
+        },
+        {
+          "name": "Radius",
+          "values": [
+            8.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "box_blur",
+      "intarget": "swap",
+      "outtarget": "blurred",
+      "use_linear_filter": true,
+      "uniforms": [
+        {
+          "name": "BlurDir",
+          "values": [
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "name": "Radius",
+          "values": [
+            8.0
+          ]
+        }
+      ]
+    },
+    {
+      "name": "color_convolve",
+      "intarget": "blurred",
+      "outtarget": "swap",
+      "uniforms": [
+        {
+          "name": "Saturation",
+          "values": [
+            2.2
+          ]
+        }
+      ]
+    },
+    {
+      "name": "blit",
+      "intarget": "swap",
+      "outtarget": "minecraft:main"
+    }
+  ]
+}

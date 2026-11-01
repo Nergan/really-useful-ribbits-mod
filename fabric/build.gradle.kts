@@ -18,6 +18,10 @@ java.toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 
 loom {
     accessWidenerPath = file("src/main/resources/reallyusefulribbits.accesswidener")
+    mixin {
+        // The Java annotation processor does not see Kotlin mixins; tiny-remapper remaps them in remapJar.
+        useLegacyMixinAp = false
+    }
 }
 
 kotlin {
@@ -41,7 +45,6 @@ tasks.withType<KotlinCompile>().configureEach {
 }
 
 sourceSets.named("main") {
-    java.srcDir(rootProject.file("src/main/java"))
     resources.srcDir(rootProject.file("src/main/resources"))
 }
 

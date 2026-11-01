@@ -1,0 +1,23 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:phantom_membrane"
+    },
+    "title": {
+      "translate": "advancements.reallyusefulribbits.vvvvvv.title"
+    },
+    "description": {
+      "translate": "advancements.reallyusefulribbits.vvvvvv.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "cursed": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

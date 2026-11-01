@@ -1,0 +1,23 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:barrier"
+    },
+    "title": {
+      "translate": "advancements.reallyusefulribbits.worse_than_losing.title"
+    },
+    "description": {
+      "translate": "advancements.reallyusefulribbits.worse_than_losing.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "cast": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

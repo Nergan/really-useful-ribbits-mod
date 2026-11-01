@@ -81,7 +81,11 @@ repositories {
 }
 
 neoForge {
-    version = neoVersion
+    enable {
+        version = neoVersion
+        // Vineflower needs more RAM than this machine has; the jar is the same without the decompiled sources.
+        setDisableRecompilation(true)
+    }
 
     parchment {
         mappingsVersion = parchmentMappingsVersion

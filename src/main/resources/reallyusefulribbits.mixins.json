@@ -4,11 +4,24 @@
   "package": "com.reallyusefulribbits.mod.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "AttributeCapMixin",
+    "CorruptWorldgenMixin",
+    "FloatingKickMixin",
+    "GiantEntityMixin",
+    "GiantPathMixin",
+    "PathNavigationAccessor",
     "PlayerMorphMixin",
+    "PlayerSpellsMixin",
     "RibbitEntityAccessor",
-    "RibbitEntityMixin"
+    "RibbitEntityMixin",
+    "ServerPlayerNicknameMixin"
   ],
-  "client": [],
+  "client": [
+    "client.DoomFogMixin",
+    "client.DoomSkyMixin",
+    "client.InvertedControlsMixin",
+    "client.SuperSecretMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

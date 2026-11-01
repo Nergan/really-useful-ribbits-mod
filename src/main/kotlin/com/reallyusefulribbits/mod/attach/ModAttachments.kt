@@ -46,6 +46,7 @@ object ModAttachments {
                     override fun write(attachment: PlayerVisualData, provider: HolderLookup.Provider): CompoundTag =
                         attachment.write()
                 })
+                .copyOnDeath()
                 .build()
         },
     )

@@ -1,0 +1,23 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:fire_charge"
+    },
+    "title": {
+      "translate": "advancements.reallyusefulribbits.fire_nation.title"
+    },
+    "description": {
+      "translate": "advancements.reallyusefulribbits.fire_nation.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "cursed": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

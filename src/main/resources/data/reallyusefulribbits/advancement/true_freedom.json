@@ -1,0 +1,23 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:elytra"
+    },
+    "title": {
+      "translate": "advancements.reallyusefulribbits.true_freedom.title"
+    },
+    "description": {
+      "translate": "advancements.reallyusefulribbits.true_freedom.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "cursed": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

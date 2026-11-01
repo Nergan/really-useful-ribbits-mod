@@ -10,6 +10,22 @@
 
 Поиск блоков риббитом не вызывает `getBlockState` и `getFluidState`, пока `Level.isLoaded` ложен: ванильный `getBlockState` синхронно грузит чанк на серверном потоке. `BlockPos.findClosestMatch` по `FARM_CLAIM_RADIUS` 128 из `FarmerAi.perform` так держал тик десятки секунд, пока деревня ещё генерировалась (ModernFix watchdog: `isFarmBlock` → `allWorkBlocks` → `findClosest`). Скан идёт только по уже загруженным чанкам и по несколько колонок за вызов. `/locate ribbits:ribbit_village` — поиск структуры мода Ribbits, к этому аддону не относится.
 
+Миксины — Kotlin. Сборка Fabric ставит `loom.mixin.useLegacyMixinAp = false`: Java-процессор refmap Kotlin не видит, а tiny-remapper переименовывает цели прямо в `remapJar`. После правки миксина проверь, что в классе из `fabric/build/libs` цель стала `method_…`. NeoForge работает на именах Mojang и refmap не нужен. Миксины на классы Ribbits — с `remap = false`.
+
+Проклятия чародея переживают смерть. NeoForge переносит облик игрока `copyOnDeath()` вложения, Fabric — `ServerPlayerEvents.COPY_FROM`. Базовые значения атрибутов (размер, здоровье, гравитация VVVVVV) ванильный `restoreFrom` переносит сам, а эффекты — нет: их список лежит в `PlayerVisualData.curseEffects` и возвращается в `afterRespawn`. Там же гравитация снова смотрит вниз, иначе игрок возрождается и падает в небо. Эффект, снятый молоком, выпадает из списка при живом игроке. Снимает всё остальное только яблоко (`SorcererCurse.clear`).
+
+Клиентские кулдауны считает свой счётчик `ClientSpells.ticks`. `LocalPlayer` пересоздаётся после смерти и смены измерения, и его `tickCount` с нуля на полминуты запирал переворот VVVVVV.
+
+Серверный конфиг NeoForge 21.1 — `config/reallyusefulribbits-server.toml`, файл в `<мир>/serverconfig/` его только переопределяет. Старый TOML без `[sorcerer.spells]` с хаосом 25 правит `NeoForgeMod.migrateLegacyConfig` до загрузки конфигов.
+
+Задачи `runClient` и `runServer` без пути проекта запускают обе платформы сразу. NeoForge — `:runClient`, Fabric — `:fabric:runClient`.
+
+Заклинания без клавиатуры проверяет одиночный мир с датапаком. Tick-функция зовёт `/reallyusefulribbits cast <ключ> @a[limit=1]`, перед каждым вызовом переносит риббита к игроку через `tp`, а `tellraw` выводит атрибуты в чат. Клиент пишет чат в `logs/latest.log`. С `pauseOnLostFocus:false` в `options.txt` мир без фокуса не встаёт на паузу.
+
+Гигантский варден и кот больше ванильных потолков: `AttributeCapMixin` поднимает размер до 128 и здоровье до 1 000 000. У сущности шире 20 блоков `GiantEntityMixin` пропускает перебор жидкостей и блоков в хитбоксе, иначе варден ×100 перебирает миллионы блоков за тик. Варден ведётся без ИИ из `DeleteWorld`, `noPhysics` не сохраняется и ставится каждый тик.
+
+В 1.21.1 из Super Secret Settings в игре остались только `invert`, `creeper`, `spider` и `blur`. Остальные эффекты — свои post-цепочки из ванильных программ (`bits`, `color_convolve`, `box_blur`) и своих `.fsh`. Программы лежат в пространстве `minecraft` с префиксом `rur_`: `EffectInstance` ищет программу там. `GameRenderer.loadEffect` в 1.21.1 приватный, его берёт `@Shadow`.
+
 Рис в воде и куст на земле не стоят на пашне: фермой считается сам такой блок и земля под ним, иначе `nearestFarmOrigin` их не видит. Колючий куст — `SweetBerryBushBlock`, тег `reallyusefulribbits:prickly_bushes` и путь с `sweet_berry`, `prickly`, `thorny` или `bramble`. Рыбная клетка с коллизией выше 0.5 (верхний полублок в воде) — не `isOpenWater`: над ней воздух, но садиться туда нельзя.
 
 

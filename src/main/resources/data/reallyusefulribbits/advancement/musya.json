@@ -1,0 +1,23 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:cod"
+    },
+    "title": {
+      "translate": "advancements.reallyusefulribbits.musya.title"
+    },
+    "description": {
+      "translate": "advancements.reallyusefulribbits.musya.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "summoned": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

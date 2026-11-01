@@ -1,0 +1,23 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:sculk_shrieker"
+    },
+    "title": {
+      "translate": "advancements.reallyusefulribbits.delete_world.title"
+    },
+    "description": {
+      "translate": "advancements.reallyusefulribbits.delete_world.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "summoned": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -1,6 +1,8 @@
 package com.reallyusefulribbits.mod.event
 
 import com.reallyusefulribbits.mod.profession.RibbitBrain
+import com.reallyusefulribbits.mod.spell.BedrockRoom
+import com.reallyusefulribbits.mod.spell.DeleteWorld
 import com.reallyusefulribbits.mod.util.DelayedTasks
 import com.reallyusefulribbits.mod.world.ContainerSupport
 import com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity
@@ -18,5 +20,7 @@ object RibbitTickHandler {
     fun onServerTick(server: MinecraftServer) {
         DelayedTasks.tick(server)
         ContainerSupport.tick(server)
+        DeleteWorld.tick(server)
+        BedrockRoom.tick(server)
     }
 }

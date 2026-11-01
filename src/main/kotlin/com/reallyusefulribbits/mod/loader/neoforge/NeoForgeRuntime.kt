@@ -11,7 +11,14 @@ import com.reallyusefulribbits.mod.event.RibbitTickHandler
 import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import com.reallyusefulribbits.mod.profession.RibbitCombat
 import com.reallyusefulribbits.mod.profession.SorcererEvents
+import com.reallyusefulribbits.mod.spell.DeleteWorld
+import com.reallyusefulribbits.mod.spell.HandSpells
+import com.reallyusefulribbits.mod.spell.WorldCorruption
 import net.neoforged.fml.ModList
+import com.reallyusefulribbits.mod.event.SorcererCommand
+import net.neoforged.neoforge.event.RegisterCommandsEvent
+import net.neoforged.neoforge.event.server.ServerStartedEvent
+import net.neoforged.neoforge.event.server.ServerStoppedEvent
 import net.neoforged.neoforge.common.NeoForge
 import net.neoforged.neoforge.common.util.FakePlayerFactory
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent
@@ -38,8 +45,12 @@ object NeoForgeRuntime {
         RuntimeHooks.sendToPlayer = { player, payload ->
             PacketDistributor.sendToPlayer(player, payload)
         }
+        RuntimeHooks.sendPayload = { player, payload ->
+            PacketDistributor.sendToPlayer(player, payload)
+        }
         RuntimeHooks.scanRadius = { ServerConfig.scanRadius() }
         RuntimeHooks.chaosLevel = { ServerConfig.chaosLevel() }
+        RuntimeHooks.spellPoints = { action -> ServerConfig.spellPoints(action) }
         RuntimeHooks.itemSlots = { level, pos -> NeoForgeContainers.slots(level, pos) }
         RuntimeHooks.containerOpener = { level -> FakePlayerFactory.getMinecraft(level) }
         RuntimeHooks.patchouliLoaded = { ModList.get().isLoaded("patchouli") }
@@ -80,11 +91,18 @@ object NeoForgeRuntime {
         game.addListener<PlayerEvent.PlayerLoggedOutEvent> { event ->
             val player = event.entity as? net.minecraft.server.level.ServerPlayer ?: return@addListener
             PlayerTickHandler.onLoggedOut(player)
+            HandSpells.forget(player)
+        }
+        game.addListener<PlayerEvent.PlayerRespawnEvent> { event ->
+            val player = event.entity as? net.minecraft.server.level.ServerPlayer ?: return@addListener
+            PlayerTickHandler.onRespawn(player)
         }
         game.addListener<LivingDeathEvent> { event ->
-            val player = event.entity as? net.minecraft.server.level.ServerPlayer ?: return@addListener
-            PlayerTickHandler.onDeath(player, event.source)
+            if (!event.isCanceled) DeleteWorld.onDeath(event.entity, event.source)
         }
+        game.addListener<RegisterCommandsEvent> { event -> SorcererCommand.register(event.dispatcher) }
+        game.addListener<ServerStartedEvent> { event -> WorldCorruption.load(event.server) }
+        game.addListener<ServerStoppedEvent> { _ -> WorldCorruption.unload() }
         game.addListener<LivingIncomingDamageEvent> { event ->
             RibbitCombat.onHurt(event.entity, event.amount, event.source)
             if (SorcererEvents.blocksDamage(event.entity, event.source)) {

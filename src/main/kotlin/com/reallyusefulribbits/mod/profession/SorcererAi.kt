@@ -5,9 +5,16 @@ import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import com.reallyusefulribbits.mod.event.ModAdvancements
 import com.reallyusefulribbits.mod.event.PlayerTickHandler
 import com.reallyusefulribbits.mod.logic.SorcererAction
+import com.reallyusefulribbits.mod.logic.SorcererNames
 import com.reallyusefulribbits.mod.logic.SorcererTable
+import com.reallyusefulribbits.mod.logic.SuperSecretShaders
 import com.reallyusefulribbits.mod.morph.PlayerMorph
 import com.reallyusefulribbits.mod.morph.SorcererCurse
+import com.reallyusefulribbits.mod.spell.BedrockRoom
+import com.reallyusefulribbits.mod.spell.DeleteWorld
+import com.reallyusefulribbits.mod.spell.RandomStructure
+import com.reallyusefulribbits.mod.spell.SkyFire
+import com.reallyusefulribbits.mod.spell.WorldCorruption
 import com.reallyusefulribbits.mod.util.DelayedTasks
 import com.reallyusefulribbits.mod.util.work
 import com.reallyusefulribbits.mod.world.SafeLanding
@@ -65,7 +72,8 @@ object SorcererAi {
         var chosen: SorcererAction? = null
         repeat(6) {
             if (allowed.isEmpty() || applied) return@repeat
-            val action = SorcererTable.pick(ribbit.random.nextInt(), com.reallyusefulribbits.mod.loader.RuntimeHooks.chaosLevel(), allowed)
+            val action = SorcererTable.pick(ribbit.random.nextDouble(), RuntimeHooks.chaosLevel(), allowed, RuntimeHooks.spellPoints)
+                ?: return@repeat
             applied = apply(level, ribbit, player, action)
             if (applied) chosen = action
             allowed.remove(action)
@@ -75,10 +83,21 @@ object SorcererAi {
         return applied
     }
 
+    /** Заклинание без броска и без проверки, может ли оно случиться. Для команды оператора. */
+    fun forceCast(level: ServerLevel, ribbit: RibbitEntity, player: ServerPlayer, action: SorcererAction): Boolean {
+        spawnSpell(level, ribbit)
+        val applied = apply(level, ribbit, player, action)
+        if (applied) playActionSound(level, ribbit, player, action)
+        return applied
+    }
+
     fun cleanseWithApple(level: ServerLevel, ribbit: RibbitEntity, player: ServerPlayer): Boolean {
         ribbit.lookControl.setLookAt(player, 180f, 180f)
         ribbit.lookAt(player, 180f, 180f)
         SorcererCurse.clear(player)
+        if (WorldCorruption.set(level.server, false)) {
+            player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("reallyusefulribbits.corruption.lifted"))
+        }
         level.sendParticles(ParticleTypes.HAPPY_VILLAGER, player.x, player.y + 1.0, player.z, 16, 0.4, 0.5, 0.4, 0.02)
         level.playSound(null, player.blockPosition(), SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 0.9f, 1.35f)
         level.playSound(null, ribbit.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.NEUTRAL, 1f, 1.2f)
@@ -87,7 +106,8 @@ object SorcererAi {
     }
 
     private fun applicable(level: ServerLevel, ribbit: RibbitEntity, player: ServerPlayer): List<SorcererAction> {
-        return SorcererTable.WEIGHTS.map { it.value }.filter { action ->
+        val curse = SorcererCurse.visual(player)
+        return SorcererAction.entries.filter { action ->
             when (action) {
                 SorcererAction.ENCHANT -> enchantCandidates(level, player).isNotEmpty()
                 SorcererAction.GROW_PLANTS -> hasNearbyGrowable(level, ribbit)
@@ -95,7 +115,13 @@ object SorcererAi {
                 SorcererAction.SUMMON_PETS -> PetSupport.petTypes(level).isNotEmpty()
                 SorcererAction.MORPH -> morphTypes().isNotEmpty()
                 SorcererAction.RANDOM_DIMENSION -> player.server.allLevels.any { it.dimension() != player.level().dimension() }
-                SorcererAction.STRUCTURE_TRIP -> true
+                SorcererAction.CREATIVE_FLIGHT -> !curse.foreverFlight && !player.isCreative
+                SorcererAction.VVVVVV -> !curse.vvvvvv
+                SorcererAction.FIREBALLS -> !curse.fireballs
+                SorcererAction.LIGHTNING_HANDS -> !curse.lightningHands
+                SorcererAction.INVERTED_CONTROLS -> !curse.invertedControls
+                SorcererAction.DELETE_WORLD -> !DeleteWorld.active(level.server) && level.difficulty != net.minecraft.world.Difficulty.PEACEFUL
+                SorcererAction.CORRUPT_WORLDGEN -> !WorldCorruption.active
                 else -> true
             }
         }
@@ -158,21 +184,99 @@ object SorcererAi {
                 dragon(level, ribbit, player)
                 true
             }
+            SorcererAction.SUPER_SECRET_SETTINGS -> {
+                val curse = SorcererCurse.visual(player)
+                curse.shader = SuperSecretShaders.pick(ribbit.random.nextInt(), curse.shader)
+                SorcererCurse.sync(player)
+                true
+            }
+            SorcererAction.INVERTED_CONTROLS -> {
+                SorcererCurse.visual(player).invertedControls = true
+                SorcererCurse.sync(player)
+                ModAdvancements.grantHowToWalk(player)
+                true
+            }
+            SorcererAction.VVVVVV -> {
+                SorcererCurse.rememberBase(player)
+                SorcererCurse.visual(player).vvvvvv = true
+                SorcererCurse.sync(player)
+                ModAdvancements.grantVvvvvv(player)
+                true
+            }
+            SorcererAction.NICKNAME -> {
+                val curse = SorcererCurse.visual(player)
+                val name = SorcererNames.pick(ribbit.random.nextInt(), curse.nickname)
+                SorcererCurse.setNickname(player, name, SorcererNames.color(ribbit.random.nextDouble(), ribbit.random.nextInt()))
+                true
+            }
+            SorcererAction.RANDOM_STRUCTURE -> RandomStructure.place(level, ribbit)
+            SorcererAction.FIREBALLS -> {
+                SorcererCurse.visual(player).fireballs = true
+                SorcererCurse.sync(player)
+                ModAdvancements.grantFireNation(player)
+                true
+            }
+            SorcererAction.LIGHTNING_HANDS -> {
+                SorcererCurse.visual(player).lightningHands = true
+                SorcererCurse.sync(player)
+                ModAdvancements.grantPerun(player)
+                true
+            }
+            SorcererAction.GIANT_CAT -> giantCat(level, player)
+            SorcererAction.BEDROCK_ROOM -> BedrockRoom.build(level, player)
+            SorcererAction.FIREBALL_RAIN -> SkyFire.fireballRain(level, ribbit, player)
+            SorcererAction.LAVA_LAKE -> SkyFire.lavaLake(level, ribbit, player)
+            SorcererAction.DELETE_WORLD -> DeleteWorld.summon(level, player)
+            SorcererAction.CORRUPT_WORLDGEN -> {
+                if (!WorldCorruption.set(level.server, true)) return false
+                ModAdvancements.grantWorseThanLosing(player)
+                for (other in level.server.playerList.players) {
+                    other.playNotifySound(SoundEvents.ELDER_GUARDIAN_CURSE, SoundSource.HOSTILE, 1f, 0.5f)
+                }
+                true
+            }
         }
     }
 
     private fun effectOrCleanse(player: ServerPlayer, ribbit: RibbitEntity) {
         if (ribbit.random.nextBoolean()) {
             player.removeAllEffects()
+            SorcererCurse.forgetEffects(player)
         } else {
             val effects = BuiltInRegistries.MOB_EFFECT.holders()
                 .filter { !it.value().isInstantenous }
                 .toList()
             if (effects.isNotEmpty()) {
                 val effect: Holder<MobEffect> = effects[ribbit.random.nextInt(effects.size)]
-                player.addEffect(MobEffectInstance(effect, -1, 0, false, true))
+                SorcererCurse.addEffect(player, effect, 0)
             }
         }
+    }
+
+    /** «Муся?!»: кот в пятьдесят раз больше, ручной, сидит, пока хозяин его не поднимет. */
+    private fun giantCat(level: ServerLevel, player: ServerPlayer): Boolean {
+        val cat = EntityType.CAT.create(level) ?: return false
+        val look = player.lookAngle
+        val flat = net.minecraft.world.phys.Vec3(look.x, 0.0, look.z).let { if (it.lengthSqr() < 1.0e-4) net.minecraft.world.phys.Vec3(0.0, 0.0, 1.0) else it.normalize() }
+        val spot = player.position().add(flat.scale(24.0))
+        val pos = BlockPos.containing(spot)
+        if (!level.isLoaded(pos)) return false
+        val ground = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, pos.x, pos.z)
+        cat.moveTo(spot.x, ground.toDouble(), spot.z, player.yRot + 180f, 0f)
+        cat.tame(player)
+        level.registryAccess().registryOrThrow(Registries.CAT_VARIANT).getRandom(level.random).ifPresent { cat.variant = it }
+        cat.getAttribute(Attributes.SCALE)?.baseValue = 50.0
+        cat.getAttribute(Attributes.MAX_HEALTH)?.baseValue = 400.0
+        cat.getAttribute(Attributes.STEP_HEIGHT)?.baseValue = 10.0
+        cat.health = 400f
+        cat.isOrderedToSit = true
+        cat.setInSittingPose(true)
+        cat.setPersistenceRequired()
+        if (!level.addFreshEntity(cat)) return false
+        cat.refreshDimensions()
+        level.playSound(null, player.blockPosition(), SoundEvents.CAT_AMBIENT, SoundSource.NEUTRAL, 3f, 0.4f)
+        ModAdvancements.grantMusya(player)
+        return true
     }
 
     private fun enchantCandidates(level: ServerLevel, player: ServerPlayer): List<ItemStack> {
@@ -328,9 +432,9 @@ object SorcererAi {
     private fun scale(player: ServerPlayer, ribbit: RibbitEntity) {
         SorcererCurse.rememberBase(player)
         val attr = player.getAttribute(Attributes.SCALE) ?: return
-        val grow = ribbit.random.nextBoolean()
-        val steps = SorcererTable.scaleDelta(grow, ribbit.random.nextInt())
-        attr.baseValue = SorcererTable.applyScaleSteps(attr.baseValue, steps)
+        val grow = ribbit.random.nextDouble() < SorcererTable.GROW_CHANCE
+        val factor = SorcererTable.scaleFactor(grow, ribbit.random.nextDouble())
+        attr.baseValue = SorcererTable.applyScale(attr.baseValue, factor)
     }
 
     private fun maxHealth(player: ServerPlayer, ribbit: RibbitEntity) {
@@ -438,10 +542,14 @@ object SorcererAi {
         return true
     }
 
+    /** «Настоящая свобода»: полёт как в творческом режиме, пока чародей не получит яблоко. */
     private fun flight(player: ServerPlayer) {
-        PlayerTickHandler.grantTemporaryFlight(player, ModConfig.FLIGHT_TICKS)
+        SorcererCurse.visual(player).foreverFlight = true
+        player.abilities.mayfly = true
+        player.onUpdateAbilities()
         player.level().playSound(null, player.blockPosition(), SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 0.6f, 1.4f)
         player.serverLevel().sendParticles(ParticleTypes.CLOUD, player.x, player.y + 1.0, player.z, 12, 0.3, 0.2, 0.3, 0.02)
+        ModAdvancements.grantTrueFreedom(player)
     }
 
     private fun dragon(level: ServerLevel, ribbit: RibbitEntity, player: ServerPlayer) {
@@ -611,6 +719,32 @@ object SorcererAi {
                 level.playSound(null, at, SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 0.7f, 1.4f)
             SorcererAction.SUMMON_DRAGON ->
                 level.playSound(null, frog, SoundEvents.ENDER_DRAGON_GROWL, SoundSource.HOSTILE, 1f, 0.8f)
+            SorcererAction.SUPER_SECRET_SETTINGS ->
+                level.playSound(null, at, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.PLAYERS, 1f, 0.6f)
+            SorcererAction.INVERTED_CONTROLS ->
+                level.playSound(null, at, SoundEvents.ENDERMAN_TELEPORT, SoundSource.PLAYERS, 0.8f, 0.6f)
+            SorcererAction.VVVVVV ->
+                level.playSound(null, at, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.2f, 1.8f)
+            SorcererAction.NICKNAME ->
+                level.playSound(null, at, SoundEvents.VILLAGER_YES, SoundSource.PLAYERS, 1f, 1.4f)
+            SorcererAction.RANDOM_STRUCTURE ->
+                level.playSound(null, frog, SoundEvents.PORTAL_TRIGGER, SoundSource.BLOCKS, 0.6f, 1.6f)
+            SorcererAction.FIREBALLS ->
+                level.playSound(null, at, SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 1f, 1f)
+            SorcererAction.LIGHTNING_HANDS ->
+                level.playSound(null, at, SoundEvents.TRIDENT_THUNDER.value(), SoundSource.PLAYERS, 0.8f, 1.2f)
+            SorcererAction.GIANT_CAT ->
+                level.playSound(null, at, SoundEvents.CAT_PURREOW, SoundSource.NEUTRAL, 2f, 0.5f)
+            SorcererAction.BEDROCK_ROOM ->
+                level.playSound(null, at, SoundEvents.IRON_DOOR_CLOSE, SoundSource.BLOCKS, 1f, 0.5f)
+            SorcererAction.FIREBALL_RAIN ->
+                level.playSound(null, frog, SoundEvents.GHAST_SCREAM, SoundSource.HOSTILE, 1.2f, 0.6f)
+            SorcererAction.LAVA_LAKE ->
+                level.playSound(null, frog, SoundEvents.LAVA_POP, SoundSource.BLOCKS, 2f, 0.5f)
+            SorcererAction.DELETE_WORLD ->
+                level.playSound(null, frog, SoundEvents.WARDEN_ROAR, SoundSource.HOSTILE, 2f, 0.6f)
+            SorcererAction.CORRUPT_WORLDGEN ->
+                level.playSound(null, frog, SoundEvents.END_PORTAL_SPAWN, SoundSource.HOSTILE, 1f, 0.5f)
         }
     }
 

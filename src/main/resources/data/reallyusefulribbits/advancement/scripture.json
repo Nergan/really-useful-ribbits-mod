@@ -1,0 +1,23 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:lava_bucket"
+    },
+    "title": {
+      "translate": "advancements.reallyusefulribbits.scripture.title"
+    },
+    "description": {
+      "translate": "advancements.reallyusefulribbits.scripture.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": true
+  },
+  "criteria": {
+    "cast": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

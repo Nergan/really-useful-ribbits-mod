@@ -1,0 +1,23 @@
+{
+  "parent": "minecraft:adventure/root",
+  "display": {
+    "icon": {
+      "id": "minecraft:lightning_rod"
+    },
+    "title": {
+      "translate": "advancements.reallyusefulribbits.perun.title"
+    },
+    "description": {
+      "translate": "advancements.reallyusefulribbits.perun.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "cursed": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

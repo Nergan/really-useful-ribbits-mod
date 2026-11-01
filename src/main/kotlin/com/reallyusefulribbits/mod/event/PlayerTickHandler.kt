@@ -3,10 +3,9 @@ package com.reallyusefulribbits.mod.event
 import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import com.reallyusefulribbits.mod.morph.PlayerMorph
 import com.reallyusefulribbits.mod.morph.SorcererCurse
-import com.reallyusefulribbits.mod.network.PlayerVisualPayload
+import com.reallyusefulribbits.mod.spell.DeleteWorld
+import com.reallyusefulribbits.mod.spell.HandSpells
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.world.damagesource.DamageSource
-import net.minecraft.world.damagesource.DamageTypes
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.GameType
 
@@ -36,9 +35,15 @@ object PlayerTickHandler {
                 player.hurt(player.damageSources().drown(), 2f)
             }
         }
-        if (visual.morphFlight && !player.isCreative && !player.isSpectator) {
+        if ((visual.morphFlight || visual.foreverFlight) && !player.isCreative && !player.isSpectator && !player.abilities.mayfly) {
             player.abilities.mayfly = true
+            player.onUpdateAbilities()
         }
+        if (visual.vvvvvv) {
+            player.resetFallDistance()
+            HandSpells.restoreGravityAboveWorld(serverPlayer)
+        }
+        if (player.tickCount % 20 == 0) SorcererCurse.pruneEffects(serverPlayer)
     }
 
     fun grantTemporaryFlight(player: ServerPlayer, ticks: Int) {
@@ -52,7 +57,7 @@ object PlayerTickHandler {
     fun revokeTemporaryFlight(player: ServerPlayer) {
         val visual = RuntimeHooks.visual(player)
         visual.flightTicks = 0
-        if (player.isCreative || player.isSpectator || visual.morphFlight) return
+        if (player.isCreative || player.isSpectator || visual.morphFlight || visual.foreverFlight) return
         val abilities = player.abilities
         abilities.mayfly = false
         abilities.flying = false
@@ -62,21 +67,18 @@ object PlayerTickHandler {
     fun onLogin(player: ServerPlayer) {
         SorcererCurse.sync(player)
         val visual = RuntimeHooks.visual(player)
-        if (visual.flightTicks > 0 || visual.morphFlight) {
+        if (visual.flightTicks > 0 || visual.morphFlight || visual.foreverFlight) {
             player.abilities.mayfly = true
             player.onUpdateAbilities()
         }
         if (visual.morphId.isNotBlank()) {
             player.refreshDimensions()
         }
+        DeleteWorld.onLogin(player)
     }
 
     fun onStartTrack(watcher: ServerPlayer, target: ServerPlayer) {
-        val visual = RuntimeHooks.visual(target)
-        RuntimeHooks.sendToPlayer(
-            watcher,
-            PlayerVisualPayload(target.uuid, visual.upsideDown, visual.morphId),
-        )
+        RuntimeHooks.sendToPlayer(watcher, SorcererCurse.payload(target))
     }
 
     fun onLoggedOut(player: ServerPlayer) {
@@ -85,8 +87,8 @@ object PlayerTickHandler {
         }
     }
 
-    fun onDeath(player: ServerPlayer, source: DamageSource) {
-        if (source.`is`(DamageTypes.GENERIC_KILL)) return
-        SorcererCurse.clear(player)
+    /** Новое тело после смерти уже несёт данные чародея: их переносит загрузчик. */
+    fun onRespawn(player: ServerPlayer) {
+        SorcererCurse.afterRespawn(player)
     }
 }
