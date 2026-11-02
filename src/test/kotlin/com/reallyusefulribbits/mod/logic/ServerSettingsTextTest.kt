@@ -70,12 +70,28 @@ class ServerSettingsTextTest {
         }
         val migrated = ServerSettingsText.migrateLegacyToml(old)!!
         val dragon = SorcererAction.SUMMON_DRAGON.defaultPoints
-        assertTrue("\t\t# Default: $dragon\r\n\t\t# Range: 0 ~ 1000000\r\n\t\tender_dragon = $dragon\r\n" in migrated)
+        assertTrue("\t\t# Default: $dragon\r\n\t\t# Range: 0 ~ ${SorcererTable.MAX_POINTS}\r\n\t\tender_dragon = $dragon\r\n" in migrated)
         assertTrue("\t\tlightning = ${SorcererAction.LIGHTNING.defaultPoints}\r\n" in migrated)
         assertTrue("\t\tlightning_hands = ${SorcererAction.LIGHTNING_HANDS.defaultPoints}\r\n" in migrated)
         assertTrue("chaos_level = 0\r\n" in migrated)
         assertNull(ServerSettingsText.migrateLegacyToml(migrated))
         assertNull(ServerSettingsText.migrateLegacyToml(old.replace("\t\tenchant = 1000\r\n", "\t\tenchant = 1200\r\n")))
+    }
+
+    @Test
+    @DisplayName("Нетронутые баллы 1.1.2 уступают новым, правленый дракон остаётся на 90")
+    fun points112MoveOnFabric() {
+        val old = listOf("scan_radius=64", "chaos_level=0") + POINTS_1_1_2.map { (id, points) -> "spell.$id=$points" }
+        val untouched = ServerSettingsText.parse(old)
+        assertTrue(ServerSettingsText.needsRewrite(untouched))
+        val settings = ServerSettingsText.resolve(untouched)
+        assertEquals(1, settings.points[SorcererAction.SUMMON_DRAGON])
+        assertEquals(1, settings.points[SorcererAction.DELETE_WORLD])
+        assertEquals(SorcererAction.ENCHANT.defaultPoints, settings.points[SorcererAction.ENCHANT])
+        val tuned = ServerSettingsText.parse(old.map { if (it == "spell.enchant=150000") "spell.enchant=2000" else it })
+        assertFalse(ServerSettingsText.needsRewrite(tuned))
+        assertEquals(90, ServerSettingsText.resolve(tuned).points[SorcererAction.SUMMON_DRAGON])
+        assertEquals(1, ServerSettingsText.resolve(tuned).points[SorcererAction.DELETE_WORLD])
     }
 
     @Test
@@ -103,4 +119,17 @@ private val POINTS_1_1_0 = linkedMapOf(
     "vvvvvv" to 400, "nickname" to 450, "random_structure" to 300, "fireballs" to 200,
     "lightning_hands" to 150, "giant_cat" to 120, "bedrock_room" to 25, "fireball_rain" to 20,
     "lava_lake" to 8, "delete_world" to 5, "corrupt_worldgen" to 3,
+)
+
+/** Баллы, которые 1.1.2 записал в конфиг по умолчанию. */
+private val POINTS_1_1_2 = linkedMapOf(
+    "effect_or_cleanse" to 121_178, "enchant" to 150_000, "launch" to 30_000, "grow_plants" to 100_000,
+    "weather" to 50_000, "day_night" to 45_000, "summon_mobs" to 25_000, "lightning" to 10_000,
+    "flip" to 30_000, "scale" to 35_000, "max_health" to 30_000, "ignite_area" to 2_000,
+    "structure_trip" to 20_000, "summon_pets" to 65_000, "diamond_rain" to 30_000, "morph" to 10_000,
+    "giant_phantom" to 2_000, "random_dimension" to 3_000, "spectator" to 6_000, "mega_explosion" to 50,
+    "creative_flight" to 12_000, "ender_dragon" to 90, "super_secret_settings" to 55_000, "inverted_controls" to 35_000,
+    "vvvvvv" to 35_000, "nickname" to 45_000, "random_structure" to 3_000, "fireballs" to 20_000,
+    "lightning_hands" to 15_000, "giant_cat" to 15_000, "bedrock_room" to 500, "fireball_rain" to 80,
+    "lava_lake" to 100, "delete_world" to 1, "corrupt_worldgen" to 1,
 )

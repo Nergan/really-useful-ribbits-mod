@@ -58,7 +58,7 @@ class ServerConfig(builder: ModConfigSpec.Builder) {
         builder
             .comment(
                 "Spell points. A spell's chance is its points divided by the sum of all points.",
-                "0 turns a spell off. The defaults add up to ${SorcererTable.DEFAULT_TOTAL}; with them 1 point is a 0.0001% chance.",
+                "0 turns a spell off. The defaults add up to ${SorcererTable.DEFAULT_TOTAL}; with them 1 point is a 0.00001% chance.",
             )
             .translation("$KEY_PREFIX.sorcerer.spells")
             .push("spells")

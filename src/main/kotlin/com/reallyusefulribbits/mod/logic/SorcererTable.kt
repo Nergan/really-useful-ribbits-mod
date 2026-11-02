@@ -3,44 +3,45 @@ package com.reallyusefulribbits.mod.logic
 /**
  * Заклинания чародея. [id] — ключ в серверном конфиге, [defaultPoints] — баллы по умолчанию.
  * Шанс заклинания — его баллы, делённые на сумму баллов всех заклинаний. 0 баллов выключает заклинание.
- * Сумма по умолчанию — миллион, так что 1 балл — это 0,0001%.
+ * Сумма по умолчанию — 9 999 092. Один балл — это 0,00001%.
+ * Дракон и гигантский варден стоят на одном балле: около одного броска на десять миллионов.
  */
 enum class SorcererAction(val id: String, val defaultPoints: Int) {
-    EFFECT_OR_CLEANSE("effect_or_cleanse", 121_178),
-    ENCHANT("enchant", 150_000),
-    LAUNCH("launch", 30_000),
-    GROW_PLANTS("grow_plants", 100_000),
-    WEATHER("weather", 50_000),
-    DAY_NIGHT("day_night", 45_000),
-    SUMMON_MOBS("summon_mobs", 25_000),
-    LIGHTNING("lightning", 10_000),
-    FLIP("flip", 30_000),
-    SCALE("scale", 35_000),
-    MAX_HEALTH("max_health", 30_000),
-    IGNITE_AREA("ignite_area", 2_000),
-    STRUCTURE_TRIP("structure_trip", 20_000),
-    SUMMON_PETS("summon_pets", 65_000),
-    DIAMOND_RAIN("diamond_rain", 30_000),
-    MORPH("morph", 10_000),
-    SUMMON_GIANT_PHANTOM("giant_phantom", 2_000),
-    RANDOM_DIMENSION("random_dimension", 3_000),
-    SPECTATOR("spectator", 6_000),
-    MEGA_EXPLOSION("mega_explosion", 50),
-    CREATIVE_FLIGHT("creative_flight", 12_000),
-    SUMMON_DRAGON("ender_dragon", 90),
-    SUPER_SECRET_SETTINGS("super_secret_settings", 55_000),
-    INVERTED_CONTROLS("inverted_controls", 35_000),
-    VVVVVV("vvvvvv", 35_000),
-    NICKNAME("nickname", 45_000),
-    RANDOM_STRUCTURE("random_structure", 3_000),
-    FIREBALLS("fireballs", 20_000),
-    LIGHTNING_HANDS("lightning_hands", 15_000),
-    GIANT_CAT("giant_cat", 15_000),
-    BEDROCK_ROOM("bedrock_room", 500),
-    FIREBALL_RAIN("fireball_rain", 80),
-    LAVA_LAKE("lava_lake", 100),
+    EFFECT_OR_CLEANSE("effect_or_cleanse", 1_211_780),
+    ENCHANT("enchant", 1_500_000),
+    LAUNCH("launch", 300_000),
+    GROW_PLANTS("grow_plants", 1_000_000),
+    WEATHER("weather", 500_000),
+    DAY_NIGHT("day_night", 450_000),
+    SUMMON_MOBS("summon_mobs", 250_000),
+    LIGHTNING("lightning", 100_000),
+    FLIP("flip", 300_000),
+    SCALE("scale", 350_000),
+    MAX_HEALTH("max_health", 300_000),
+    IGNITE_AREA("ignite_area", 20_000),
+    STRUCTURE_TRIP("structure_trip", 200_000),
+    SUMMON_PETS("summon_pets", 650_000),
+    DIAMOND_RAIN("diamond_rain", 300_000),
+    MORPH("morph", 100_000),
+    SUMMON_GIANT_PHANTOM("giant_phantom", 20_000),
+    RANDOM_DIMENSION("random_dimension", 30_000),
+    SPECTATOR("spectator", 60_000),
+    MEGA_EXPLOSION("mega_explosion", 500),
+    CREATIVE_FLIGHT("creative_flight", 120_000),
+    SUMMON_DRAGON("ender_dragon", 1),
+    SUPER_SECRET_SETTINGS("super_secret_settings", 550_000),
+    INVERTED_CONTROLS("inverted_controls", 350_000),
+    VVVVVV("vvvvvv", 350_000),
+    NICKNAME("nickname", 450_000),
+    RANDOM_STRUCTURE("random_structure", 30_000),
+    FIREBALLS("fireballs", 200_000),
+    LIGHTNING_HANDS("lightning_hands", 150_000),
+    GIANT_CAT("giant_cat", 150_000),
+    BEDROCK_ROOM("bedrock_room", 5_000),
+    FIREBALL_RAIN("fireball_rain", 800),
+    LAVA_LAKE("lava_lake", 1_000),
     DELETE_WORLD("delete_world", 1),
-    CORRUPT_WORLDGEN("corrupt_worldgen", 1),
+    CORRUPT_WORLDGEN("corrupt_worldgen", 10),
     ;
 
     companion object {
@@ -56,7 +57,7 @@ object SorcererTable {
     /** Хаос по умолчанию до 1.1.0. Старый файл Fabric с этим числом получает новое значение по умолчанию. */
     const val LEGACY_DEFAULT_CHAOS: Int = 25
 
-    const val MAX_POINTS: Int = 1_000_000
+    const val MAX_POINTS: Int = 10_000_000
 
     val DEFAULT_TOTAL: Int = SorcererAction.entries.sumOf { it.defaultPoints }
 
@@ -108,10 +109,15 @@ object SorcererTable {
         return (table.firstOrNull { it.value == action }?.weight ?: 0.0) / total
     }
 
-    /** Доля баллов в процентах без лишних нулей: 15, 12.12, 0.009, 0.0001. */
+    /** Доля баллов в процентах без лишних нулей: 15, 12.12, 0.0001, 0.00001. */
     fun percentText(points: Int, total: Int = DEFAULT_TOTAL): String {
         val percent = points * 100.0 / total
-        val text = String.format(java.util.Locale.ROOT, if (percent >= 1.0) "%.2f" else "%.4f", percent)
+        val pattern = when {
+            percent >= 1.0 -> "%.2f"
+            percent >= 0.0001 -> "%.4f"
+            else -> "%.5f"
+        }
+        val text = String.format(java.util.Locale.ROOT, pattern, percent)
         return text.trimEnd('0').trimEnd('.')
     }
 

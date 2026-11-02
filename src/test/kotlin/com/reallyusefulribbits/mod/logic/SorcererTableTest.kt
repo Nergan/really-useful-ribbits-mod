@@ -11,13 +11,18 @@ import org.junit.jupiter.api.Test
 class SorcererTableTest {
 
     @Test
-    @DisplayName("Баллы по умолчанию сходятся в миллион: дракон 0,009%, лава 0,01%, варден и порча по 0,0001%")
+    @DisplayName("Баллы по умолчанию: дракон и варден по одному баллу, около 0,00001%")
     fun defaultPoints() {
-        assertEquals(1_000_000, SorcererTable.DEFAULT_TOTAL)
-        assertEquals(0.00009, SorcererTable.chance(SorcererAction.SUMMON_DRAGON), 1e-12)
-        assertEquals(0.0001, SorcererTable.chance(SorcererAction.LAVA_LAKE), 1e-12)
-        assertEquals(0.000001, SorcererTable.chance(SorcererAction.DELETE_WORLD), 1e-12)
-        assertEquals(0.000001, SorcererTable.chance(SorcererAction.CORRUPT_WORLDGEN), 1e-12)
+        assertEquals(9_999_092, SorcererTable.DEFAULT_TOTAL)
+        assertEquals(1, SorcererAction.SUMMON_DRAGON.defaultPoints)
+        assertEquals(1, SorcererAction.DELETE_WORLD.defaultPoints)
+        assertEquals(1.0 / SorcererTable.DEFAULT_TOTAL, SorcererTable.chance(SorcererAction.SUMMON_DRAGON), 1e-15)
+        assertEquals(1.0 / SorcererTable.DEFAULT_TOTAL, SorcererTable.chance(SorcererAction.DELETE_WORLD), 1e-15)
+        assertEquals(
+            SorcererAction.LAVA_LAKE.defaultPoints / SorcererTable.DEFAULT_TOTAL.toDouble(),
+            SorcererTable.chance(SorcererAction.LAVA_LAKE),
+            1e-12,
+        )
         assertEquals(SorcererAction.entries.size, SorcererAction.entries.map { it.id }.toSet().size)
     }
 
@@ -26,8 +31,9 @@ class SorcererTableTest {
     fun percentText() {
         assertEquals("15", SorcererTable.percentText(SorcererAction.ENCHANT.defaultPoints))
         assertEquals("12.12", SorcererTable.percentText(SorcererAction.EFFECT_OR_CLEANSE.defaultPoints))
-        assertEquals("0.009", SorcererTable.percentText(SorcererAction.SUMMON_DRAGON.defaultPoints))
-        assertEquals("0.0001", SorcererTable.percentText(SorcererAction.DELETE_WORLD.defaultPoints))
+        assertEquals("0.00001", SorcererTable.percentText(SorcererAction.SUMMON_DRAGON.defaultPoints))
+        assertEquals("0.00001", SorcererTable.percentText(SorcererAction.DELETE_WORLD.defaultPoints))
+        assertEquals("0.0001", SorcererTable.percentText(SorcererAction.CORRUPT_WORLDGEN.defaultPoints))
     }
 
     @Test
@@ -35,7 +41,7 @@ class SorcererTableTest {
     fun rarityOrder() {
         val fewest = SorcererAction.entries.minOf { it.defaultPoints }
         val rarest = SorcererAction.entries.filter { it.defaultPoints == fewest }.toSet()
-        assertEquals(setOf(SorcererAction.DELETE_WORLD, SorcererAction.CORRUPT_WORLDGEN), rarest)
+        assertEquals(setOf(SorcererAction.DELETE_WORLD, SorcererAction.SUMMON_DRAGON), rarest)
         val ruinous = listOf(
             SorcererAction.MEGA_EXPLOSION, SorcererAction.FIREBALL_RAIN, SorcererAction.LAVA_LAKE,
             SorcererAction.SUMMON_DRAGON, SorcererAction.DELETE_WORLD, SorcererAction.CORRUPT_WORLDGEN,
@@ -50,7 +56,7 @@ class SorcererTableTest {
     }
 
     @Test
-    @DisplayName("Бросок попадает в объявленные баллы, даже в один балл из миллиона")
+    @DisplayName("Бросок попадает в объявленные баллы, даже в один балл")
     fun pickHonorsPoints() {
         assertEquals(SorcererAction.EFFECT_OR_CLEANSE, SorcererTable.pick(0.0))
         val table = SorcererTable.weights()
@@ -70,7 +76,7 @@ class SorcererTableTest {
         assertTrue(chaotic.maxOf { it.weight } / chaotic.minOf { it.weight } < 1.0001)
         val half = SorcererTable.weights(50).associate { it.value to it.weight }
         assertTrue(half.getValue(SorcererAction.ENCHANT) > half.getValue(SorcererAction.SUMMON_DRAGON))
-        assertTrue(half.getValue(SorcererAction.SUMMON_DRAGON) > half.getValue(SorcererAction.CORRUPT_WORLDGEN))
+        assertTrue(half.getValue(SorcererAction.CORRUPT_WORLDGEN) > half.getValue(SorcererAction.DELETE_WORLD))
         assertTrue(SorcererTable.chance(SorcererAction.CORRUPT_WORLDGEN, 25) < 0.002)
         assertEquals(calm.size, chaotic.size)
     }

@@ -28,6 +28,7 @@ object MerchantAi {
     )
 
     fun tick(level: ServerLevel, ribbit: RibbitEntity) {
+        replaceAmethystSwaps(ribbit)
         val data = ribbit.work()
         when (data.merchantPhaseEnum()) {
             MerchantPhase.INIT -> initStock(ribbit)
@@ -107,7 +108,7 @@ object MerchantAi {
     }
 
     private fun storeVisit(data: com.reallyusefulribbits.mod.attach.RibbitWorkData, result: ItemStack, price: Int) {
-        if (result.isEmpty) return
+        if (result.isEmpty || result.`is`(Items.AMETHYST_SHARD)) return
         val id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(result.item).toString()
         data.copiedTradeIds += id
         data.copiedTradePrices += price.coerceIn(1, 32)
@@ -156,11 +157,11 @@ object MerchantAi {
     private fun createOffers(ribbit: RibbitEntity, count: Int, exclude: Set<String>): List<MerchantOffer> {
         val data = ribbit.work()
         val copies = data.copiedGoods.mapIndexedNotNull { index, stack ->
-            if (stack.isEmpty) null else stack to data.copiedTradePrices.getOrElse(index) { 4 }
+            if (stack.isEmpty || stack.`is`(Items.AMETHYST_SHARD)) null else stack to data.copiedTradePrices.getOrElse(index) { 4 }
         }
         val fallback = (0 until data.usedSlots(ProfessionKind.MERCHANT))
             .map { data.items[it] }
-            .filter { !it.isEmpty }
+            .filter { !it.isEmpty && !it.`is`(Items.AMETHYST_SHARD) }
             .map { it to 4 }
         val pool = if (copies.isNotEmpty()) copies else fallback
         if (pool.isEmpty()) return emptyList()
@@ -173,7 +174,7 @@ object MerchantAi {
             if (offers.size >= count) break
             val pick = pool[index]
             val key = itemKey(pick.first)
-            if (key in used) continue
+            if (key in used || key == MerchantEconomy.AMETHYST_ID) continue
             used += key
             val goods = pick.first.copy()
             goods.count = MerchantEconomy.itemCountFor(goods.maxStackSize, random)
@@ -190,6 +191,25 @@ object MerchantAi {
             )
         }
         return offers
+    }
+
+    /** Уже сохранённая сделка «осколки за осколки» становится 64 алмаза за 1 осколок. */
+    private fun replaceAmethystSwaps(ribbit: RibbitEntity) {
+        val offers = ribbit.offers
+        for (index in offers.indices) {
+            val offer = offers[index]
+            val costs = ArrayList<String>(2)
+            if (offer.costA.`is`(Items.AMETHYST_SHARD)) costs += MerchantEconomy.AMETHYST_ID
+            if (offer.costB.`is`(Items.AMETHYST_SHARD)) costs += MerchantEconomy.AMETHYST_ID
+            if (!MerchantEconomy.isAmethystSwap(itemKey(offer.result), costs)) continue
+            offers[index] = MerchantOffer(
+                ItemCost(Items.AMETHYST_SHARD, MerchantEconomy.DIAMOND_FOR_AMETHYST_PRICE),
+                ItemStack(Items.DIAMOND, MerchantEconomy.DIAMOND_FOR_AMETHYST_COUNT),
+                999,
+                0,
+                0.05f,
+            )
+        }
     }
 
     private fun offerItemKey(offer: MerchantOffer): String = itemKey(offer.result)

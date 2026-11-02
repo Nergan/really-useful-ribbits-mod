@@ -23,6 +23,14 @@ object MerchantEconomy {
     const val HARASS_TICKS = 15 * 20
     const val COOLDOWN_TICKS = 12 * 20
     const val MAX_COPIED_TRADES = 48
+    const val AMETHYST_ID = "minecraft:amethyst_shard"
+    const val DIAMOND_ID = "minecraft:diamond"
+    const val DIAMOND_FOR_AMETHYST_COUNT = 64
+    const val DIAMOND_FOR_AMETHYST_PRICE = 1
+
+    /** Покупка и продажа одних и тех же осколков аметиста. Такой сделки не бывает. */
+    fun isAmethystSwap(resultId: String, costIds: Iterable<String>): Boolean =
+        resultId == AMETHYST_ID && costIds.any { it == AMETHYST_ID }
 
     fun priceFor(itemMaxStack: Int, random: (Int, Int) -> Int): Int {
         val base = when {
@@ -65,7 +73,9 @@ object MerchantEconomy {
             unique.putIfAbsent(id, avg)
         }
         val offers = ArrayList<MerchantOfferPlan>(count)
-        for (pick in unique.entries.take(count)) {
+        for (pick in unique.entries) {
+            if (offers.size >= count) break
+            if (pick.key == AMETHYST_ID) continue
             val max = itemMax(pick.key).coerceAtLeast(1)
             val itemPrices = visitPool.filter { it.first == pick.key }.map { it.second }
             offers += MerchantOfferPlan(

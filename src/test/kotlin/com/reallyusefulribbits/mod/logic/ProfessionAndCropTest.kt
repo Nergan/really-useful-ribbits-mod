@@ -65,6 +65,23 @@ class ProfessionAndCropTest {
     }
 
     @Test
+    @DisplayName("Торговец не продаёт аметисты за аметисты")
+    fun merchantSkipsAmethystForAmethyst() {
+        val plans = MerchantEconomy.plan(
+            inventoryIds = listOf("minecraft:amethyst_shard", "minecraft:cod"),
+            copiedId = "minecraft:amethyst_shard",
+            random = { min, _ -> min },
+            itemMax = { 64 },
+        )
+        assertEquals(listOf("minecraft:cod"), plans.map { it.itemId })
+        assertTrue(MerchantEconomy.isAmethystSwap("minecraft:amethyst_shard", listOf("minecraft:amethyst_shard")))
+        assertFalse(MerchantEconomy.isAmethystSwap("minecraft:diamond", listOf("minecraft:amethyst_shard")))
+        assertFalse(MerchantEconomy.isAmethystSwap("minecraft:amethyst_shard", listOf("minecraft:emerald")))
+        assertEquals(64, MerchantEconomy.DIAMOND_FOR_AMETHYST_COUNT)
+        assertEquals(1, MerchantEconomy.DIAMOND_FOR_AMETHYST_PRICE)
+    }
+
+    @Test
     @DisplayName("Торговец меняет предложение по четвертям по кругу")
     fun merchantQuarterRotation() {
         assertEquals(0, MerchantEconomy.quarterStart(0))
