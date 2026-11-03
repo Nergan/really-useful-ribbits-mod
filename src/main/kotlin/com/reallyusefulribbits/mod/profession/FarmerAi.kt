@@ -3,6 +3,7 @@ package com.reallyusefulribbits.mod.profession
 import com.reallyusefulribbits.mod.config.ModConfig
 import com.reallyusefulribbits.mod.inventory.GroundPickup
 import com.reallyusefulribbits.mod.inventory.RibbitBags
+import com.reallyusefulribbits.mod.logic.FarmerFocus
 import com.reallyusefulribbits.mod.logic.FarmerTask
 import com.reallyusefulribbits.mod.logic.FarmerTaskPlanner
 import com.reallyusefulribbits.mod.logic.FarmerWorldView
@@ -31,6 +32,8 @@ object FarmerAi {
     private val busy = HashSet<Int>()
     private val hikes = HashMap<Int, Hike>()
     private val plantLocks = HashMap<Int, BlockPos>()
+    private val farCursor = HashMap<Int, Int>()
+    private val ignoredItems = HashMap<Int, Long>()
 
     fun ensureWorkGoal(ribbit: RibbitEntity) {
         if (ribbit.professionKind() != ProfessionKind.FARMER) return
@@ -93,7 +96,8 @@ object FarmerAi {
             data.farmMemory.addAll(merged)
         }
         val farm = data.farmMemory.toList()
-        val jobs = scanJobs(level, ribbit, farm)
+        val chestSeeds = chestPlantables(level, ribbit)
+        val jobs = scanJobs(level, ribbit, farm, chestSeeds)
         val view = FarmerWorldView(
             inventoryFull = RibbitBags.isFull(data, ProfessionKind.FARMER),
             inventoryHasItems = RibbitBags.hasItems(data, ProfessionKind.FARMER),
@@ -101,7 +105,7 @@ object FarmerAi {
             hasMatureCrop = jobs.harvest != null,
             hasTillable = jobs.till != null,
             hasEmptyFarmland = jobs.plant != null,
-            hasPlantable = hasPlantable(level, ribbit),
+            hasPlantable = hasPlantable(ribbit, chestSeeds),
             hasImmatureCrop = jobs.water != null && data.cooldown <= 0,
             hasBonemeal = hasBoneMeal(level, ribbit),
             hasBonemealTarget = jobs.meal != null,
@@ -137,10 +141,13 @@ object FarmerAi {
         val meal: BlockPos?,
     )
 
-    private fun scanJobs(level: ServerLevel, ribbit: RibbitEntity, farm: List<BlockPos>): Jobs {
+    private fun scanJobs(
+        level: ServerLevel,
+        ribbit: RibbitEntity,
+        farm: List<BlockPos>,
+        chestSeeds: List<ItemStack>,
+    ): Jobs {
         val now = level.gameTime
-        val farmSet = farm.toHashSet()
-        val data = ribbit.work()
         var harvest: BlockPos? = null
         var till: BlockPos? = null
         var tillDist = Double.MAX_VALUE
@@ -151,29 +158,38 @@ object FarmerAi {
         var plantDist = Double.MAX_VALUE
         var waterDist = Double.MAX_VALUE
         var mealDist = Double.MAX_VALUE
-        val cropScan = LinkedHashSet<BlockPos>()
-        for (pos in farm) {
-            cropScan += pos
-            for (dx in -2..2) {
-                for (dz in -2..2) {
-                    cropScan += pos.offset(dx, 0, dz)
-                    cropScan += pos.offset(dx, 1, dz)
-                }
-            }
-            for (dy in 0..8) cropScan += pos.above(dy)
+        var previews = 0
+        val seen = HashSet<Long>()
+        val origin = ribbit.blockPosition()
+        val distances = LongArray(farm.size)
+        for (i in farm.indices) {
+            val plot = farm[i]
+            val dx = (plot.x - origin.x).toLong()
+            val dz = (plot.z - origin.z).toLong()
+            distances[i] = dx * dx + dz * dz
         }
-        for (pos in cropScan) {
-            if (!level.isLoaded(pos)) continue
+        val cursor = farCursor[ribbit.id] ?: 0
+        val focus = FarmerFocus.lookIndexes(farm.size, cursor, distances)
+        if (farm.isNotEmpty()) farCursor[ribbit.id] = (cursor + FarmerFocus.FAR_STEP) % farm.size
+        val farmSet = HashSet<BlockPos>(focus.size)
+        for (index in focus) farmSet.add(farm[index])
+        fun consider(pos: BlockPos) {
+            if (!seen.add(pos.asLong()) || !level.isLoaded(pos)) return
+            if (!available(level, pos, ribbit.id, now)) return
             val state = level.getBlockState(pos)
             val dist = ribbit.distanceToSqr(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
             if (dist < harvestDist && CropSupport.isMatureCrop(level, pos)) {
-                if (CaveVines.hasGlowBerries(state) && !CropSupport.canReachBerries(ribbit.eyeY, pos)) continue
-                val preview = CropSupport.previewDrops(level, pos, ribbit)
-                if (!RibbitBags.canInsertAll(data, ProfessionKind.FARMER, preview)) continue
-                harvest = pos
-                harvestDist = dist
+                val berriesTooHigh = CaveVines.hasGlowBerries(state) && !CropSupport.canReachBerries(ribbit.eyeY, pos)
+                if (!berriesTooHigh) {
+                    val decision = acceptsHarvest(level, ribbit, pos, previews)
+                    if (decision.second) previews++
+                    if (decision.first) {
+                        harvest = pos
+                        harvestDist = dist
+                    }
+                }
             }
-            if (dist < plantDist && canPlantSoil(level, ribbit, pos)) {
+            if (dist < plantDist && canPlantSoil(level, ribbit, pos, chestSeeds)) {
                 plant = pos
                 plantDist = dist
             }
@@ -186,29 +202,84 @@ object FarmerAi {
                 mealDist = dist
             }
         }
-        val tillCandidates = LinkedHashSet<BlockPos>()
-        tillCandidates.addAll(data.farmMemory)
-        for (pos in farm) {
+        for (index in focus) {
+            val plot = farm[index]
+            val vine = level.isLoaded(plot) && CropSupport.isCaveVine(level.getBlockState(plot))
+            val height = if (vine) 8 else 3
+            consider(plot)
+            for (dy in 1..height) consider(plot.above(dy))
             for (dir in Direction.Plane.HORIZONTAL) {
-                val neighbor = pos.relative(dir)
-                if (isInteriorHole(level, neighbor, farmSet)) tillCandidates += neighbor
+                val side = plot.relative(dir)
+                consider(side)
+                consider(side.above())
+                if (isInteriorHole(level, side, farmSet)) {
+                    if (!level.isLoaded(side) || !CropSupport.isTillable(level.getBlockState(side))) continue
+                    val dist = ribbit.distanceToSqr(side.x + 0.5, side.y.toDouble(), side.z + 0.5)
+                    if (dist < tillDist) {
+                        till = side
+                        tillDist = dist
+                    }
+                }
             }
         }
-        for (pos in tillCandidates) {
-            if (!level.isLoaded(pos)) continue
-            if (!CropSupport.isTillable(level.getBlockState(pos))) continue
-            val dist = ribbit.distanceToSqr(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
+        for (index in focus) {
+            val plot = farm[index]
+            if (!level.isLoaded(plot) || !CropSupport.isTillable(level.getBlockState(plot))) continue
+            val dist = ribbit.distanceToSqr(plot.x + 0.5, plot.y.toDouble(), plot.z + 0.5)
             if (dist < tillDist) {
-                till = pos
+                till = plot
                 tillDist = dist
             }
         }
-        val plantTarget = stick(ribbit, plant) { canPlantSoil(level, ribbit, it) }
-        listOfNotNull(harvest, till, plantTarget, water, meal).forEach {
-            BlockReservation.tryClaim(level, it, ribbit.id, now)
-        }
+        val plantTarget = stick(ribbit, plant) { canPlantSoil(level, ribbit, it, chestSeeds) }
         BlockReservation.cleanup(now)
         return Jobs(harvest, till, plantTarget, water, meal)
+    }
+
+    /** Пустой слот принимает любой урожай. Иначе смотрим дроп, но не больше четырёх лут-таблиц за тик. */
+    private fun acceptsHarvest(
+        level: ServerLevel,
+        ribbit: RibbitEntity,
+        pos: BlockPos,
+        previews: Int,
+    ): Pair<Boolean, Boolean> {
+        val data = ribbit.work()
+        val decision = FarmerFocus.harvestNow(
+            RibbitBags.isFull(data, ProfessionKind.FARMER),
+            hasEmptySlot(data),
+        )
+        if (decision != null) return decision to false
+        if (previews >= 4) return false to false
+        val preview = CropSupport.previewDrops(level, pos, ribbit)
+        val fits = preview.isEmpty() || preview.any { stack ->
+            stack.isEmpty || RibbitBags.canInsertAll(data, ProfessionKind.FARMER, listOf(stack))
+        }
+        return fits to true
+    }
+
+    private fun hasEmptySlot(data: com.reallyusefulribbits.mod.attach.RibbitWorkData): Boolean {
+        val used = data.usedSlots(ProfessionKind.FARMER)
+        for (i in 0 until used) {
+            if (data.items[i].isEmpty) return true
+        }
+        return false
+    }
+
+    private fun available(level: ServerLevel, pos: BlockPos, entityId: Int, now: Long): Boolean {
+        val holder = BlockReservation.holder(level, pos, now)
+        return holder == null || holder == entityId
+    }
+
+    /** Семена из сундука читаются один раз за тик, а не на каждую пустую грядку. */
+    private fun chestPlantables(level: ServerLevel, ribbit: RibbitEntity): List<ItemStack> {
+        val container = ribbit.work().containerPos ?: return emptyList()
+        val handler = ContainerSupport.handler(level, container) ?: return emptyList()
+        val out = ArrayList<ItemStack>()
+        for (slot in 0 until handler.slots) {
+            val stack = handler.getStackInSlot(slot)
+            if (!stack.isEmpty && CropSupport.plantableBlock(stack) != null) out += stack.copy()
+        }
+        return out
     }
 
     /** Держит одну дальнюю грядку, но если рядом уже есть пустая — сажает её сразу. */
@@ -239,6 +310,7 @@ object FarmerAi {
 
     private fun actOn(level: ServerLevel, ribbit: RibbitEntity, pos: BlockPos?, action: (BlockPos) -> Unit) {
         if (pos == null) return
+        if (!BlockReservation.tryClaim(level, pos, ribbit.id, level.gameTime)) return
         if (!walkTo(level, ribbit, pos)) return
         action(pos)
         BlockReservation.release(level, pos, ribbit.id)
@@ -250,13 +322,23 @@ object FarmerAi {
         val data = ribbit.work()
         if (RibbitBags.isFull(data, ProfessionKind.FARMER)) return false
         if (data.task == FarmerTask.WATER.name && data.taskTicks in 1 until ModConfig.WATERING_ANIM_TICKS) return false
+        val now = level.gameTime
+        if (ignoredItems.size > 64) ignoredItems.entries.removeIf { it.value <= now }
         val box = ribbit.boundingBox.inflate(8.0)
         val item = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity::class.java, box) { entity ->
-            entity.isAlive && entity.tickCount >= 8 && GroundPickup.isRelevant(ProfessionKind.FARMER, entity.item)
+            entity.isAlive && entity.tickCount >= 8 &&
+                (ignoredItems[entity.id] ?: 0L) <= now &&
+                GroundPickup.isRelevant(ProfessionKind.FARMER, entity.item)
         }.minByOrNull { ribbit.distanceToSqr(it) } ?: return false
         if (ribbit.distanceToSqr(item) <= ModConfig.GROUND_PICKUP_RANGE * ModConfig.GROUND_PICKUP_RANGE) return false
-        walkTo(level, ribbit, item.blockPosition(), 1.8, 1.35, false)
+        walkTo(level, ribbit, item.blockPosition(), 1.8, 1.35, false, item.id.toLong())
         LookAt.block(ribbit, item.blockPosition(), 0.2)
+        val still = hikes[ribbit.id]?.takeIf { it.work == item.id.toLong() }?.still ?: 0
+        if (still > 50) {
+            ignoredItems[item.id] = now + 200
+            hikes.remove(ribbit.id)
+            return false
+        }
         return true
     }
 
@@ -298,12 +380,14 @@ object FarmerAi {
             }
             return
         }
+        if (!BlockReservation.tryClaim(level, soil, ribbit.id, level.gameTime)) return
         if (!walkTo(level, ribbit, soil)) return
         val seed = RibbitBags.takeOne(data, ProfessionKind.FARMER) { CropSupport.canPlant(level, soil, it) }
         if (seed.isEmpty) return
         if (!CropSupport.plant(level, soil, seed) && !seed.isEmpty) {
             RibbitBags.insert(data, ProfessionKind.FARMER, seed)
         }
+        BlockReservation.release(level, soil, ribbit.id)
         data.taskTicks = FarmerTaskPlanner.MIN_TASK_TICKS + FarmerTaskPlanner.SWITCH_COOLDOWN_TICKS
     }
 
@@ -323,6 +407,7 @@ object FarmerAi {
             }
             return
         }
+        if (!BlockReservation.tryClaim(level, crop, ribbit.id, level.gameTime)) return
         if (!walkTo(level, ribbit, crop)) return
         LookAt.block(ribbit, crop, 0.5)
         val meal = RibbitBags.takeOne(data, ProfessionKind.FARMER) { it.`is`(Items.BONE_MEAL) }
@@ -330,11 +415,16 @@ object FarmerAi {
         if (!CropSupport.applyBonemeal(level, crop, meal) && !meal.isEmpty) {
             RibbitBags.insert(data, ProfessionKind.FARMER, meal)
         }
+        BlockReservation.release(level, crop, ribbit.id)
         data.taskTicks = FarmerTaskPlanner.MIN_TASK_TICKS + FarmerTaskPlanner.SWITCH_COOLDOWN_TICKS
     }
 
     private fun water(level: ServerLevel, ribbit: RibbitEntity, pos: BlockPos?) {
         if (pos == null) return
+        if (!BlockReservation.tryClaim(level, pos, ribbit.id, level.gameTime)) {
+            ribbit.setWatering(false)
+            return
+        }
         LookAt.block(ribbit, pos, 0.4)
         if (!walkTo(level, ribbit, pos)) {
             ribbit.setWatering(false)
@@ -345,6 +435,7 @@ object FarmerAi {
         if (ribbit.work().taskTicks >= ModConfig.WATERING_ANIM_TICKS) {
             LookAt.block(ribbit, pos, 0.4)
             CropSupport.water(level, pos)
+            BlockReservation.release(level, pos, ribbit.id)
             ribbit.setWatering(false)
             ribbit.work().cooldown = ModConfig.WATER_COOLDOWN_TICKS
             ribbit.work().taskTicks = FarmerTaskPlanner.MIN_TASK_TICKS + FarmerTaskPlanner.SWITCH_COOLDOWN_TICKS
@@ -425,27 +516,22 @@ object FarmerAi {
         return false
     }
 
-    private fun canPlantSoil(level: ServerLevel, ribbit: RibbitEntity, pos: BlockPos): Boolean {
+    private fun canPlantSoil(
+        level: ServerLevel,
+        ribbit: RibbitEntity,
+        pos: BlockPos,
+        chestSeeds: List<ItemStack>,
+    ): Boolean {
         if (!CropSupport.isEmptyFarmland(level, pos)) return false
         val data = ribbit.work()
         if (!RibbitBags.find(data, ProfessionKind.FARMER) { CropSupport.canPlant(level, pos, it) }.isEmpty) return true
-        val container = data.containerPos ?: return false
-        val handler = ContainerSupport.handler(level, container) ?: return false
-        for (slot in 0 until handler.slots) {
-            if (CropSupport.canPlant(level, pos, handler.getStackInSlot(slot))) return true
-        }
-        return false
+        return chestSeeds.any { CropSupport.canPlant(level, pos, it) }
     }
 
-    private fun hasPlantable(level: ServerLevel, ribbit: RibbitEntity): Boolean {
+    private fun hasPlantable(ribbit: RibbitEntity, chestSeeds: List<ItemStack>): Boolean {
+        if (chestSeeds.isNotEmpty()) return true
         val data = ribbit.work()
-        if (!RibbitBags.find(data, ProfessionKind.FARMER) { CropSupport.plantableBlock(it) != null }.isEmpty) return true
-        val container = data.containerPos ?: return false
-        val handler = ContainerSupport.handler(level, container) ?: return false
-        for (slot in 0 until handler.slots) {
-            if (CropSupport.plantableBlock(handler.getStackInSlot(slot)) != null) return true
-        }
-        return false
+        return !RibbitBags.find(data, ProfessionKind.FARMER) { CropSupport.plantableBlock(it) != null }.isEmpty
     }
 
     private fun walkTo(
@@ -455,6 +541,7 @@ object FarmerAi {
         reach: Double = Math.sqrt(ModConfig.WORK_REACH_SQ),
         speed: Double = 1.35,
         allowStuckArrive: Boolean = false,
+        track: Long = pos.asLong(),
     ): Boolean {
         val target = Vec3(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5)
         if (ribbit.distanceToSqr(target) <= reach * reach) {
@@ -466,13 +553,13 @@ object FarmerAi {
         val spot = standSpot(level, ribbit, pos, reach)
         val nav = ribbit.navigation
         val previous = hikes[ribbit.id]
-        val hike = if (previous != null && previous.work == pos.asLong()) {
+        val hike = if (previous != null && previous.work == track) {
             previous
         } else {
-            Hike(pos.asLong(), ribbit.x, ribbit.z, 0, false)
+            Hike(track, ribbit.x, ribbit.z, 0, false)
         }
         val moved = ribbit.distanceToSqr(hike.lastX, ribbit.y, hike.lastZ) > 0.01
-        if (moved) hike.still = 0 else if (previous != null && previous.work == pos.asLong()) hike.still++
+        if (moved) hike.still = 0 else if (previous != null && previous.work == track) hike.still++
         hike.lastX = ribbit.x
         hike.lastZ = ribbit.z
         if (!hike.direct && hike.still >= 8) hike.direct = true

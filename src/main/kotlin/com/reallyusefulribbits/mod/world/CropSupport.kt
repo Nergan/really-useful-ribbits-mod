@@ -192,6 +192,8 @@ object CropSupport {
     fun isMatureCrop(level: Level, pos: BlockPos): Boolean {
         val state = level.getBlockState(pos)
         if (isPricklyBush(state)) return false
+        // Стебель кукурузы и риса не урожай: ломается початок или метёлка над ним.
+        if (hasSupportProperty(state)) return false
         val block = state.block
         if (block is StemBlock || block is AttachedStemBlock) return false
         if (block is CropBlock) return block.isMaxAge(state)
@@ -203,9 +205,9 @@ object CropSupport {
         if (age != null && isAgeCrop(state)) {
             val max = age.possibleValues.maxOrNull() ?: return false
             if (state.getValue(age) < max) return false
-            if (BuiltInRegistries.BLOCK.getKey(block).namespace != "minecraft") return true
-            val grower = block as? BonemealableBlock ?: return true
-            return !grower.isValidBonemealTarget(level, pos, state)
+            val grower = block as? BonemealableBlock
+            val stillGrows = grower != null && grower.isValidBonemealTarget(level, pos, state)
+            return CropRules.ageCropIsReady(atMaxAge = true, bonemealStillWorks = stillGrows, supportStem = false)
         }
         return false
     }
@@ -245,13 +247,14 @@ object CropSupport {
     }
 
     fun needsWater(level: Level, pos: BlockPos): Boolean {
-        if (isImmatureCrop(level, pos)) return true
         val state = level.getBlockState(pos)
-        if (state.block is FarmBlock && state.hasProperty(FarmBlock.MOISTURE)) {
-            val cropAbove = level.getBlockState(pos.above())
-            if (!cropAbove.isAir && state.getValue(FarmBlock.MOISTURE) < 7) return true
-        }
-        return false
+        val bareVine = isCaveVine(state) && !CaveVines.hasGlowBerries(state)
+        val dryHere = isDryCropSoil(level, pos, state)
+        val under = pos.below()
+        val underState = level.getBlockState(under)
+        val dryUnder = !dryHere && isDryCropSoil(level, under, underState) &&
+            (isImmatureCrop(level, pos) || isMatureCrop(level, pos))
+        return CropRules.wantsWater(dryHere || dryUnder, bareVine)
     }
 
     fun previewDrops(level: ServerLevel, pos: BlockPos, harvester: Entity): List<ItemStack> {
@@ -269,8 +272,9 @@ object CropSupport {
 
     fun harvest(level: ServerLevel, pos: BlockPos, harvester: Entity): List<ItemStack> {
         val state = level.getBlockState(pos)
-        val fruit = pos.above()
-        if (isSupportingStem(state)) {
+        if (hasSupportProperty(state)) {
+            if (!isSupportingStem(state)) return emptyList()
+            val fruit = pos.above()
             if (!isMatureCrop(level, fruit)) return emptyList()
             return harvest(level, fruit, harvester) + scoopDrops(level, pos)
         }
@@ -366,6 +370,17 @@ object CropSupport {
         return stacks
     }
 
+    private fun hasSupportProperty(state: BlockState): Boolean {
+        for (property in state.properties) {
+            if (property is net.minecraft.world.level.block.state.properties.BooleanProperty &&
+                property.name.contains("support")
+            ) {
+                return true
+            }
+        }
+        return false
+    }
+
     private fun isSupportingStem(state: BlockState): Boolean {
         for (property in state.properties) {
             if (property is net.minecraft.world.level.block.state.properties.BooleanProperty &&
@@ -376,6 +391,17 @@ object CropSupport {
             }
         }
         return false
+    }
+
+    /** Пашня под культурой, у которой кончилась влага. Мокрая грядка полива не просит. */
+    private fun isDryCropSoil(level: Level, pos: BlockPos, state: BlockState): Boolean {
+        if (!isClassicFarmSoil(state) || !state.hasProperty(FarmBlock.MOISTURE)) return false
+        if (state.getValue(FarmBlock.MOISTURE) >= 7) return false
+        if (!level.isLoaded(pos.above())) return false
+        val above = level.getBlockState(pos.above())
+        if (above.isAir) return false
+        val fluid = above.fluidState
+        return fluid.isEmpty || !fluid.`is`(FluidTags.WATER)
     }
 
     fun water(level: ServerLevel, pos: BlockPos) {
@@ -503,6 +529,7 @@ object CropSupport {
     /** Культура, от которой ферма растёт: рис в воде, куст, обычная грядка. Колючий куст сюда не входит. */
     fun isAnchorCrop(level: Level, pos: BlockPos): Boolean {
         if (!level.isLoaded(pos)) return false
+        if (hasSupportProperty(level.getBlockState(pos))) return true
         return isMatureCrop(level, pos) || isImmatureCrop(level, pos)
     }
 

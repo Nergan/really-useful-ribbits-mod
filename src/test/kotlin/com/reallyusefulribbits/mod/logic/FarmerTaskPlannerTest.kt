@@ -154,4 +154,27 @@ class FarmerTaskPlannerTest {
         val plant = grow.copy(hasEmptyFarmland = true, hasPlantable = true)
         assertEquals(FarmerTask.PLANT, FarmerTaskPlanner.next(plant))
     }
+
+    @Test
+    @DisplayName("Ближние грядки смотрятся всегда, дальние — окном")
+    fun focusKeepsNearestPlots() {
+        val distances = longArrayOf(100, 1, 50, 3, 80, 2, 70, 90, 4, 60)
+        val seen = FarmerFocus.lookIndexes(distances.size, cursor = 0, distances, near = 3, far = 2)
+        assertTrue(seen.contains(1))
+        assertTrue(seen.contains(5))
+        assertTrue(seen.contains(3))
+        assertEquals(5, seen.size)
+        assertEquals(true, FarmerFocus.harvestNow(bagFull = false, emptySlot = true))
+        assertEquals(false, FarmerFocus.harvestNow(bagFull = true, emptySlot = false))
+        assertEquals(null, FarmerFocus.harvestNow(bagFull = false, emptySlot = false))
+    }
+
+    @Test
+    @DisplayName("Маленькое поле проверяется целиком")
+    fun smallFieldIsFullyChecked() {
+        val distances = longArrayOf(4, 1, 9)
+        val seen = FarmerFocus.lookIndexes(distances.size, cursor = 2, distances, near = 24, far = 12)
+        assertEquals(3, seen.size)
+        assertEquals(3, seen.toSet().size)
+    }
 }

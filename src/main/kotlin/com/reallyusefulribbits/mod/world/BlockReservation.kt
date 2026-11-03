@@ -9,6 +9,12 @@ object BlockReservation {
 
     private val claims = HashMap<Pair<ResourceKey<Level>, Long>, Claim>()
 
+    fun holder(level: Level, pos: BlockPos, now: Long): Int? {
+        val current = claims[level.dimension() to pos.asLong()] ?: return null
+        if (current.expiresAt <= now) return null
+        return current.entityId
+    }
+
     fun tryClaim(level: Level, pos: BlockPos, entityId: Int, now: Long, duration: Int = 80): Boolean {
         val key = level.dimension() to pos.asLong()
         val current = claims[key]

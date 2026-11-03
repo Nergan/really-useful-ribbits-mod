@@ -28,6 +28,17 @@ object CropRules {
     /** Верхняя половина блока занята: верхний полублок, в том числе в воде. */
     fun blocksUpperHalf(maxCollisionY: Double): Boolean = maxCollisionY > 0.5
 
+    /**
+     * Куст с возрастом готов к сбору, когда больше не растёт.
+     * Стебель кукурузы и риса не готов никогда: плод стоит над ним.
+     */
+    fun ageCropIsReady(atMaxAge: Boolean, bonemealStillWorks: Boolean, supportStem: Boolean): Boolean =
+        atMaxAge && !bonemealStillWorks && !supportStem
+
+    /** Полив имеет смысл сухой пашне под культурой и голой пещерной лозе. */
+    fun wantsWater(drySoilWithCrop: Boolean, bareCaveVine: Boolean): Boolean =
+        drySoilWithCrop || bareCaveVine
+
     fun isPricklyPath(path: String): Boolean {
         val name = path.substringAfter(':')
         return name.contains("sweet_berry") || name.contains("prickly") ||

@@ -53,6 +53,8 @@ object GroundPickup {
     fun isFarmerLoot(stack: ItemStack): Boolean {
         if (stack.isEmpty) return false
         if (CropSupport.plantableBlock(stack) != null) return true
+        val path = BuiltInRegistries.ITEM.getKey(stack.item).path
+        if (path == "corn_cob" || path == "rice_panicle" || path == "rice" || path == "tomato") return true
         if (stack.`is`(ItemTags.VILLAGER_PLANTABLE_SEEDS)) return true
         if (CROP_TAGS.any { stack.`is`(it) }) return true
         if (stack.get(DataComponents.FOOD) != null && !isKitchenFood(stack)) return true

@@ -32,6 +32,13 @@ class ProfessionAndCropTest {
         assertTrue(CropRules.isPricklyPath("mod:thorny_bramble"))
         assertFalse(CropRules.isPricklyPath("farmersdelight:budding_tomatoes"))
         assertFalse(CropRules.isPricklyPath("vinery:grapevine"))
+        assertFalse(CropRules.ageCropIsReady(atMaxAge = false, bonemealStillWorks = false, supportStem = false))
+        assertFalse(CropRules.ageCropIsReady(atMaxAge = true, bonemealStillWorks = true, supportStem = false))
+        assertFalse(CropRules.ageCropIsReady(atMaxAge = true, bonemealStillWorks = false, supportStem = true))
+        assertTrue(CropRules.ageCropIsReady(atMaxAge = true, bonemealStillWorks = false, supportStem = false))
+        assertFalse(CropRules.wantsWater(drySoilWithCrop = false, bareCaveVine = false))
+        assertTrue(CropRules.wantsWater(drySoilWithCrop = true, bareCaveVine = false))
+        assertTrue(CropRules.wantsWater(drySoilWithCrop = false, bareCaveVine = true))
         assertFalse(CropRules.blocksUpperHalf(0.5))
         assertTrue(CropRules.blocksUpperHalf(1.0))
     }
