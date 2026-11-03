@@ -120,7 +120,7 @@
   "reallyusefulribbits.guide.page.addon.2": "A ribbit is still one creature. The original mod picks its profession. This addon only watches that profession and gives it work: fishing, farming, trading, luck, or chaos.",
 
   "reallyusefulribbits.guide.entry.head": "Maracas",
-  "reallyusefulribbits.guide.page.head.1": "Right-click a fisher, gardener, sorcerer or nitwit with a $(item)maraca$() from the original $(item)Ribbits$() mod. The ribbit vanishes into a spawn egg of that profession and drops whatever it was carrying. A merchant is left alone, so its goods stay in the stall. You can no longer seat a ribbit on your head.",
+  "reallyusefulribbits.guide.page.head.1": "Right-click a fisher, gardener, sorcerer or nitwit with a $(item)maraca$() from the original $(item)Ribbits$() mod. The ribbit vanishes into a spawn egg of that profession and drops whatever it was carrying. A merchant is caught only with Shift+right-click: a plain click still opens its trades, and its goods stay inside the egg. You can no longer seat a ribbit on your head.",
   "reallyusefulribbits.guide.page.head.2": "The egg keeps the profession, umbrella and instrument. The workplace is forgotten, and the spot where the egg is used becomes the new home. Merchant ribbits still sell maracas.",
 
   "reallyusefulribbits.guide.entry.home": "A New Home",

@@ -16,7 +16,7 @@ Download one set and put those files in the `mods` folder.
 
 | File | Required | What it is |
 | --- | --- | --- |
-| `reallyusefulribbits-neoforge-1.21.1-1.1.4.jar` | Yes | this addon |
+| `reallyusefulribbits-neoforge-1.21.1-1.1.5.jar` | Yes | this addon |
 | `kotlinforforge-5.8.0-all.jar` | Yes | [Kotlin for Forge](https://modrinth.com/mod/kotlin-for-forge) |
 | `Ribbits-1.21.1-NeoForge-4.1.6.jar` | Yes | [Ribbits](https://modrinth.com/mod/ribbits) |
 | `geckolib-neoforge-1.21.1-4.7.6.jar` | Yes | [GeckoLib](https://modrinth.com/mod/geckolib), required by Ribbits |
@@ -27,7 +27,7 @@ Download one set and put those files in the `mods` folder.
 
 | File | Required | What it is |
 | --- | --- | --- |
-| `reallyusefulribbits-fabric-1.21.1-1.1.4.jar` | Yes | this addon |
+| `reallyusefulribbits-fabric-1.21.1-1.1.5.jar` | Yes | this addon |
 | `fabric-api-0.116.17+1.21.1.jar` | Yes | [Fabric API](https://modrinth.com/mod/fabric-api) |
 | `fabric-language-kotlin-1.13.2+kotlin.2.1.20.jar` | Yes | [Fabric Language Kotlin](https://modrinth.com/mod/fabric-language-kotlin) |
 | `Ribbits-1.21.1-Fabric-4.1.6.jar` | Yes | [Ribbits](https://modrinth.com/mod/ribbits) |
@@ -46,7 +46,7 @@ Optional extras (not attached to the release, install them yourself if you want 
 
 ## Features
 
-- **A spawn egg.** Right-click a fisher, gardener, sorcerer or nitwit with a **maraca** from the original Ribbits mod. The ribbit vanishes into a spawn egg of that profession and drops its inventory. The egg keeps the profession, umbrella and instrument; the workplace is forgotten, and the spot where the egg is used becomes home. A merchant is left alone, so a maraca click still opens its trades. Merchant ribbits sell maracas. Catching one grants *so I guess this is my new home now…* You cannot seat a ribbit on your head.
+- **A spawn egg.** Right-click a fisher, gardener, sorcerer or nitwit with a **maraca** from the original Ribbits mod. The ribbit vanishes into a spawn egg of that profession and drops its inventory. The egg keeps the profession, umbrella and instrument; the workplace is forgotten, and the spot where the egg is used becomes home. A merchant is caught only with Shift+right-click: a plain click still opens its trades, and its goods stay in the egg. Merchant ribbits sell maracas. Catching one grants *so I guess this is my new home now…* You cannot seat a ribbit on your head.
 - **Shared territory.** Every working ribbit scans a configurable radius (64 blocks by default). Several ribbits can work the same area. They do not steal each other’s reserved crop or water tile.
 - **Fisher.** Binds one nearby water block and one container. Sits on the bank with the fishing animation, runs vanilla-style fishing (splashes toward the bobber, then a catch of fish only), and carries up to 4 items. A slab in the upper half of a water block is not a fishing spot. At 4 it stands up, walks to the container, deposits normal stacks, then returns to the water. Right-click outlines the ribbit, the water tile and the container. Missing a bind plays the hurt croak and angry particles.
 - **Farmer.** Binds one connected farm (farmland, Farmer's Delight farmland, soul sand, sugar-cane bases, crops in water or on mud, and bush crops such as tomatoes and grapevines) and one container. Sweet berry bushes and other prickly bushes are left alone. Harvests, plants, tills, waters only farmland that has dried out, and sometimes coaxes glow berries onto vines. Corn cobs and rice panicles are taken and the stem is left. On a large field the nearest plots are checked first. It cuts sugar cane that is already growing and does not plant more. It never tramples farmland. Melons, pumpkins and nether wart are included, and so are water crops such as rice. A crop that a right-click harvests (Farmer's Delight tomatoes, and mods such as Harvest with Ease) is gathered that way. It walks to items thrown nearby when it can pick them up, and walks up to its chest before inserting or taking items. Inventory is 4×64. Right-click sprinkles particles on the farm and the container.

@@ -32,25 +32,26 @@ object HomePoint {
 
     /**
      * Маракас забирает риббита в яйцо его профессии. Дом больше не переносится.
-     * Торговец сюда не попадает: его товары нельзя высыпать на землю.
+     * Товары торговца остаются в яйце: на землю их высыпать нельзя.
      */
     fun capture(player: Player, ribbit: RibbitEntity) {
         val level = ribbit.level() as? ServerLevel ?: return
         val kind = ribbit.professionKind()
-        if (kind == ProfessionKind.MERCHANT) return
         val eggItem = BuiltInRegistries.ITEM.get(ResourceLocation.parse(eggId(kind)))
         if (eggItem == Items.AIR) {
             ReallyUsefulRibbitsMod.LOGGER.warn("Нет яйца спавна для профессии {}", kind)
             return
         }
         val data = ribbit.work()
-        val drops = RibbitBags.extractAll(data, kind)
-        data.forgetWorkplace()
-        for (stack in drops) {
-            val entity = ItemEntity(level, ribbit.x, ribbit.y + 0.2, ribbit.z, stack)
-            entity.setPickUpDelay(10)
-            level.addFreshEntity(entity)
+        if (kind != ProfessionKind.MERCHANT) {
+            val drops = RibbitBags.extractAll(data, kind)
+            for (stack in drops) {
+                val entity = ItemEntity(level, ribbit.x, ribbit.y + 0.2, ribbit.z, stack)
+                entity.setPickUpDelay(10)
+                level.addFreshEntity(entity)
+            }
         }
+        data.forgetWorkplace()
         val tag = ribbit.saveWithoutId(CompoundTag())
         listOf(
             "Pos", "Motion", "Rotation", "UUID", "FallDistance", "Fire", "Air", "OnGround",
@@ -75,6 +76,7 @@ object HomePoint {
         ProfessionKind.FARMER -> "ribbits:ribbit_gardener_spawn_egg"
         ProfessionKind.SORCERER -> "ribbits:ribbit_sorcerer_spawn_egg"
         ProfessionKind.NITWIT -> "ribbits:ribbit_nitwit_spawn_egg"
+        ProfessionKind.MERCHANT -> "ribbits:ribbit_merchant_spawn_egg"
         else -> "ribbits:ribbit_nitwit_spawn_egg"
     }
 }

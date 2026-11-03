@@ -33,7 +33,8 @@ object RibbitInteractionHandler {
         val ribbit = target as? RibbitEntity ?: return null
         if (hand != InteractionHand.MAIN_HAND) return null
         if (HomePoint.isMaraca(player.mainHandItem)) {
-            if (ribbit.professionKind() == ProfessionKind.MERCHANT) return null
+            // Обычный клик по торговцу открывает сделки. В яйцо он идёт только с Shift.
+            if (ribbit.professionKind() == ProfessionKind.MERCHANT && !player.isShiftKeyDown) return null
             if (!level.isClientSide) {
                 HomePoint.capture(player, ribbit)
             }
