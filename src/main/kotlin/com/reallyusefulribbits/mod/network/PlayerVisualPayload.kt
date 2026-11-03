@@ -15,6 +15,7 @@ data class PlayerVisualPayload(
     val nickname: String = "",
     val nickColor: Int = -1,
     val shader: String = "",
+    val timers: String = "",
 ) : CustomPacketPayload {
 
     override fun type(): CustomPacketPayload.Type<out CustomPacketPayload> = TYPE
@@ -32,6 +33,7 @@ data class PlayerVisualPayload(
                 buf.writeUtf(value.nickname)
                 buf.writeInt(value.nickColor)
                 buf.writeUtf(value.shader)
+                buf.writeUtf(value.timers)
             },
             { buf ->
                 PlayerVisualPayload(
@@ -42,6 +44,7 @@ data class PlayerVisualPayload(
                     nickname = buf.readUtf(),
                     nickColor = buf.readInt(),
                     shader = buf.readUtf(),
+                    timers = if (buf.readableBytes() > 0) buf.readUtf() else "",
                 )
             },
         )

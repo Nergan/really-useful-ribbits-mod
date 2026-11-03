@@ -4,11 +4,13 @@ data class ServerSettings(
     val scanRadius: Int,
     val chaos: Int,
     val points: Map<SorcererAction, Int>,
+    val durations: Map<String, Int> = SpellDurations.defaults(),
 )
 
 /** Файл `reallyusefulribbits-server.properties` для Fabric: разбор, старые значения и запись. */
 object ServerSettingsText {
     private const val SPELL_PREFIX = "spell."
+    private const val DURATION_PREFIX = "duration."
     private val LEGACY_TOML_CHAOS = Regex("""(?m)^(\s*chaos_level\s*=\s*)${SorcererTable.LEGACY_DEFAULT_CHAOS}(?=[ \t]*\r?$)""")
 
     /**
@@ -41,6 +43,22 @@ object ServerSettingsText {
     )
 
     /**
+     * Баллы по умолчанию широкой таблицы на 9 999 092, до дождя яблок и статуи.
+     * Нетронутый файл получает новые баллы эффекта и два новых заклинания.
+     */
+    private val POINTS_WIDE: Map<String, Int> = mapOf(
+        "effect_or_cleanse" to 1_211_780, "enchant" to 1_500_000, "launch" to 300_000, "grow_plants" to 1_000_000,
+        "weather" to 500_000, "day_night" to 450_000, "summon_mobs" to 250_000, "lightning" to 100_000,
+        "flip" to 300_000, "scale" to 350_000, "max_health" to 300_000, "ignite_area" to 20_000,
+        "structure_trip" to 200_000, "summon_pets" to 650_000, "diamond_rain" to 300_000, "morph" to 100_000,
+        "giant_phantom" to 20_000, "random_dimension" to 30_000, "spectator" to 60_000, "mega_explosion" to 500,
+        "creative_flight" to 120_000, "ender_dragon" to 1, "super_secret_settings" to 550_000, "inverted_controls" to 350_000,
+        "vvvvvv" to 350_000, "nickname" to 450_000, "random_structure" to 30_000, "fireballs" to 200_000,
+        "lightning_hands" to 150_000, "giant_cat" to 150_000, "bedrock_room" to 5_000, "fireball_rain" to 800,
+        "lava_lake" to 1_000, "delete_world" to 1, "corrupt_worldgen" to 10,
+    )
+
+    /**
      * TOML NeoForge: без раздела баллов (до 1.1.0) хаос 25 был значением по умолчанию,
      * а раздел с нетронутыми баллами 1.1.0 или 1.1.2 получает новые баллы вместе со строками `# Default:`.
      */
@@ -49,7 +67,7 @@ object ServerSettingsText {
             if (!LEGACY_TOML_CHAOS.containsMatchIn(text)) return null
             return LEGACY_TOML_CHAOS.replace(text) { it.groupValues[1] + SorcererTable.DEFAULT_CHAOS }
         }
-        val untouched = listOf(POINTS_1_1_0, POINTS_1_1_2).any { table ->
+        val untouched = listOf(POINTS_1_1_0, POINTS_1_1_2, POINTS_WIDE).any { table ->
             SorcererAction.entries.all { action ->
                 tomlEntry(action.id).find(text)?.groupValues?.get(2)?.toIntOrNull() == table[action.id]
             }
@@ -90,18 +108,23 @@ object ServerSettingsText {
             val stored = if (stale) null else values[SPELL_PREFIX + action.id]?.toIntOrNull()
             (stored ?: action.defaultPoints).coerceIn(0, SorcererTable.MAX_POINTS)
         }
-        return ServerSettings(radius, chaos, points)
+        val durations = SpellDurations.STATES.associate { state ->
+            val stored = values[DURATION_PREFIX + state.id]?.toIntOrNull()
+            state.id to SpellDurations.clamp(stored ?: state.defaultSeconds)
+        }
+        return ServerSettings(radius, chaos, points, durations)
     }
 
     /** Файл без части ключей или с нетронутыми баллами 1.1.0 либо 1.1.2 переписывается полным. */
     fun needsRewrite(values: Map<String, String>): Boolean {
         if ("scan_radius" !in values || "chaos_level" !in values) return true
         if (SorcererAction.entries.any { (SPELL_PREFIX + it.id) !in values }) return true
+        if (SpellDurations.STATES.any { (DURATION_PREFIX + it.id) !in values }) return true
         return holdsStaleDefaults(values)
     }
 
     private fun holdsStaleDefaults(values: Map<String, String>): Boolean =
-        holdsTable(values, POINTS_1_1_0) || holdsTable(values, POINTS_1_1_2)
+        holdsTable(values, POINTS_1_1_0) || holdsTable(values, POINTS_1_1_2) || holdsTable(values, POINTS_WIDE)
 
     private fun holdsTable(values: Map<String, String>, table: Map<String, Int>): Boolean =
         SorcererAction.entries.all { action ->
@@ -118,6 +141,11 @@ object ServerSettingsText {
         appendLine("# 0 turns a spell off. The defaults add up to ${SorcererTable.DEFAULT_TOTAL}; with them 1 point is a 0.00001% chance.")
         for (action in SorcererAction.entries) {
             appendLine("$SPELL_PREFIX${action.id}=${settings.points[action] ?: action.defaultPoints}")
+        }
+        appendLine("# How many seconds a sorcerer state lasts. -1 lasts until something removes it.")
+        for (state in SpellDurations.STATES) {
+            val seconds = settings.durations[state.id] ?: state.defaultSeconds
+            appendLine("$DURATION_PREFIX${state.id}=${SpellDurations.clamp(seconds)}")
         }
     }
 }

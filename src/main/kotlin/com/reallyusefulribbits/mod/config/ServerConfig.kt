@@ -3,6 +3,7 @@ package com.reallyusefulribbits.mod.config
 import com.reallyusefulribbits.mod.logic.ScanRadius
 import com.reallyusefulribbits.mod.logic.SorcererAction
 import com.reallyusefulribbits.mod.logic.SorcererTable
+import com.reallyusefulribbits.mod.logic.SpellDurations
 import net.neoforged.neoforge.common.ModConfigSpec
 
 /**
@@ -30,11 +31,15 @@ class ServerConfig(builder: ModConfigSpec.Builder) {
 
         fun spellPoints(action: SorcererAction): Int =
             CONFIG.spellPoints[action]?.get()?.coerceIn(0, SorcererTable.MAX_POINTS) ?: action.defaultPoints
+
+        fun spellSeconds(id: String): Int =
+            SpellDurations.clamp(CONFIG.spellDurations[id]?.get() ?: SpellDurations.seconds(id))
     }
 
     val scanRadius: ModConfigSpec.IntValue
     val chaosLevel: ModConfigSpec.IntValue
     val spellPoints: Map<SorcererAction, ModConfigSpec.IntValue>
+    val spellDurations: Map<String, ModConfigSpec.IntValue>
 
     init {
         builder.push("work")
@@ -66,6 +71,19 @@ class ServerConfig(builder: ModConfigSpec.Builder) {
             builder
                 .translation("$KEY_PREFIX.sorcerer.spells.${action.id}")
                 .defineInRange(action.id, action.defaultPoints, 0, SorcererTable.MAX_POINTS)
+        }
+        builder.pop()
+        builder
+            .comment(
+                "How many seconds a sorcerer state lasts.",
+                "-1 lasts until something removes it. Spectator defaults to one hour, the bedrock room to five minutes.",
+            )
+            .translation("$KEY_PREFIX.sorcerer.durations")
+            .push("durations")
+        spellDurations = SpellDurations.STATES.associate { state ->
+            state.id to builder
+                .translation("$KEY_PREFIX.sorcerer.durations.${state.id}")
+                .defineInRange(state.id, state.defaultSeconds, SpellDurations.FOREVER, SpellDurations.MAX_SECONDS)
         }
         builder.pop()
         builder.pop()

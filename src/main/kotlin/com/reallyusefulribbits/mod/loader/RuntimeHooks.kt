@@ -26,8 +26,12 @@ object RuntimeHooks {
     lateinit var scanRadius: () -> Int
     lateinit var chaosLevel: () -> Int
     lateinit var spellPoints: (SorcererAction) -> Int
+    lateinit var spellSeconds: (String) -> Int
     lateinit var itemSlots: (Level, BlockPos) -> ItemSlots?
     lateinit var containerOpener: (ServerLevel) -> Player
+
+    fun opener(level: ServerLevel): Player? =
+        if (::containerOpener.isInitialized) containerOpener(level) else null
     lateinit var patchouliLoaded: () -> Boolean
     lateinit var guideReceived: (Player) -> Boolean
     lateinit var markGuideReceived: (Player) -> Unit

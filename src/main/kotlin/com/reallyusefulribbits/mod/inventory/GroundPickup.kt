@@ -5,12 +5,18 @@ import com.reallyusefulribbits.mod.logic.ProfessionKind
 import com.reallyusefulribbits.mod.util.work
 import com.reallyusefulribbits.mod.world.CropSupport
 import com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity
+import net.minecraft.core.component.DataComponents
+import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.core.registries.Registries
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.tags.ItemTags
+import net.minecraft.tags.TagKey
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.item.BlockItem
+import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.CropBlock
@@ -48,6 +54,8 @@ object GroundPickup {
         if (stack.isEmpty) return false
         if (CropSupport.plantableBlock(stack) != null) return true
         if (stack.`is`(ItemTags.VILLAGER_PLANTABLE_SEEDS)) return true
+        if (CROP_TAGS.any { stack.`is`(it) }) return true
+        if (stack.get(DataComponents.FOOD) != null && !isKitchenFood(stack)) return true
         val item = stack.item
         if (item is BlockItem) {
             val block = item.block
@@ -75,27 +83,19 @@ object GroundPickup {
 
     fun isFisherLoot(stack: ItemStack): Boolean {
         if (stack.isEmpty) return false
-        if (stack.`is`(ItemTags.FISHES)) return true
-        val item = stack.item
-        return item == Items.COD ||
-            item == Items.SALMON ||
-            item == Items.TROPICAL_FISH ||
-            item == Items.PUFFERFISH ||
-            item == Items.LILY_PAD ||
-            item == Items.BOWL ||
-            item == Items.LEATHER ||
-            item == Items.BONE ||
-            item == Items.STRING ||
-            item == Items.INK_SAC ||
-            item == Items.NAUTILUS_SHELL ||
-            item == Items.SADDLE ||
-            item == Items.NAME_TAG ||
-            item == Items.FISHING_ROD ||
-            item == Items.ENCHANTED_BOOK ||
-            item == Items.STICK ||
-            item == Items.TRIPWIRE_HOOK ||
-            item == Items.ROTTEN_FLESH ||
-            item == Items.BAMBOO ||
-            item == Items.COCOA_BEANS
+        return stack.`is`(ItemTags.FISHES)
     }
+
+    private fun isKitchenFood(stack: ItemStack): Boolean {
+        val path = BuiltInRegistries.ITEM.getKey(stack.item).path
+        return path.contains("beef") || path.contains("pork") || path.contains("chicken") ||
+            path.contains("mutton") || path.contains("rabbit") || path.contains("flesh") ||
+            path.contains("spider_eye") || path.contains("golden_apple") || path.contains("fish") ||
+            path.contains("cod") || path.contains("salmon") || stack.`is`(ItemTags.FISHES)
+    }
+
+    private val CROP_TAGS: List<TagKey<Item>> = listOf(
+        "c:crops", "c:seeds", "c:vegetables", "c:grains", "c:fruits",
+        "c:foods/vegetable", "c:foods/fruit", "c:foods/grain", "farmersdelight:crops",
+    ).map { TagKey.create(Registries.ITEM, ResourceLocation.parse(it)) }
 }

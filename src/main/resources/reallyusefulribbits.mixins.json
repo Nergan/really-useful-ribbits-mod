@@ -6,6 +6,7 @@
   "mixins": [
     "AttributeCapMixin",
     "CorruptWorldgenMixin",
+    "FarmlandTrampleMixin",
     "FloatingKickMixin",
     "GiantEntityMixin",
     "GiantPathMixin",

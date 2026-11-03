@@ -19,7 +19,7 @@ object ClientVisuals {
 
     fun set(payload: PlayerVisualPayload) {
         val empty = !payload.upsideDown && payload.morphId.isBlank() && payload.flags == 0 &&
-            payload.nickname.isBlank() && payload.shader.isBlank()
+            payload.nickname.isBlank() && payload.shader.isBlank() && payload.timers.isBlank()
         if (empty) entries.remove(payload.playerId) else entries[payload.playerId] = payload
     }
 
@@ -49,6 +49,8 @@ object ClientVisuals {
     fun nickname(id: UUID): PlayerVisualPayload? = entries[id]?.takeIf { it.nickname.isNotBlank() }
 
     fun shader(id: UUID): String = entries[id]?.shader.orEmpty()
+
+    fun timers(id: UUID): String = entries[id]?.timers.orEmpty()
 
     fun clear(id: UUID) {
         entries.remove(id)

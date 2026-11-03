@@ -16,7 +16,7 @@ Download one set and put those files in the `mods` folder.
 
 | File | Required | What it is |
 | --- | --- | --- |
-| `reallyusefulribbits-neoforge-1.21.1-1.1.2.jar` | Yes | this addon |
+| `reallyusefulribbits-neoforge-1.21.1-1.1.3.jar` | Yes | this addon |
 | `kotlinforforge-5.8.0-all.jar` | Yes | [Kotlin for Forge](https://modrinth.com/mod/kotlin-for-forge) |
 | `Ribbits-1.21.1-NeoForge-4.1.6.jar` | Yes | [Ribbits](https://modrinth.com/mod/ribbits) |
 | `geckolib-neoforge-1.21.1-4.7.6.jar` | Yes | [GeckoLib](https://modrinth.com/mod/geckolib), required by Ribbits |
@@ -27,7 +27,7 @@ Download one set and put those files in the `mods` folder.
 
 | File | Required | What it is |
 | --- | --- | --- |
-| `reallyusefulribbits-fabric-1.21.1-1.1.2.jar` | Yes | this addon |
+| `reallyusefulribbits-fabric-1.21.1-1.1.3.jar` | Yes | this addon |
 | `fabric-api-0.116.17+1.21.1.jar` | Yes | [Fabric API](https://modrinth.com/mod/fabric-api) |
 | `fabric-language-kotlin-1.13.2+kotlin.2.1.20.jar` | Yes | [Fabric Language Kotlin](https://modrinth.com/mod/fabric-language-kotlin) |
 | `Ribbits-1.21.1-Fabric-4.1.6.jar` | Yes | [Ribbits](https://modrinth.com/mod/ribbits) |
@@ -46,12 +46,12 @@ Optional extras (not attached to the release, install them yourself if you want 
 
 ## Features
 
-- **A new home.** Right-click a ribbit with a **maraca** from the original Ribbits mod to set its home point where it is standing. The old farm, fishing water, and chest are forgotten, so a farmer or a fisher stops walking back to the village. Merchant ribbits sell maracas. This grants *so I guess this is my new home now…* You cannot seat a ribbit on your head.
+- **A spawn egg.** Right-click a fisher, gardener, sorcerer or nitwit with a **maraca** from the original Ribbits mod. The ribbit vanishes into a spawn egg of that profession and drops its inventory. The egg keeps the profession, umbrella and instrument; the workplace is forgotten, and the spot where the egg is used becomes home. A merchant is left alone, so a maraca click still opens its trades. Merchant ribbits sell maracas. Catching one grants *so I guess this is my new home now…* You cannot seat a ribbit on your head.
 - **Shared territory.** Every working ribbit scans a configurable radius (64 blocks by default). Several ribbits can work the same area. They do not steal each other’s reserved crop or water tile.
-- **Fisher.** Binds one nearby water block and one container. Sits on the bank with the fishing animation, runs vanilla-style fishing (splashes toward the bobber, then a catch), and carries up to 4 items. A slab in the upper half of a water block is not a fishing spot. At 4 it stands up, walks to the container, deposits normal stacks, then returns to the water. Right-click outlines the ribbit, the water tile and the container. Missing a bind plays the hurt croak and angry particles.
-- **Farmer.** Binds one connected farm (farmland, Farmer's Delight farmland, soul sand, sugar-cane bases, crops in water or on mud, and bush crops such as tomatoes and grapevines) and one container. Sweet berry bushes and other prickly bushes are left alone. Harvests, plants, tills, waters farmland, and sometimes coaxes glow berries onto vines. Melons, pumpkins, cane and nether wart are included. It walks up to its chest before inserting or taking items. Inventory is 4×64. Right-click sprinkles particles on the farm and the container.
+- **Fisher.** Binds one nearby water block and one container. Sits on the bank with the fishing animation, runs vanilla-style fishing (splashes toward the bobber, then a catch of fish only), and carries up to 4 items. A slab in the upper half of a water block is not a fishing spot. At 4 it stands up, walks to the container, deposits normal stacks, then returns to the water. Right-click outlines the ribbit, the water tile and the container. Missing a bind plays the hurt croak and angry particles.
+- **Farmer.** Binds one connected farm (farmland, Farmer's Delight farmland, soul sand, sugar-cane bases, crops in water or on mud, and bush crops such as tomatoes and grapevines) and one container. Sweet berry bushes and other prickly bushes are left alone. Harvests, plants, tills, waters farmland, and sometimes coaxes glow berries onto vines. It cuts sugar cane that is already growing and does not plant more. It never tramples farmland. Melons, pumpkins and nether wart are included, and so are water crops such as rice. A crop that a right-click harvests (Farmer's Delight tomatoes, and mods such as Harvest with Ease) is gathered that way. It walks to items thrown nearby when it can pick them up, and walks up to its chest before inserting or taking items. Inventory is 4×64. Right-click sprinkles particles on the farm and the container.
 - **Merchant.** 27 slots of 256. Starts with random goods plus 256 emeralds and 256 amethysts. Hunts villagers, wandering traders, wandering ribbits and any other merchant, copies a buyable item (maxed trades, no stock limits), builds up to 16 unique-item amethyst offers, then croaks at a player until you trade or ignore them. Always walks at 1.5× speed. An offer that both buys and sells amethyst shards is never created. One already saved on a merchant is replaced with 64 diamonds for 1 amethyst shard.
-- **Sorcerer.** Right-click with an amethyst shard rolls one of 35 spells, see [Sorcerer spells](#sorcerer-spells). Curses survive death. Feeding the sorcerer an enchanted golden apple strips them all and stops world corruption; milk still clears ordinary effects. Endermen in range flee. Otherwise it still wanders like a normal ribbit.
+- **Sorcerer.** Right-click with an amethyst shard rolls one of 37 spells, see [Sorcerer spells](#sorcerer-spells). States survive death until their timer runs out. Each state's duration is a server setting in seconds; -1 lasts until something removes it. Spectator defaults to one hour and the bedrock room to five minutes; the rest default to -1. The time left is shown on the left of the screen. Feeding the sorcerer an enchanted golden apple strips them all and stops world corruption; milk still clears ordinary effects. Endermen in range flee. Otherwise it still wanders like a normal ribbit.
 - **Nitwit.** Applies Luck in the scan radius. Picks up ground loot (27 slots of 64) and sometimes carries it to a player, tossing it the way Q does.
 - **Guidebook (optional).** With [Patchouli](https://modrinth.com/mod/patchouli) installed, the first join into a world gives *Really Useful Ribbits*. Craft it with a book and a giant lily pad. The book is also in the Ribbits creative tab. Without Patchouli the rest of the addon works as usual. Professions themselves come from Ribbits; this addon only gives those frogs jobs.
 
@@ -61,12 +61,12 @@ Every spell has points in the server config. A spell's chance is its points divi
 
 **Default chaos level: 0.** Chaos flattens the odds: each spell weighs its points to the power of `1 - chaos/100`. At 0 the chances are exactly the table below; at 100 every enabled spell is equally likely. Rare spells stay rarer than common ones at any level.
 
-Curses survive death: effects, upside-down, size, max health, morph, nickname, shader, inverted controls, VVVVVV, fireball and lightning hands, and flight. Milk still clears ordinary effects. Everything else comes off only with an enchanted golden apple given to the sorcerer.
+States survive death until their timer runs out: effects, upside-down, size, max health, morph, nickname, shader, inverted controls, VVVVVV, fireball and lightning hands, flight, spectator and the bedrock room. The duration of each is `duration.<id>` in the server config, in seconds. -1 lasts until something removes it. Spectator defaults to 3600 and the bedrock room to 300; every other state defaults to -1. The remaining time is drawn on the left of the screen, including states the game does not list as status effects. Milk still clears ordinary effects. Everything else comes off only with an enchanted golden apple given to the sorcerer.
 
 | Spell | Key | What it does | Points | Default chance |
 | --- | --- | --- | ---: | ---: |
 | Random enchantment | `enchant` | A random enchantment on a random item you carry. | 1500000 | 15% |
-| Endless effect or cleanse | `effect_or_cleanse` | Half the time an endless random effect, half the time every effect is removed. Milk still clears the effect. | 1211780 | 12.12% |
+| Effect or cleanse | `effect_or_cleanse` | Half the time a random effect, half the time every effect is removed. The effect lasts for the configured duration; the default is until something removes it. Milk still clears it. | 761780 | 7.62% |
 | Plant growth | `grow_plants` | Bone meal on up to 64 plants around the sorcerer. | 1000000 | 10% |
 | Tamed pets | `summon_pets` | 1–8 tamed pets in random colors, modded ones too. | 650000 | 6.5% |
 | Super Secret Settings | `super_secret_settings` | A random screen shader from the old Super Secret Settings button. | 550000 | 5.5% |
@@ -80,6 +80,8 @@ Curses survive death: effects, upside-down, size, max health, morph, nickname, s
 | Upside down | `flip` | Turns your model upside down, or back. | 300000 | 3% |
 | Max health | `max_health` | Max health becomes 1–128. | 300000 | 3% |
 | Diamond rain | `diamond_rain` | 256 diamonds fall around the sorcerer. | 300000 | 3% |
+| Enchanted apple rain | `apple_rain` | 256 enchanted golden apples fall around the sorcerer, the same way the diamonds do. | 250000 | 2.5% |
+| Player statue | `player_statue` | Builds a concrete statue of the player's skin inside the sorcerer's radius. | 200000 | 2% |
 | Summon mobs | `summon_mobs` | 1–16 mobs of one random kind, usually peaceful. | 250000 | 2.5% |
 | Structure trip | `structure_trip` | Ten invisible seconds at a nearby village, portal or map structure, then back. | 200000 | 2% |
 | Fireball hands | `fireballs` | Right-click air with an empty hand to throw a ghast fireball (*Once, the Fire Nation...*). | 200000 | 2% |
@@ -88,12 +90,12 @@ Curses survive death: effects, upside-down, size, max health, morph, nickname, s
 | Creative flight | `creative_flight` | Flight as in creative mode (*True Freedom*). | 120000 | 1.2% |
 | Lightning | `lightning` | Lightning next to the sorcerer. It does not hurt the frog. | 100000 | 1% |
 | Morph | `morph` | Turns you into a random mob. Only humanoid mobs can still place, break and open things. | 100000 | 1% |
-| Spectator hour | `spectator` | An hour in spectator mode (*This ghost will be kind, right?*). | 60000 | 0.6% |
+| Spectator | `spectator` | Spectator mode for the configured time. The default is one hour (*This ghost will be kind, right?*). | 60000 | 0.6% |
 | Random dimension | `random_dimension` | Teleports you to a safe spot in another dimension. | 30000 | 0.3% |
 | Random structure | `random_structure` | Builds a random structure the server knows, modded ones too, in the sorcerer's radius. | 30000 | 0.3% |
 | Ring of fire | `ignite_area` | Sets fire to the ground around the sorcerer. | 20000 | 0.2% |
 | Giant phantom | `giant_phantom` | A huge glowing phantom (*Foma, is that you?*). | 20000 | 0.2% |
-| Bedrock room | `bedrock_room` | Locks you in a 16×16×16 bedrock room. Five minutes later the old blocks come back (*Walled In!*). | 5000 | 0.05% |
+| Bedrock room | `bedrock_room` | Locks you in a 16×16×16 bedrock room. The old blocks come back when the configured time runs out; the default is five minutes (*Walled In!*). | 5000 | 0.05% |
 | Lava lake in the sky | `lava_lake` | A 128×128 lake of lava at the top of the world above the sorcerer (*And so it was written in the scriptures of Ada Abdulov...*). | 1000 | 0.01% |
 | Fireball rain | `fireball_rain` | 48 fireballs fall from the top of the world around the sorcerer and explode like TNT (*Apocalypse*). | 800 | 0.008% |
 | Mega explosion | `mega_explosion` | A crater far stronger than TNT. The frog is unharmed (*no magic today*). | 500 | 0.005% |

@@ -10,7 +10,9 @@ import com.reallyusefulribbits.mod.logic.SorcererTable
 import com.reallyusefulribbits.mod.logic.SuperSecretShaders
 import com.reallyusefulribbits.mod.morph.PlayerMorph
 import com.reallyusefulribbits.mod.morph.SorcererCurse
+import com.reallyusefulribbits.mod.morph.CurseClock
 import com.reallyusefulribbits.mod.spell.BedrockRoom
+import com.reallyusefulribbits.mod.spell.SkinStatue
 import com.reallyusefulribbits.mod.spell.DeleteWorld
 import com.reallyusefulribbits.mod.spell.RandomStructure
 import com.reallyusefulribbits.mod.spell.SkyFire
@@ -170,6 +172,11 @@ object SorcererAi {
                 diamonds(level, ribbit, player)
                 true
             }
+            SorcererAction.APPLE_RAIN -> {
+                appleRain(level, ribbit, player)
+                true
+            }
+            SorcererAction.PLAYER_STATUE -> SkinStatue.place(level, ribbit, player)
             SorcererAction.RANDOM_DIMENSION -> dimension(player)
             SorcererAction.CREATIVE_FLIGHT -> {
                 flight(player)
@@ -187,11 +194,13 @@ object SorcererAi {
             SorcererAction.SUPER_SECRET_SETTINGS -> {
                 val curse = SorcererCurse.visual(player)
                 curse.shader = SuperSecretShaders.pick(ribbit.random.nextInt(), curse.shader)
+                CurseClock.arm(player, "super_secret_settings")
                 SorcererCurse.sync(player)
                 true
             }
             SorcererAction.INVERTED_CONTROLS -> {
                 SorcererCurse.visual(player).invertedControls = true
+                CurseClock.arm(player, "inverted_controls")
                 SorcererCurse.sync(player)
                 ModAdvancements.grantHowToWalk(player)
                 true
@@ -199,6 +208,7 @@ object SorcererAi {
             SorcererAction.VVVVVV -> {
                 SorcererCurse.rememberBase(player)
                 SorcererCurse.visual(player).vvvvvv = true
+                CurseClock.arm(player, "vvvvvv")
                 SorcererCurse.sync(player)
                 ModAdvancements.grantVvvvvv(player)
                 true
@@ -207,17 +217,20 @@ object SorcererAi {
                 val curse = SorcererCurse.visual(player)
                 val name = SorcererNames.pick(ribbit.random.nextInt(), curse.nickname)
                 SorcererCurse.setNickname(player, name, SorcererNames.color(ribbit.random.nextDouble(), ribbit.random.nextInt()))
+                CurseClock.arm(player, "nickname")
                 true
             }
             SorcererAction.RANDOM_STRUCTURE -> RandomStructure.place(level, ribbit)
             SorcererAction.FIREBALLS -> {
                 SorcererCurse.visual(player).fireballs = true
+                CurseClock.arm(player, "fireballs")
                 SorcererCurse.sync(player)
                 ModAdvancements.grantFireNation(player)
                 true
             }
             SorcererAction.LIGHTNING_HANDS -> {
                 SorcererCurse.visual(player).lightningHands = true
+                CurseClock.arm(player, "lightning_hands")
                 SorcererCurse.sync(player)
                 ModAdvancements.grantPerun(player)
                 true
@@ -426,6 +439,7 @@ object SorcererAi {
         SorcererCurse.rememberBase(player)
         val visual = RuntimeHooks.visual(player)
         visual.upsideDown = !visual.upsideDown
+        if (visual.upsideDown) CurseClock.arm(player, "flip") else CurseClock.disarm(player, "flip")
         SorcererCurse.sync(player)
     }
 
@@ -435,6 +449,7 @@ object SorcererAi {
         val grow = ribbit.random.nextDouble() < SorcererTable.GROW_CHANCE
         val factor = SorcererTable.scaleFactor(grow, ribbit.random.nextDouble())
         attr.baseValue = SorcererTable.applyScale(attr.baseValue, factor)
+        CurseClock.arm(player, "scale")
     }
 
     private fun maxHealth(player: ServerPlayer, ribbit: RibbitEntity) {
@@ -442,6 +457,7 @@ object SorcererAi {
         val attr = player.getAttribute(Attributes.MAX_HEALTH) ?: return
         attr.baseValue = SorcererTable.maxHealth(ribbit.random.nextInt()).toDouble()
         if (player.health > player.maxHealth) player.health = player.maxHealth
+        CurseClock.arm(player, "max_health")
     }
 
     private fun ignite(level: ServerLevel, ribbit: RibbitEntity): Boolean {
@@ -534,6 +550,30 @@ object SorcererAi {
         level.playSound(null, player.blockPosition(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 1f, 0.5f)
     }
 
+    private fun appleRain(level: ServerLevel, ribbit: RibbitEntity, player: ServerPlayer) {
+        val originX = ribbit.x
+        val originY = ribbit.y
+        val originZ = ribbit.z
+        val perWave = ModConfig.DIAMOND_RAIN_COUNT / ModConfig.DIAMOND_RAIN_WAVES
+        repeat(ModConfig.DIAMOND_RAIN_WAVES) { wave ->
+            DelayedTasks.later(level.server, 1 + wave * 4) {
+                if (!level.isLoaded(BlockPos.containing(originX, originY, originZ))) return@later
+                repeat(perWave) {
+                    val angle = level.random.nextDouble() * Math.PI * 2
+                    val dist = level.random.nextDouble() * 6.5
+                    val x = originX + cos(angle) * dist
+                    val z = originZ + sin(angle) * dist
+                    val y = originY + 14.0 + level.random.nextDouble() * 8.0
+                    val entity = ItemEntity(level, x, y, z, ItemStack(Items.ENCHANTED_GOLDEN_APPLE))
+                    entity.setDeltaMovement(0.0, -0.05, 0.0)
+                    entity.setPickUpDelay(15)
+                    level.addFreshEntity(entity)
+                }
+            }
+        }
+        level.playSound(null, player.blockPosition(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 1f, 1.2f)
+    }
+
     private fun dimension(player: ServerPlayer): Boolean {
         val dest = player.server.allLevels.filter { it.dimension() != player.level().dimension() }.randomOrNull() ?: return false
         val landing = SafeLanding.find(dest, dest.sharedSpawnPos)
@@ -547,6 +587,7 @@ object SorcererAi {
         SorcererCurse.visual(player).foreverFlight = true
         player.abilities.mayfly = true
         player.onUpdateAbilities()
+        CurseClock.arm(player, "creative_flight")
         player.level().playSound(null, player.blockPosition(), SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 0.6f, 1.4f)
         player.serverLevel().sendParticles(ParticleTypes.CLOUD, player.x, player.y + 1.0, player.z, 12, 0.3, 0.2, 0.3, 0.02)
         ModAdvancements.grantTrueFreedom(player)
@@ -609,7 +650,7 @@ object SorcererAi {
         if (player.gameMode.gameModeForPlayer != GameType.SPECTATOR) {
             visual.previousGameMode = player.gameMode.gameModeForPlayer.getName()
         }
-        visual.spectatorTicks = ModConfig.SPECTATOR_TICKS
+        visual.spectatorTicks = CurseClock.ticks("spectator")
         player.setGameMode(GameType.SPECTATOR)
         player.serverLevel().sendParticles(ParticleTypes.SOUL, player.x, player.y + 1.0, player.z, 18, 0.4, 0.6, 0.4, 0.02)
         ModAdvancements.grantGhost(player)
@@ -705,6 +746,10 @@ object SorcererAi {
                 level.playSound(null, frog, SoundEvents.CAT_PURREOW, SoundSource.NEUTRAL, 1f, 1.1f)
             SorcererAction.DIAMOND_RAIN ->
                 level.playSound(null, at, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.2f, 0.6f)
+            SorcererAction.APPLE_RAIN ->
+                level.playSound(null, at, SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.2f, 1.4f)
+            SorcererAction.PLAYER_STATUE ->
+                level.playSound(null, at, SoundEvents.STONE_PLACE, SoundSource.BLOCKS, 1f, 0.8f)
             SorcererAction.MORPH ->
                 level.playSound(null, at, SoundEvents.EVOKER_CAST_SPELL, SoundSource.PLAYERS, 1f, 0.7f)
             SorcererAction.SUMMON_GIANT_PHANTOM ->

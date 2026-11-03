@@ -6,6 +6,7 @@ import com.reallyusefulribbits.mod.loader.ItemSlots
 import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import com.reallyusefulribbits.mod.logic.ServerSettings
 import com.reallyusefulribbits.mod.logic.ServerSettingsText
+import com.reallyusefulribbits.mod.logic.SpellDurations
 import com.reallyusefulribbits.mod.network.PlayerVisualPayload
 import net.fabricmc.fabric.api.entity.FakePlayer
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup
@@ -55,6 +56,7 @@ object FabricRuntime {
         RuntimeHooks.scanRadius = { settings.scanRadius }
         RuntimeHooks.chaosLevel = { settings.chaos }
         RuntimeHooks.spellPoints = { action -> settings.points[action] ?: action.defaultPoints }
+        RuntimeHooks.spellSeconds = { id -> SpellDurations.seconds(id, settings.durations) }
     }
 
     /** Экран настроек пишет тот же файл; сервер в этом же процессе берёт новые значения сразу. */

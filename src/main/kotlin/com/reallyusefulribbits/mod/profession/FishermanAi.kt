@@ -147,7 +147,7 @@ object FishermanAi {
 
     private fun catchFish(level: ServerLevel, ribbit: RibbitEntity) {
         val data = ribbit.work()
-        val loot = rollLoot(level, ribbit, Vec3(data.bobberX, data.bobberY, data.bobberZ))
+        val loot = fishOnly(level, ribbit, Vec3(data.bobberX, data.bobberY, data.bobberZ))
         for (stack in loot) {
             val leftover = RibbitBags.insert(data, ProfessionKind.FISHERMAN, stack)
             if (!leftover.isEmpty) {
@@ -165,6 +165,15 @@ object FishermanAi {
         level.playSound(null, ribbit.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.NEUTRAL, 0.45f, 1.2f)
         data.fishingActive = false
         data.fishingElapsed = 0
+    }
+
+    /** Мусор и сокровища из таблицы рыбалки выбрасываются. Несколько попыток, пока не выпадет рыба. */
+    private fun fishOnly(level: ServerLevel, ribbit: RibbitEntity, origin: Vec3): List<ItemStack> {
+        repeat(12) {
+            val fish = rollLoot(level, ribbit, origin).filter { it.`is`(net.minecraft.tags.ItemTags.FISHES) }
+            if (fish.isNotEmpty()) return fish
+        }
+        return emptyList()
     }
 
     private fun rollLoot(level: ServerLevel, ribbit: RibbitEntity, origin: Vec3): List<ItemStack> {

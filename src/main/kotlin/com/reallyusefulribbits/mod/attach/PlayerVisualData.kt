@@ -32,6 +32,8 @@ class PlayerVisualData(
     var nickColor: Int = -1,
     var shader: String = "",
     var invertedControls: Boolean = false,
+    /** Игровое время, когда состояние спадёт. -1 — пока не снимут яблоком. */
+    val until: MutableMap<String, Long> = LinkedHashMap(),
 ) {
     fun write(): CompoundTag {
         val out = CompoundTag()
@@ -61,12 +63,21 @@ class PlayerVisualData(
         out.putInt("NickColor", nickColor)
         out.putString("Shader", shader)
         out.putBoolean("InvertedControls", invertedControls)
+        val times = CompoundTag()
+        until.forEach { (id, ticks) -> times.putLong(id, ticks) }
+        out.put("Until", times)
         return out
     }
 
     fun copy(): PlayerVisualData = load(write())
 
     companion object {
+        private fun readUntil(tag: CompoundTag): MutableMap<String, Long> {
+            val out = LinkedHashMap<String, Long>()
+            for (key in tag.allKeys) out[key] = tag.getLong(key)
+            return out
+        }
+
         @JvmStatic
         fun load(tag: CompoundTag): PlayerVisualData = PlayerVisualData(
             upsideDown = tag.getBoolean("UpsideDown"),
@@ -93,6 +104,7 @@ class PlayerVisualData(
             nickColor = if (tag.contains("NickColor")) tag.getInt("NickColor") else -1,
             shader = tag.getString("Shader"),
             invertedControls = tag.getBoolean("InvertedControls"),
+            until = readUntil(tag.getCompound("Until")),
         )
     }
 }

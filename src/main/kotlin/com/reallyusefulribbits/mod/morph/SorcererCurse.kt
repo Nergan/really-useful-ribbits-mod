@@ -49,6 +49,7 @@ object SorcererCurse {
             nickname = data.nickname,
             nickColor = data.nickColor,
             shader = data.shader,
+            timers = if (player is ServerPlayer) CurseClock.describe(player) else "",
         )
     }
 
@@ -87,17 +88,19 @@ object SorcererCurse {
             player.onUpdateAbilities()
         }
         player.refreshDimensions()
+        CurseClock.arm(player, "morph")
         sync(player)
     }
 
     /** Бесконечный эффект, который вернётся после смерти, пока его не снимут молоком или яблоком. */
     fun addEffect(player: ServerPlayer, effect: Holder<MobEffect>, amplifier: Int) {
-        player.addEffect(MobEffectInstance(effect, -1, amplifier, false, true))
+        val duration = CurseClock.ticks("effect_or_cleanse")
+        player.addEffect(MobEffectInstance(effect, duration, amplifier, false, true))
         val id = effect.unwrapKey().map { it.location().toString() }.orElse("") ?: ""
         if (id.isEmpty()) return
         val data = visual(player)
         data.curseEffects.removeIf { it.substringBefore('|') == id }
-        data.curseEffects += "$id|$amplifier"
+        data.curseEffects += "$id|$amplifier|$duration"
     }
 
     fun forgetEffects(player: Player) {
@@ -120,9 +123,7 @@ object SorcererCurse {
         val data = visual(player)
         player.getAttribute(Attributes.GRAVITY)?.let { it.baseValue = kotlin.math.abs(it.baseValue) }
         for (entry in data.curseEffects.toList()) {
-            val holder = effectHolder(entry.substringBefore('|')) ?: continue
-            val amplifier = entry.substringAfter('|', "0").toIntOrNull() ?: 0
-            player.addEffect(MobEffectInstance(holder, -1, amplifier, false, true))
+            CurseClock.applyStoredEffect(player, entry)
         }
         if ((data.foreverFlight || data.morphFlight || data.flightTicks > 0) && !player.isCreative && !player.isSpectator) {
             player.abilities.mayfly = true
@@ -199,10 +200,59 @@ object SorcererCurse {
             if (!player.isCreative) player.setGameMode(mode)
         }
         data.spectatorTicks = 0
+        data.until.clear()
         PlayerTickHandler.revokeTemporaryFlight(player)
         player.refreshDimensions()
         sync(player)
         if (hadNickname) broadcastName(player)
+    }
+
+    fun expire(player: ServerPlayer, id: String) {
+        val data = visual(player)
+        when (id) {
+            "flip" -> data.upsideDown = false
+            "scale" -> restoreAttribute(player, Attributes.SCALE, data.savedScale, 1.0)
+            "max_health" -> {
+                restoreAttribute(player, Attributes.MAX_HEALTH, data.savedMaxHealth, 20.0)
+                if (player.health > player.maxHealth) player.health = player.maxHealth
+            }
+            "morph" -> {
+                data.morphId = ""
+                data.morphFlight = false
+                restoreAttribute(player, Attributes.ATTACK_DAMAGE, data.savedAttack, 1.0)
+                restoreAttribute(player, Attributes.ATTACK_KNOCKBACK, data.savedKnockback, 0.0)
+                restoreAttribute(player, Attributes.STEP_HEIGHT, data.savedStep, 0.6)
+                if (!data.until.containsKey("max_health")) {
+                    restoreAttribute(player, Attributes.MAX_HEALTH, data.savedMaxHealth, 20.0)
+                }
+                if (!data.until.containsKey("scale")) restoreAttribute(player, Attributes.SCALE, data.savedScale, 1.0)
+                if (player.health > player.maxHealth) player.health = player.maxHealth
+                player.refreshDimensions()
+            }
+            "creative_flight" -> {
+                data.foreverFlight = false
+                PlayerTickHandler.revokeTemporaryFlight(player)
+            }
+            "super_secret_settings" -> data.shader = ""
+            "inverted_controls" -> data.invertedControls = false
+            "vvvvvv" -> {
+                data.vvvvvv = false
+                player.getAttribute(Attributes.GRAVITY)?.let { gravity ->
+                    gravity.baseValue = kotlin.math.abs(if (data.attributesSaved) data.savedGravity else gravity.baseValue)
+                        .takeIf { it > 1.0e-4 } ?: LivingEntity.DEFAULT_BASE_GRAVITY
+                }
+            }
+            "nickname" -> {
+                val had = data.nickname.isNotBlank()
+                data.nickname = ""
+                data.nickColor = -1
+                if (had) broadcastName(player)
+            }
+            "fireballs" -> data.fireballs = false
+            "lightning_hands" -> data.lightningHands = false
+            "bedrock_room" -> Unit
+        }
+        sync(player)
     }
 
     fun hasCurse(player: Player): Boolean {
@@ -210,7 +260,7 @@ object SorcererCurse {
         return data.upsideDown ||
             data.flightTicks > 0 ||
             data.morphId.isNotBlank() ||
-            data.spectatorTicks > 0 ||
+            data.spectatorTicks != 0 ||
             data.attributesSaved ||
             data.curseEffects.isNotEmpty() ||
             data.vvvvvv ||

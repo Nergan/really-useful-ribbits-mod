@@ -33,8 +33,9 @@ object RibbitInteractionHandler {
         val ribbit = target as? RibbitEntity ?: return null
         if (hand != InteractionHand.MAIN_HAND) return null
         if (HomePoint.isMaraca(player.mainHandItem)) {
+            if (ribbit.professionKind() == ProfessionKind.MERCHANT) return null
             if (!level.isClientSide) {
-                HomePoint.setHere(player, ribbit)
+                HomePoint.capture(player, ribbit)
             }
             return InteractionResult.sidedSuccess(level.isClientSide)
         }

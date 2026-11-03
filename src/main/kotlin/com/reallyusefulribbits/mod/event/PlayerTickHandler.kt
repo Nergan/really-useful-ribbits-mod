@@ -1,8 +1,10 @@
 package com.reallyusefulribbits.mod.event
 
 import com.reallyusefulribbits.mod.loader.RuntimeHooks
+import com.reallyusefulribbits.mod.morph.CurseClock
 import com.reallyusefulribbits.mod.morph.PlayerMorph
 import com.reallyusefulribbits.mod.morph.SorcererCurse
+import com.reallyusefulribbits.mod.spell.SkinStatue
 import com.reallyusefulribbits.mod.spell.DeleteWorld
 import com.reallyusefulribbits.mod.spell.HandSpells
 import net.minecraft.server.level.ServerPlayer
@@ -44,6 +46,7 @@ object PlayerTickHandler {
             HandSpells.restoreGravityAboveWorld(serverPlayer)
         }
         if (player.tickCount % 20 == 0) SorcererCurse.pruneEffects(serverPlayer)
+        CurseClock.tick(serverPlayer)
     }
 
     fun grantTemporaryFlight(player: ServerPlayer, ticks: Int) {
@@ -65,6 +68,7 @@ object PlayerTickHandler {
     }
 
     fun onLogin(player: ServerPlayer) {
+        SkinStatue.request(player)
         SorcererCurse.sync(player)
         val visual = RuntimeHooks.visual(player)
         if (visual.flightTicks > 0 || visual.morphFlight || visual.foreverFlight) {

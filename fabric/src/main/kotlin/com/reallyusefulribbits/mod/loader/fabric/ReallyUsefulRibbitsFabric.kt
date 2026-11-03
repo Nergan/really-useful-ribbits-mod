@@ -62,7 +62,7 @@ class ReallyUsefulRibbitsFabric : ModInitializer {
                     PlayerTickHandler.onPlayerTick(player)
                 }
                 for (ribbit in level.getAllEntities()) {
-                    RibbitTickHandler.onEntityTick(ribbit)
+                    if (ribbit != null) RibbitTickHandler.onEntityTick(ribbit)
                 }
             }
         }

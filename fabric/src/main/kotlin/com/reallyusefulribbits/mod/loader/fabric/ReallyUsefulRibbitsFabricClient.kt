@@ -5,6 +5,7 @@ import com.reallyusefulribbits.mod.client.ClientBeams
 import com.reallyusefulribbits.mod.client.ClientDoom
 import com.reallyusefulribbits.mod.client.ClientSpells
 import com.reallyusefulribbits.mod.client.ClientVisuals
+import com.reallyusefulribbits.mod.client.CurseHud
 import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import com.reallyusefulribbits.mod.network.DoomSkyPayload
 import com.reallyusefulribbits.mod.network.LightningBeamPayload
@@ -12,6 +13,7 @@ import com.reallyusefulribbits.mod.network.PlayerVisualPayload
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
 
 class ReallyUsefulRibbitsFabricClient : ClientModInitializer {
@@ -31,5 +33,6 @@ class ReallyUsefulRibbitsFabricClient : ClientModInitializer {
         WorldRenderEvents.AFTER_TRANSLUCENT.register { context ->
             BeamRenderer.render(context.tickCounter().getGameTimeDeltaPartialTick(false))
         }
+        HudRenderCallback.EVENT.register { graphics, _ -> CurseHud.render(graphics) }
     }
 }

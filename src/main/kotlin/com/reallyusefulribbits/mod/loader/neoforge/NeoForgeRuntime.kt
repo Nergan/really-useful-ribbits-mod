@@ -51,6 +51,7 @@ object NeoForgeRuntime {
         RuntimeHooks.scanRadius = { ServerConfig.scanRadius() }
         RuntimeHooks.chaosLevel = { ServerConfig.chaosLevel() }
         RuntimeHooks.spellPoints = { action -> ServerConfig.spellPoints(action) }
+        RuntimeHooks.spellSeconds = { id -> ServerConfig.spellSeconds(id) }
         RuntimeHooks.itemSlots = { level, pos -> NeoForgeContainers.slots(level, pos) }
         RuntimeHooks.containerOpener = { level -> FakePlayerFactory.getMinecraft(level) }
         RuntimeHooks.patchouliLoaded = { ModList.get().isLoaded("patchouli") }

@@ -58,6 +58,7 @@ object FarmerAi {
         val data = ribbit.work()
         val radius = com.reallyusefulribbits.mod.loader.RuntimeHooks.scanRadius()
         GroundPickup.tick(level, ribbit, ProfessionKind.FARMER)
+        if (seekThrown(level, ribbit)) return
         if (WorldScan.scanDue(level.gameTime, data.lastScanAt, ModConfig.BIND_SCAN_INTERVAL, ribbit.id)) {
             data.lastScanAt = level.gameTime
             if (!WorldScan.bindingOk(level, data.containerPos) { ContainerSupport.isStorage(level, it) }) {
@@ -244,9 +245,27 @@ object FarmerAi {
         ribbit.work().taskTicks = FarmerTaskPlanner.MIN_TASK_TICKS + FarmerTaskPlanner.SWITCH_COOLDOWN_TICKS
     }
 
+    /** Предмет, брошенный рядом, важнее текущей грядки, кроме уже начатого полива. */
+    private fun seekThrown(level: ServerLevel, ribbit: RibbitEntity): Boolean {
+        val data = ribbit.work()
+        if (RibbitBags.isFull(data, ProfessionKind.FARMER)) return false
+        if (data.task == FarmerTask.WATER.name && data.taskTicks in 1 until ModConfig.WATERING_ANIM_TICKS) return false
+        val box = ribbit.boundingBox.inflate(8.0)
+        val item = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity::class.java, box) { entity ->
+            entity.isAlive && entity.tickCount >= 8 && GroundPickup.isRelevant(ProfessionKind.FARMER, entity.item)
+        }.minByOrNull { ribbit.distanceToSqr(it) } ?: return false
+        if (ribbit.distanceToSqr(item) <= ModConfig.GROUND_PICKUP_RANGE * ModConfig.GROUND_PICKUP_RANGE) return false
+        walkTo(level, ribbit, item.blockPosition(), 1.8, 1.35, false)
+        LookAt.block(ribbit, item.blockPosition(), 0.2)
+        return true
+    }
+
     private fun harvest(level: ServerLevel, ribbit: RibbitEntity, pos: BlockPos) {
         val preview = CropSupport.previewDrops(level, pos, ribbit)
-        if (!RibbitBags.canInsertAll(ribbit.work(), ProfessionKind.FARMER, preview)) return
+        val anyFits = preview.isEmpty() || preview.any { stack ->
+            stack.isEmpty || RibbitBags.canInsertAll(ribbit.work(), ProfessionKind.FARMER, listOf(stack))
+        }
+        if (!anyFits) return
         val drops = CropSupport.harvest(level, pos, ribbit)
         for (stack in drops) {
             val leftover = RibbitBags.insert(ribbit.work(), ProfessionKind.FARMER, stack)

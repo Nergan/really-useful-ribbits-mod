@@ -54,9 +54,11 @@ class ServerSettingsTextTest {
         assertTrue(ServerSettingsText.needsRewrite(untouched))
         assertEquals(SorcererAction.SUMMON_DRAGON.defaultPoints, ServerSettingsText.resolve(untouched).points[SorcererAction.SUMMON_DRAGON])
         val tuned = ServerSettingsText.parse(old.map { if (it == "spell.enchant=1000") "spell.enchant=2000" else it })
-        assertFalse(ServerSettingsText.needsRewrite(tuned))
-        assertEquals(93, ServerSettingsText.resolve(tuned).points[SorcererAction.SUMMON_DRAGON])
-        assertEquals(2000, ServerSettingsText.resolve(tuned).points[SorcererAction.ENCHANT])
+        assertTrue(ServerSettingsText.needsRewrite(tuned))
+        val kept = ServerSettingsText.resolve(tuned)
+        assertEquals(93, kept.points[SorcererAction.SUMMON_DRAGON])
+        assertEquals(2000, kept.points[SorcererAction.ENCHANT])
+        assertEquals(SorcererAction.APPLE_RAIN.defaultPoints, kept.points[SorcererAction.APPLE_RAIN])
     }
 
     @Test
@@ -89,9 +91,30 @@ class ServerSettingsTextTest {
         assertEquals(1, settings.points[SorcererAction.DELETE_WORLD])
         assertEquals(SorcererAction.ENCHANT.defaultPoints, settings.points[SorcererAction.ENCHANT])
         val tuned = ServerSettingsText.parse(old.map { if (it == "spell.enchant=150000") "spell.enchant=2000" else it })
-        assertFalse(ServerSettingsText.needsRewrite(tuned))
-        assertEquals(90, ServerSettingsText.resolve(tuned).points[SorcererAction.SUMMON_DRAGON])
-        assertEquals(1, ServerSettingsText.resolve(tuned).points[SorcererAction.DELETE_WORLD])
+        assertTrue(ServerSettingsText.needsRewrite(tuned))
+        val kept = ServerSettingsText.resolve(tuned)
+        assertEquals(90, kept.points[SorcererAction.SUMMON_DRAGON])
+        assertEquals(1, kept.points[SorcererAction.DELETE_WORLD])
+        assertEquals(2000, kept.points[SorcererAction.ENCHANT])
+        assertEquals(SorcererAction.PLAYER_STATUE.defaultPoints, kept.points[SorcererAction.PLAYER_STATUE])
+    }
+
+    @Test
+    @DisplayName("Нетронутая широкая таблица получает новые баллы эффекта и два заклинания")
+    fun wideTableMoves() {
+        val old = listOf("scan_radius=64", "chaos_level=0") + POINTS_WIDE.map { (id, points) -> "spell.$id=$points" }
+        val untouched = ServerSettingsText.parse(old)
+        assertTrue(ServerSettingsText.needsRewrite(untouched))
+        val settings = ServerSettingsText.resolve(untouched)
+        assertEquals(761_780, settings.points[SorcererAction.EFFECT_OR_CLEANSE])
+        assertEquals(250_000, settings.points[SorcererAction.APPLE_RAIN])
+        assertEquals(200_000, settings.points[SorcererAction.PLAYER_STATUE])
+        assertEquals(1, settings.points[SorcererAction.SUMMON_DRAGON])
+        assertEquals(-1, settings.durations["flip"])
+        assertEquals(3600, settings.durations["spectator"])
+        assertEquals(300, settings.durations["bedrock_room"])
+        val written = ServerSettingsText.parse(ServerSettingsText.render(settings).lines())
+        assertFalse(ServerSettingsText.needsRewrite(written))
     }
 
     @Test
@@ -132,4 +155,17 @@ private val POINTS_1_1_2 = linkedMapOf(
     "vvvvvv" to 35_000, "nickname" to 45_000, "random_structure" to 3_000, "fireballs" to 20_000,
     "lightning_hands" to 15_000, "giant_cat" to 15_000, "bedrock_room" to 500, "fireball_rain" to 80,
     "lava_lake" to 100, "delete_world" to 1, "corrupt_worldgen" to 1,
+)
+
+/** Баллы широкой таблицы до дождя яблок и статуи. */
+private val POINTS_WIDE = linkedMapOf(
+    "effect_or_cleanse" to 1_211_780, "enchant" to 1_500_000, "launch" to 300_000, "grow_plants" to 1_000_000,
+    "weather" to 500_000, "day_night" to 450_000, "summon_mobs" to 250_000, "lightning" to 100_000,
+    "flip" to 300_000, "scale" to 350_000, "max_health" to 300_000, "ignite_area" to 20_000,
+    "structure_trip" to 200_000, "summon_pets" to 650_000, "diamond_rain" to 300_000, "morph" to 100_000,
+    "giant_phantom" to 20_000, "random_dimension" to 30_000, "spectator" to 60_000, "mega_explosion" to 500,
+    "creative_flight" to 120_000, "ender_dragon" to 1, "super_secret_settings" to 550_000, "inverted_controls" to 350_000,
+    "vvvvvv" to 350_000, "nickname" to 450_000, "random_structure" to 30_000, "fireballs" to 200_000,
+    "lightning_hands" to 150_000, "giant_cat" to 150_000, "bedrock_room" to 5_000, "fireball_rain" to 800,
+    "lava_lake" to 1_000, "delete_world" to 1, "corrupt_worldgen" to 10,
 )

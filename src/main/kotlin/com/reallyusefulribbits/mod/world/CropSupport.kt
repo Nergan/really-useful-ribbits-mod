@@ -1,6 +1,7 @@
 package com.reallyusefulribbits.mod.world
 
 import com.reallyusefulribbits.mod.config.ModConfig
+import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import com.reallyusefulribbits.mod.logic.CropRules
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
@@ -83,14 +84,26 @@ object CropSupport {
         if (item is BlockItem) {
             val block = item.block
             val state = block.defaultBlockState()
-            if (isPricklyBush(state)) return null
-            if (block is CropBlock || block is StemBlock || block is NetherWartBlock || block is SugarCaneBlock) return block
+            if (block is SugarCaneBlock || isPricklyBush(state)) return null
+            if (block is CropBlock || block is StemBlock || block is NetherWartBlock) return block
             if (state.`is`(BlockTags.CROPS)) return block
             if (stack.`is`(ItemTags.VILLAGER_PLANTABLE_SEEDS)) return block
             if (block is BushBlock && ageProperty(state) != null) return block
             if (isModAgeCrop(state)) return block
         }
-        return null
+        return linkedCrop(stack)
+    }
+
+    /** Семена, которые не являются блоком: помидор Farmer's Delight и зёрна кукурузы. */
+    private fun linkedCrop(stack: ItemStack): Block? {
+        val key = BuiltInRegistries.ITEM.getKey(stack.item).toString()
+        val blockId = when (key) {
+            "farmersdelight:tomato_seeds" -> "farmersdelight:budding_tomatoes"
+            "culturaldelights:corn_kernels" -> "culturaldelights:corn"
+            else -> return null
+        }
+        val block = BuiltInRegistries.BLOCK.get(net.minecraft.resources.ResourceLocation.parse(blockId))
+        return if (block == Blocks.AIR) null else block
     }
 
     fun canPlant(level: Level, soil: BlockPos, stack: ItemStack): Boolean {
@@ -190,6 +203,7 @@ object CropSupport {
         if (age != null && isAgeCrop(state)) {
             val max = age.possibleValues.maxOrNull() ?: return false
             if (state.getValue(age) < max) return false
+            if (BuiltInRegistries.BLOCK.getKey(block).namespace != "minecraft") return true
             val grower = block as? BonemealableBlock ?: return true
             return !grower.isValidBonemealTarget(level, pos, state)
         }
@@ -255,6 +269,12 @@ object CropSupport {
 
     fun harvest(level: ServerLevel, pos: BlockPos, harvester: Entity): List<ItemStack> {
         val state = level.getBlockState(pos)
+        val fruit = pos.above()
+        if (isSupportingStem(state)) {
+            if (!isMatureCrop(level, fruit)) return emptyList()
+            return harvest(level, fruit, harvester) + scoopDrops(level, pos)
+        }
+        tryUseHarvest(level, pos)?.let { return it + scoopDrops(level, pos) }
         val block = state.block
         val drops: List<ItemStack>
         val sound: net.minecraft.sounds.SoundEvent
@@ -288,7 +308,74 @@ object CropSupport {
             }
         }
         level.playSound(null, pos, sound, SoundSource.BLOCKS, 1f, 1f)
-        return drops
+        return drops + scoopDrops(level, pos)
+    }
+
+    /**
+     * Правый клик, как у помидоров Farmer's Delight и модов вроде Harvest with Ease.
+     * null — блок не отдался клику, его надо ломать как обычно.
+     */
+    private fun tryUseHarvest(level: ServerLevel, pos: BlockPos): List<ItemStack>? {
+        val player = RuntimeHooks.opener(level) ?: return null
+        val state = level.getBlockState(pos)
+        if (state.isAir) return null
+        val before = IntArray(player.inventory.containerSize) { player.inventory.getItem(it).count }
+        val beforeEmpty = BooleanArray(player.inventory.containerSize) { player.inventory.getItem(it).isEmpty }
+        val box = net.minecraft.world.phys.AABB(pos).inflate(1.5)
+        val beforeItems = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity::class.java, box).map { it.id }.toSet()
+        val hit = net.minecraft.world.phys.BlockHitResult(
+            net.minecraft.world.phys.Vec3.atCenterOf(pos),
+            Direction.UP,
+            pos,
+            false,
+        )
+        val result = state.useWithoutItem(level, player, hit)
+        val after = level.getBlockState(pos)
+        val gained = ArrayList<ItemStack>()
+        for (slot in 0 until player.inventory.containerSize) {
+            val now = player.inventory.getItem(slot)
+            if (beforeEmpty[slot]) {
+                if (!now.isEmpty) {
+                    gained += now.copy()
+                    player.inventory.setItem(slot, ItemStack.EMPTY)
+                }
+            } else if (now.count > before[slot]) {
+                gained += now.copyWithCount(now.count - before[slot])
+                now.count = before[slot]
+            }
+        }
+        val spawned = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity::class.java, box)
+            .filter { it.id !in beforeItems }
+        for (entity in spawned) {
+            gained += entity.item.copy()
+            entity.discard()
+        }
+        if (!result.consumesAction() && after == state && gained.isEmpty()) return null
+        return gained
+    }
+
+    /** Початок кукурузы и метёлка риса падают отдельной сущностью, когда ломается стебель. */
+    private fun scoopDrops(level: ServerLevel, pos: BlockPos): List<ItemStack> {
+        val box = net.minecraft.world.phys.AABB(pos).inflate(1.5, 2.5, 1.5)
+        val found = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity::class.java, box) { it.isAlive && it.tickCount <= 2 }
+        val stacks = ArrayList<ItemStack>()
+        for (entity in found) {
+            stacks += entity.item.copy()
+            entity.discard()
+        }
+        return stacks
+    }
+
+    private fun isSupportingStem(state: BlockState): Boolean {
+        for (property in state.properties) {
+            if (property is net.minecraft.world.level.block.state.properties.BooleanProperty &&
+                property.name.contains("support") &&
+                state.getValue(property)
+            ) {
+                return true
+            }
+        }
+        return false
     }
 
     fun water(level: ServerLevel, pos: BlockPos) {
@@ -367,7 +454,8 @@ object CropSupport {
             val soilState = level.getBlockState(soil)
             if (soilState.block is FarmBlock && soilState.hasProperty(FarmBlock.MOISTURE)) {
                 if (soilState.getValue(FarmBlock.MOISTURE) < 7) {
-                    level.setBlock(soil, soilState.setValue(FarmBlock.MOISTURE, 7), Block.UPDATE_ALL)
+                    // Без уведомления соседей: кукуруза и рис от него ставят второй блок и дюпают растение.
+                    level.setBlock(soil, soilState.setValue(FarmBlock.MOISTURE, 7), Block.UPDATE_CLIENTS)
                 }
             }
         }
@@ -437,8 +525,11 @@ object CropSupport {
         val block = state.block
         if (block is CropBlock || block is BushBlock || block is StemBlock || block is NetherWartBlock) return false
         if (ageProperty(state) == null) return false
-        if (BuiltInRegistries.BLOCK.getKey(block).namespace == "minecraft") return false
-        return block is BonemealableBlock
+        val id = BuiltInRegistries.BLOCK.getKey(block)
+        if (id.namespace == "minecraft") return false
+        if (block is BonemealableBlock) return true
+        val path = id.path
+        return path.contains("rice") || path.contains("tomato") || path.contains("corn")
     }
 
     /** Рис в воде или на грязи и куст не на пашне. Пшеница на пашне сюда не входит: её и так находит грядка. */

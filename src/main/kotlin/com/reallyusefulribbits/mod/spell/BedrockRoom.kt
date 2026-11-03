@@ -55,7 +55,10 @@ object BedrockRoom {
         player.teleportTo(shape.centerX + 0.5, shape.minY + 1.0, shape.centerZ + 0.5)
         val room = CompoundTag()
         room.putString("Dimension", level.dimension().location().toString())
-        room.putLong("Until", level.server.overworld().gameTime + DURATION_TICKS)
+        val seconds = com.reallyusefulribbits.mod.loader.RuntimeHooks.spellSeconds("bedrock_room")
+        val until = if (seconds < 0) Long.MAX_VALUE else level.server.overworld().gameTime + seconds * 20L
+        room.putLong("Until", until)
+        com.reallyusefulribbits.mod.morph.CurseClock.arm(player, "bedrock_room")
         room.put("Blocks", saved)
         val data = SorcererWorldData.get(level.server)
         data.rooms += room

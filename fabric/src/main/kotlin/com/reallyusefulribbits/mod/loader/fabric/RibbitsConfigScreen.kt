@@ -4,6 +4,7 @@ import com.reallyusefulribbits.mod.logic.ScanRadius
 import com.reallyusefulribbits.mod.logic.ServerSettings
 import com.reallyusefulribbits.mod.logic.SorcererAction
 import com.reallyusefulribbits.mod.logic.SorcererTable
+import com.reallyusefulribbits.mod.logic.SpellDurations
 import me.shedaniel.clothconfig2.api.ConfigBuilder
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
@@ -17,10 +18,11 @@ object RibbitsConfigScreen {
         var radius = current.scanRadius
         var chaos = current.chaos
         val points = current.points.toMutableMap()
+        val durations = current.durations.toMutableMap()
         val builder = ConfigBuilder.create()
             .setParentScreen(parent)
             .setTitle(Component.translatable("$KEY.title"))
-            .setSavingRunnable { FabricRuntime.saveSettings(ServerSettings(radius, chaos, points.toMap())) }
+            .setSavingRunnable { FabricRuntime.saveSettings(ServerSettings(radius, chaos, points.toMap(), durations.toMap())) }
         val entries = builder.entryBuilder()
 
         val work = builder.getOrCreateCategory(Component.translatable("$KEY.work"))
@@ -60,6 +62,23 @@ object RibbitsConfigScreen {
                         ),
                     )
                     .setSaveConsumer { points[action] = it }
+                    .build(),
+            )
+        }
+
+        val times = builder.getOrCreateCategory(Component.translatable("$KEY.sorcerer.durations"))
+        times.addEntry(
+            entries.startTextDescription(Component.translatable("$KEY.sorcerer.durations.tooltip")).build(),
+        )
+        for (state in SpellDurations.STATES) {
+            val stored = durations[state.id] ?: state.defaultSeconds
+            times.addEntry(
+                entries.startIntField(Component.translatable("reallyusefulribbits.curse.${state.id}"), stored)
+                    .setDefaultValue(state.defaultSeconds)
+                    .setMin(SpellDurations.FOREVER)
+                    .setMax(SpellDurations.MAX_SECONDS)
+                    .setTooltip(Component.translatable("$KEY.sorcerer.durations.default", state.defaultSeconds))
+                    .setSaveConsumer { durations[state.id] = SpellDurations.clamp(it) }
                     .build(),
             )
         }

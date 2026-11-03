@@ -7,7 +7,7 @@ package com.reallyusefulribbits.mod.logic
  * Дракон и гигантский варден стоят на одном балле: около одного броска на десять миллионов.
  */
 enum class SorcererAction(val id: String, val defaultPoints: Int) {
-    EFFECT_OR_CLEANSE("effect_or_cleanse", 1_211_780),
+    EFFECT_OR_CLEANSE("effect_or_cleanse", 761_780),
     ENCHANT("enchant", 1_500_000),
     LAUNCH("launch", 300_000),
     GROW_PLANTS("grow_plants", 1_000_000),
@@ -22,6 +22,8 @@ enum class SorcererAction(val id: String, val defaultPoints: Int) {
     STRUCTURE_TRIP("structure_trip", 200_000),
     SUMMON_PETS("summon_pets", 650_000),
     DIAMOND_RAIN("diamond_rain", 300_000),
+    APPLE_RAIN("apple_rain", 250_000),
+    PLAYER_STATUE("player_statue", 200_000),
     MORPH("morph", 100_000),
     SUMMON_GIANT_PHANTOM("giant_phantom", 20_000),
     RANDOM_DIMENSION("random_dimension", 30_000),

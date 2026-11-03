@@ -30,7 +30,7 @@ class SorcererTableTest {
     @DisplayName("Шанс по умолчанию в экране настроек пишется как в README")
     fun percentText() {
         assertEquals("15", SorcererTable.percentText(SorcererAction.ENCHANT.defaultPoints))
-        assertEquals("12.12", SorcererTable.percentText(SorcererAction.EFFECT_OR_CLEANSE.defaultPoints))
+        assertEquals("7.62", SorcererTable.percentText(SorcererAction.EFFECT_OR_CLEANSE.defaultPoints))
         assertEquals("0.00001", SorcererTable.percentText(SorcererAction.SUMMON_DRAGON.defaultPoints))
         assertEquals("0.00001", SorcererTable.percentText(SorcererAction.DELETE_WORLD.defaultPoints))
         assertEquals("0.0001", SorcererTable.percentText(SorcererAction.CORRUPT_WORLDGEN.defaultPoints))

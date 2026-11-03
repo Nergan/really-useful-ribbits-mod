@@ -12,6 +12,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent
 import net.neoforged.neoforge.client.event.RenderHandEvent
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent
 import net.neoforged.neoforge.client.event.RenderLivingEvent
+import net.neoforged.neoforge.client.event.RenderGuiEvent
 import net.neoforged.neoforge.client.event.RenderPlayerEvent
 import net.neoforged.neoforge.client.gui.ConfigurationScreen
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory
@@ -36,6 +37,11 @@ object ClientModEvents {
     @SubscribeEvent
     fun onTickEnd(event: ClientTickEvent.Post) {
         ClientSpells.endTick(Minecraft.getInstance())
+    }
+
+    @SubscribeEvent
+    fun onHud(event: RenderGuiEvent.Post) {
+        CurseHud.render(event.guiGraphics)
     }
 
     @SubscribeEvent
