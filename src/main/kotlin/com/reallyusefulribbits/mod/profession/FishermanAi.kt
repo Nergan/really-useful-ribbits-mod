@@ -198,12 +198,11 @@ object FishermanAi {
         val chestDist = ribbit.distanceToSqr(center)
         val stand = standNear(level, pos, ribbit)
         val standDist = if (stand != null) ribbit.distanceToSqr(stand) else Double.MAX_VALUE
-        val arrived = chestDist <= ModConfig.CONTAINER_REACH_SQ || standDist <= 2.56
         val previous = chestProgress[ribbit.id]
         if (previous != null && chestDist >= previous - 0.02) data.navStuck++ else data.navStuck = 0
         chestProgress[ribbit.id] = chestDist
-        val closeEnoughToGiveUp = data.navStuck >= 20 && chestDist <= 9.0
-        if (!arrived && !closeEnoughToGiveUp) {
+        val onSpot = stand != null && standDist <= ModConfig.FISHER_DEPOSIT_REACH_SQ
+        if (!onSpot) {
             approach(ribbit, stand ?: center, 1.05)
             return
         }

@@ -25,6 +25,9 @@ object InventoryRules {
         else -> 64
     }
 
+    /** Сколько рыбы ещё положить в сумку, прежде чем рыбак пойдёт к бочке. */
+    fun fishUntilHaul(carried: Int, limit: Int = FISHER_CARRY): Int = (limit - carried).coerceAtLeast(0)
+
     fun slotCount(kind: ProfessionKind): Int = when (kind) {
         ProfessionKind.FISHERMAN -> FISHER_SLOTS
         ProfessionKind.FARMER -> FARMER_SLOTS

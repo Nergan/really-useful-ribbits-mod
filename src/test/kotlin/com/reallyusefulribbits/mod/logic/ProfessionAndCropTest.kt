@@ -1,5 +1,6 @@
 package com.reallyusefulribbits.mod.logic
 
+import com.reallyusefulribbits.mod.logic.InventoryRules
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -41,6 +42,18 @@ class ProfessionAndCropTest {
         assertTrue(CropRules.wantsWater(drySoilWithCrop = false, bareCaveVine = true))
         assertFalse(CropRules.blocksUpperHalf(0.5))
         assertTrue(CropRules.blocksUpperHalf(1.0))
+        assertTrue(CropRules.isCornStalk("culturaldelights:corn"))
+        assertTrue(CropRules.isCornEar("culturaldelights:corn_upper"))
+        assertFalse(CropRules.isCornEar("culturaldelights:corn"))
+        assertTrue(CropRules.isBuddingTomato("farmersdelight:budding_tomatoes"))
+        assertTrue(CropRules.isTomatoVine("farmersdelight:tomatoes"))
+        assertTrue(CropRules.isTomatoVine("farmersdelight:tomatoes_on_rope"))
+        assertFalse(CropRules.isTomatoVine("farmersdelight:budding_tomatoes"))
+        assertTrue(CropRules.ageAtMax(3, 3))
+        assertFalse(CropRules.ageAtMax(2, 3))
+        assertTrue(CropRules.isTomatoVineDrop("farmersdelight:tomato"))
+        assertEquals(0, InventoryRules.fishUntilHaul(4))
+        assertEquals(3, InventoryRules.fishUntilHaul(1))
     }
 
     @Test

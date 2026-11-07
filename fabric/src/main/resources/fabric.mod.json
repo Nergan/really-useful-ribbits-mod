@@ -11,7 +11,8 @@
   "entrypoints": {
     "main": ["com.reallyusefulribbits.mod.loader.fabric.ReallyUsefulRibbitsFabric"],
     "client": ["com.reallyusefulribbits.mod.loader.fabric.ReallyUsefulRibbitsFabricClient"],
-    "modmenu": ["com.reallyusefulribbits.mod.loader.fabric.RibbitsModMenu"]
+    "modmenu": ["com.reallyusefulribbits.mod.loader.fabric.RibbitsModMenu"],
+    "jade": ["com.reallyusefulribbits.mod.compat.RibbitJadePlugin"]
   },
   "accessWidener": "reallyusefulribbits.accesswidener",
   "mixins": [
@@ -31,6 +32,7 @@
   },
   "suggests": {
     "patchouli": "*",
-    "modmenu": "*"
+    "modmenu": "*",
+    "jade": "*"
   }
 }

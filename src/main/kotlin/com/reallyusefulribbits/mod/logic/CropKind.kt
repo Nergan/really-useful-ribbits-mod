@@ -35,6 +35,24 @@ object CropRules {
     fun ageCropIsReady(atMaxAge: Boolean, bonemealStillWorks: Boolean, supportStem: Boolean): Boolean =
         atMaxAge && !bonemealStillWorks && !supportStem
 
+    /** Стебель кукурузы Cultural Delights. Ломать его нельзя: початок стоит блоком выше. */
+    fun isCornStalk(blockId: String): Boolean = blockId == "culturaldelights:corn"
+
+    /** Спелый початок. Собирается только он, стебель остаётся. */
+    fun isCornEar(blockId: String): Boolean = blockId == "culturaldelights:corn_upper"
+
+    /** Куст до лозы. Его не срывают: костная мука превращает его в лозу с плодами. */
+    fun isBuddingTomato(blockId: String): Boolean = blockId == "farmersdelight:budding_tomatoes"
+
+    /** Лоза, с которой плоды снимают пустой рукой, не ломая блок. */
+    fun isTomatoVine(blockId: String): Boolean =
+        blockId == "farmersdelight:tomatoes" || blockId == "farmersdelight:tomatoes_on_rope"
+
+    fun isTomatoVineDrop(itemId: String): Boolean =
+        itemId == "farmersdelight:tomato" || itemId == "farmersdelight:rotten_tomato"
+
+    fun ageAtMax(age: Int, max: Int): Boolean = age >= max
+
     /** Полив имеет смысл сухой пашне под культурой и голой пещерной лозе. */
     fun wantsWater(drySoilWithCrop: Boolean, bareCaveVine: Boolean): Boolean =
         drySoilWithCrop || bareCaveVine

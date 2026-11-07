@@ -28,7 +28,9 @@ object GroundPickup {
         if (RibbitBags.isFull(ribbit.work(), kind)) return
         val box = ribbit.boundingBox.inflate(ModConfig.GROUND_PICKUP_RANGE)
         val items = level.getEntitiesOfClass(ItemEntity::class.java, box) { item ->
-            item.isAlive && item.tickCount >= 8 && isRelevant(kind, item.item)
+            if (!item.isAlive || !isRelevant(kind, item.item)) return@getEntitiesOfClass false
+            val hit = kind == ProfessionKind.FISHERMAN && item.boundingBox.intersects(ribbit.boundingBox)
+            hit || item.tickCount >= 8
         }
         for (item in items) {
             val leftover = RibbitBags.insert(ribbit.work(), kind, item.item.copy())

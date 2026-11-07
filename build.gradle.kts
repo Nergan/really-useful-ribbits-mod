@@ -96,11 +96,15 @@ neoForge {
         create("client") {
             client()
             systemProperty("neoforge.enabledGameTestNamespaces", modId)
+            jvmArguments.addAll(listOf("-Xms256m", "-Xmx768m", "-XX:+UseSerialGC"))
         }
         create("server") {
             server()
             programArgument("--nogui")
+            programArgument("--port")
+            programArgument("25567")
             systemProperty("neoforge.enabledGameTestNamespaces", modId)
+            jvmArguments.addAll(listOf("-Xms128m", "-Xmx512m", "-XX:+UseSerialGC"))
         }
         create("gameTestServer") {
             type = "gameTestServer"
@@ -142,6 +146,7 @@ dependencies {
     implementation("maven.modrinth:ribbits:$ribbitsVersion")
     implementation("software.bernie.geckolib:geckolib-neoforge-$minecraftVersion:$geckolibVersion")
     implementation("com.yungnickyoung.minecraft.yungsapi:YungsApi:$yungsapiVersion")
+    compileOnly("maven.modrinth:jade:${prop("jade_version")}")
 
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")

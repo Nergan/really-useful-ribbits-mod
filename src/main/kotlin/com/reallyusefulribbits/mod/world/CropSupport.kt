@@ -3,6 +3,8 @@ package com.reallyusefulribbits.mod.world
 import com.reallyusefulribbits.mod.config.ModConfig
 import com.reallyusefulribbits.mod.loader.RuntimeHooks
 import com.reallyusefulribbits.mod.logic.CropRules
+import com.reallyusefulribbits.mod.logic.ProfessionKind
+import com.reallyusefulribbits.mod.util.work
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.core.registries.BuiltInRegistries
@@ -192,7 +194,11 @@ object CropSupport {
     fun isMatureCrop(level: Level, pos: BlockPos): Boolean {
         val state = level.getBlockState(pos)
         if (isPricklyBush(state)) return false
-        // Стебель кукурузы и риса не урожай: ломается початок или метёлка над ним.
+        val id = BuiltInRegistries.BLOCK.getKey(state.block).toString()
+        // Стебель кукурузы и куст помидора не урожай. Початок и лоза готовы на максимальном возрасте.
+        if (CropRules.isCornStalk(id) || CropRules.isBuddingTomato(id)) return false
+        if (CropRules.isCornEar(id) || CropRules.isTomatoVine(id)) return ageAtMax(state)
+        // Стебель риса не урожай: ломается метёлка над ним.
         if (hasSupportProperty(state)) return false
         val block = state.block
         if (block is StemBlock || block is AttachedStemBlock) return false
@@ -272,6 +278,23 @@ object CropSupport {
 
     fun harvest(level: ServerLevel, pos: BlockPos, harvester: Entity): List<ItemStack> {
         val state = level.getBlockState(pos)
+        val id = BuiltInRegistries.BLOCK.getKey(state.block).toString()
+        if (CropRules.isCornStalk(id)) {
+            val fruit = pos.above()
+            if (!isMatureCrop(level, fruit)) return emptyList()
+            return harvest(level, fruit, harvester)
+        }
+        if (CropRules.isTomatoVine(id)) {
+            if (!ageAtMax(state)) return emptyList()
+            return harvestTomato(level, pos, harvester)
+        }
+        if (CropRules.isCornEar(id)) {
+            if (!ageAtMax(state)) return emptyList()
+            val drops = Block.getDrops(state, level, pos, level.getBlockEntity(pos), harvester, ItemStack.EMPTY)
+            level.removeBlock(pos, false)
+            level.playSound(null, pos, SoundEvents.CROP_BREAK, SoundSource.BLOCKS, 1f, 1f)
+            return drops
+        }
         if (hasSupportProperty(state)) {
             if (!isSupportingStem(state)) return emptyList()
             val fruit = pos.above()
@@ -313,6 +336,50 @@ object CropSupport {
         }
         level.playSound(null, pos, sound, SoundSource.BLOCKS, 1f, 1f)
         return drops + scoopDrops(level, pos)
+    }
+
+    /** Пустая рука снимает помидоры и оставляет лозу. Блок не ломается. */
+    private fun harvestTomato(level: ServerLevel, pos: BlockPos, harvester: Entity): List<ItemStack> {
+        val picked = tryUseHarvest(level, pos)
+        if (picked != null && picked.isNotEmpty()) return picked
+        val ribbit = harvester as? com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity
+        if (picked != null && ribbit != null) {
+            scoopTomatoNextTick(level, pos, ribbit)
+        }
+        return emptyList()
+    }
+
+    /**
+     * Farmer's Delight кладёт помидоры сущностью в конце тика. К следующему тику они уже лежат,
+     * и лягушка забирает их в сумку, а не оставляет на грядке.
+     */
+    private fun scoopTomatoNextTick(
+        level: ServerLevel,
+        pos: BlockPos,
+        ribbit: com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity,
+    ) {
+        val id = ribbit.id
+        level.server.execute {
+            val living = level.getEntity(id) as? com.yungnickyoung.minecraft.ribbits.entity.RibbitEntity ?: return@execute
+            val box = net.minecraft.world.phys.AABB(pos).inflate(1.5)
+            val found = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity::class.java, box) {
+                it.isAlive && it.tickCount <= 2 && CropRules.isTomatoVineDrop(BuiltInRegistries.ITEM.getKey(it.item.item).toString())
+            }
+            for (entity in found) {
+                val leftover = com.reallyusefulribbits.mod.inventory.RibbitBags.insert(
+                    living.work(),
+                    ProfessionKind.FARMER,
+                    entity.item.copy(),
+                )
+                if (leftover.isEmpty) entity.discard() else entity.item = leftover
+            }
+        }
+    }
+
+    private fun ageAtMax(state: BlockState): Boolean {
+        val age = ageProperty(state) ?: return false
+        val max = age.possibleValues.maxOrNull() ?: return false
+        return CropRules.ageAtMax(state.getValue(age), max)
     }
 
     /**

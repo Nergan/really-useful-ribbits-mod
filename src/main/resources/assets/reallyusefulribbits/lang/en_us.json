@@ -173,5 +173,7 @@
   "reallyusefulribbits.curse.nickname": "Nickname",
   "reallyusefulribbits.curse.fireballs": "Fireball hands",
   "reallyusefulribbits.curse.lightning_hands": "Lightning hands",
-  "reallyusefulribbits.curse.bedrock_room": "Bedrock room"
+  "reallyusefulribbits.curse.bedrock_room": "Bedrock room",
+  "reallyusefulribbits.jade.fish_left": "Fish until the barrel: %s",
+  "reallyusefulribbits.jade.bag_empty": "Bag is empty"
 }

@@ -22,6 +22,21 @@ loom {
         // The Java annotation processor does not see Kotlin mixins; tiny-remapper remaps them in remapJar.
         useLegacyMixinAp = false
     }
+    runs {
+        named("client") {
+            vmArg("-Xms256m")
+            vmArg("-Xmx768m")
+            vmArg("-XX:+UseSerialGC")
+        }
+        named("server") {
+            programArg("--nogui")
+            programArg("--port")
+            programArg("25567")
+            vmArg("-Xms128m")
+            vmArg("-Xmx512m")
+            vmArg("-XX:+UseSerialGC")
+        }
+    }
 }
 
 kotlin {
@@ -90,6 +105,7 @@ dependencies {
     // он уже лежит внутри Patchouli-*-FABRIC.jar.
     modRuntimeOnly("me.zeroeightsix:fiber:0.23.0-2")
     modImplementation("me.shedaniel.cloth:cloth-config-fabric:${prop("cloth_config_version")}")
+    modCompileOnly("maven.modrinth:jade:${prop("jade_fabric_version")}")
     modCompileOnly("com.terraformersmc:modmenu:${prop("modmenu_version")}")
     modRuntimeOnly("org.reflections:reflections:0.10.2")
 }

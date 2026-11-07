@@ -173,5 +173,7 @@
   "reallyusefulribbits.curse.nickname": "Ник",
   "reallyusefulribbits.curse.fireballs": "Огненные шары",
   "reallyusefulribbits.curse.lightning_hands": "Молнии из руки",
-  "reallyusefulribbits.curse.bedrock_room": "Комната из бедрока"
+  "reallyusefulribbits.curse.bedrock_room": "Комната из бедрока",
+  "reallyusefulribbits.jade.fish_left": "Рыбы до бочки: %s",
+  "reallyusefulribbits.jade.bag_empty": "Сумка пуста"
 }
