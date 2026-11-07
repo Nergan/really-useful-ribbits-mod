@@ -228,8 +228,8 @@ jobs:
           set -euo pipefail
           python3 .github/scripts/replace-modrinth-versions.py \
             really-useful-ribbits \
-            "${{ steps.versions.outputs.mod_version }}" \
-            "${{ steps.versions.outputs.mod_version }}-fabric"
+            --slot "${{ steps.versions.outputs.mod_version }}" neoforge 1.21.1 \
+            --slot "${{ steps.versions.outputs.mod_version }}-fabric" fabric 1.21.1
 
       - name: Publish Modrinth
         if: steps.modrinth_token.outputs.present == 'true'
